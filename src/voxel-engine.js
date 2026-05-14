@@ -40,6 +40,7 @@ export class VoxelEngine {
     this._history = [];
     this._redoStack = [];
     this._maxHistory = 50;
+    this._maxRedo = 50;
 
     this._setupEvents();
   }
@@ -47,14 +48,21 @@ export class VoxelEngine {
   _getMaterial(materialName) {
     const mat = this.materialDB.get(materialName);
     if (!mat) return null;
-    const key = mat.name + '-' + mat.color + '-' + (mat.roughness || 0.4) + '-' + (mat.metalness || 0.3);
+    const isTransparent = mat.transparent || false;
+    const key = mat.name + '-' + mat.color + '-' + (mat.roughness || 0.4) + '-' + (mat.metalness || 0.3) + '-' + isTransparent;
     let m = this.materialCache.get(key);
     if (!m) {
-      m = new THREE.MeshStandardMaterial({
+      const opts = {
         color: new THREE.Color(mat.color),
         roughness: mat.roughness || 0.4,
         metalness: mat.metalness || 0.3,
-      });
+      };
+      if (isTransparent) {
+        opts.transparent = true;
+        opts.opacity = mat.opacity || 0.6;
+        opts.depthWrite = false;
+      }
+      m = new THREE.MeshStandardMaterial(opts);
       this.materialCache.set(key, m);
     }
     return m;
@@ -171,7 +179,7 @@ export class VoxelEngine {
   _onPointerMove(event) {
     const hit = this._raycast(event);
     if (hit) {
-      this.highlight.position.copy(this._worldPos(hit));
+      this.highlight.position.copy(this._worldPos({ x: hit.x, y: hit.y, z: hit.z }));
       this.highlight.visible = true;
 
       if (this.activeTool === 'add') {
@@ -235,7 +243,23 @@ export class VoxelEngine {
   addVoxel(pos, materialName, moduleId) {
     if (moduleId === undefined) moduleId = null;
     const key = this._gridKey(pos);
-    if (this.voxels.has(key)) return false;
+    if (this.voxels.has(key)) {
+      // Evita duplicati: se esiste, aggiorna solo il materiale
+      const existing = this.voxels.get(key);
+      if (existing.material !== materialName) {
+        existing.material = materialName;
+        existing.density = this.materialDB.getDensity(materialName);
+        const mesh = this.meshes.get(key);
+        if (mesh) {
+          const newMat = this._getMaterial(materialName);
+          if (newMat) {
+            mesh.material.dispose();
+            mesh.material = newMat;
+          }
+        }
+      }
+      return false;
+    }
 
     const material = this.materialDB.get(materialName);
     if (!material) return false;
@@ -280,13 +304,13 @@ export class VoxelEngine {
     this._onVoxelChanged();
   }
 
-  fillLayer(y, materialName, moduleId) {
+  fillLayer(y, materialName, moduleId, solid = false) {
     if (moduleId === undefined) moduleId = null;
     let added = 0;
     const radius = 5;
     for (let x = -radius; x <= radius; x++) {
       for (let z = -radius; z <= radius; z++) {
-        if (x === -radius || x === radius || z === -radius || z === radius) {
+        if (solid || x === -radius || x === radius || z === -radius || z === radius) {
           if (this.addVoxel({ x: x, y: y, z: z }, materialName, moduleId)) added++;
         }
       }
@@ -321,7 +345,10 @@ export class VoxelEngine {
 
   clearAll() {
     for (const entry of this.meshes) {
-      this.voxelGroup.remove(entry[1]);
+      const mesh = entry[1];
+      this.voxelGroup.remove(mesh);
+      if (mesh.geometry) mesh.geometry.dispose();
+      if (mesh.material) mesh.material.dispose();
     }
     this.meshes.clear();
     this.voxels.clear();
@@ -357,10 +384,15 @@ export class VoxelEngine {
     this._redoStack = [];
   }
 
+  _pushRedo(action) {
+    this._redoStack.push(action);
+    if (this._redoStack.length > this._maxRedo) this._redoStack.shift();
+  }
+
   undo() {
     if (this._history.length === 0) return;
     const action = this._history.pop();
-    this._redoStack.push(action);
+    this._pushRedo(action);
     if (action.type === 'add') {
       this._removeVoxelSilently(action.x, action.y, action.z);
     } else if (action.type === 'remove') {
@@ -405,6 +437,7 @@ export class VoxelEngine {
     const mesh = this.meshes.get(key);
     if (mesh) {
       this.voxelGroup.remove(mesh);
+      // Do NOT dispose shared geometry/material here — they are cached and reused
       this.meshes.delete(key);
     }
     this.voxels.delete(key);
@@ -425,22 +458,42 @@ export class VoxelEngine {
 
   fromJSON(data) {
     this.clearAll();
+
+    if (!data || typeof data !== 'object') {
+      console.error('[VoxelEngine] Invalid JSON data');
+      return;
+    }
+
     if (data.modules) this.moduleSystem.fromJSON(data.modules);
     const voxels = data.voxels || [];
+    if (!Array.isArray(voxels)) {
+      console.error('[VoxelEngine] voxels must be an array');
+      return;
+    }
+
+    let loaded = 0;
     for (let i = 0; i < voxels.length; i++) {
       const v = voxels[i];
-      this.voxels.set(this._gridKey(v), v);
+      if (!v || typeof v.x !== 'number' || typeof v.y !== 'number' || typeof v.z !== 'number' || !v.material) {
+        console.warn('[VoxelEngine] Skipping invalid voxel at index', i);
+        continue;
+      }
+      const key = this._gridKey(v);
+      if (this.voxels.has(key)) continue; // skip duplicates
+      this.voxels.set(key, v);
       const meshMaterial = this._getMaterial(v.material);
       if (!meshMaterial) continue;
       const mesh = new THREE.Mesh(this.sharedGeometry, meshMaterial);
       mesh.position.set(v.x * this.voxelSize, v.y * this.voxelSize, v.z * this.voxelSize);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      mesh.userData.voxelKey = this._gridKey(v);
+      mesh.userData.voxelKey = key;
       this.voxelGroup.add(mesh);
-      this.meshes.set(this._gridKey(v), mesh);
+      this.meshes.set(key, mesh);
+      loaded++;
     }
     this._onVoxelChanged();
+    console.log('[VoxelEngine] Loaded', loaded, 'voxels from JSON');
   }
 
   resetCamera() {

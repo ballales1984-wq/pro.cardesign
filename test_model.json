@@ -1,0 +1,28 @@
+{
+  "dimensions": {
+    "x": 16,
+    "y": 16,
+    "z": 16
+  },
+  "voxels": [
+    {
+      "x": 5,
+      "y": 5,
+      "z": 5,
+      "material": "carbonio",
+      "density": 1750.0,
+      "temperature_limit": 3600.0,
+      "module": "test",
+      "color": "#2C2C2C"
+    }
+  ],
+  "modules": [
+    {
+      "name": "test",
+      "voxel_count": 1,
+      "function": "",
+      "tolerance": 0.01,
+      "properties": {}
+    }
+  ]
+}

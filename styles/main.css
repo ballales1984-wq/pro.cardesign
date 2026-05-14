@@ -443,4 +443,5 @@ body {
 
 .btn-secondary {
   background: var(--hover);
-  color: var(--te
+  color: var(--text);
+}

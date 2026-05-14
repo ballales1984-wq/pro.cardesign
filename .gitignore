@@ -36,3 +36,5 @@ venv/
 # Data files
 *.json
 *.stl
+!full_model.json
+!test_model.json

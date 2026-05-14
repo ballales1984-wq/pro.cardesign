@@ -72,7 +72,7 @@ class VoxelEngine:
     def remove_voxel(self, x: int, y: int, z: int):
         if (x, y, z) in self.voxel_map:
             voxel = self.voxel_map[(x, y, z)]
-            if voxel.module in self.modules:
+            if voxel.module in self.modules and voxel in self.modules[voxel.module].voxels:
                 self.modules[voxel.module].voxels.remove(voxel)
             del self.voxel_map[(x, y, z)]
             self.grid[x, y, z] = 0
@@ -216,9 +216,9 @@ def main():
             shell_positions.append((x, 8, z))
             shell_positions.append((x, 55, z))
     for y in range(8, 56):
-        for x in range(8, 56):
-            shell_positions.append((8, x, y))
-            shell_positions.append((55, x, y))
+        for z in range(8, 56):
+            shell_positions.append((8, y, z))
+            shell_positions.append((55, y, z))
 
     for pos in shell_positions:
         engine.set_voxel(pos[0], pos[1], pos[2], "carbonio", "carrozzeria")

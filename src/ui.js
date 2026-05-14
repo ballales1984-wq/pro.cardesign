@@ -423,8 +423,9 @@ export class UI {
     }
   }
 
-  // Keyboard shortcuts
+// Keyboard shortcuts
   _setupKeyboard() {
+    var self = this;
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         self.voxelEngine.selectedVoxel = null;
