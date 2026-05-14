@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>VoxelCAD — Pro.Cardesign</title>
+  <link rel="stylesheet" href="./styles/main.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Toolbar superiore -->
+    <header id="toolbar">
+      <div class="brand">
+        <span class="logo">◆</span>
+        <h1>VoxelCAD</h1>
+        <span class="version">v0.1.0</span>
+      </div>
+      <div class="tools">
+        <button id="tool-select" class="tool active" title="Seleziona (V)"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNMSAxTDEuNSA3LjVMNi4wOCAyLjVMMTIgN2wtNC41IDYuNWwxLjUgMUwxMCAxMi41TDUuNSAxNEwxMC4wIDE3bC0yLjUtMi41LTQuNS00LjVMNi4wIDguNWwtNC41IDQuNWwyLjUgMi41TDYgMTBsNi41LTUuNVoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=" alt=""/> Seleziona</button>
+        <button id="tool-add" class="tool" title="Aggiungi Voxel (A)"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNOSAydjJoMHYyeiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik03IDB2Mmgydi16IiBmaWxsPSIjZmZmIi8+PC9zdmc+" alt=""/> Aggiungi</button>
+        <button id="tool-remove" class="tool" title="Rimuovi Voxel (R)"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNNCA4aDd2LTEiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOCA3djdoLTJ2LTNIMHYzeiIgcGxhY2VUcmFuc2Zvcm09InJvdGF0ZSgxODApIiBmaWxsPSIjZmZmIi8+PC9zdmc+" alt=""/> Rimuovi</button>
+        <button id="tool-fill" class="tool" title="Riempimento (F)"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNNSAwaDYgNkg1eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==" alt=""/> Fill</button>
+        <!-- Input livello fill -->
+        <div class="fill-input-wrap" title="Livello Y per Fill">
+          <input type="number" id="fill-y-prompt" value="0" min="-20" max="20" step="1" />
+          <label for="fill-y-prompt">Y</label>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="btn-undo" title="Annulla (Ctrl+Z)">↩ Undo</button>
+        <button id="btn-redo" title="Ripristina (Ctrl+Y)">↪ Redo</button>
+        <button id="btn-save" title="Salva progetto">💾 Salva</button>
+        <button id="btn-load" title="Carica progetto">📂 Carica</button>
+        <button id="btn-export" title="Esporta mesh">📦 Esporta</button>
+        <button id="btn-sim" title="Calcola fisica">⚡ Simula</button>
+        <button id="btn-reset-cam" title="Reset camera">🎯 Reset Cam</button>
+        <button id="btn-clear" title="Pulisci tutto">🗑️ Pulisci</button>
+      </div>
+    </header>
+
+    <!-- Pannello laterale -->
+    <aside id="sidebar">
+      <!-- Materiali -->
+      <div class="panel" id="panel-materials">
+        <div class="panel-header" data-toggle="materials">
+          🎨 Materiali <span class="arrow">▼</span>
+        </div>
+        <div class="panel-body" id="materials-list"></div>
+      </div>
+
+      <!-- Moduli -->
+      <div class="panel" id="panel-modules">
+        <div class="panel-header" data-toggle="modules">
+          🧩 Moduli <span class="arrow">▼</span>
+        </div>
+        <div class="panel-body" id="modules-tree"></div>
+        <div class="panel-body" id="modules-actions" style="padding: 6px 8px; border-top: 1px solid var(--border);">
+          <input type="text" id="new-module-name" class="prop-input" placeholder="Nome modulo" style="width: calc(100% - 8px); margin-bottom: 4px;" />
+          <div style="display: flex; gap: 4px;">
+            <button id="btn-add-module" class="btn-primary" style="flex:1; padding: 5px 8px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; color: #fff; background: var(--accent);">+ Aggiungi</button>
+            <button id="btn-remove-module" class="btn-secondary" style="flex:1; padding: 5px 8px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; color: var(--text); background: var(--hover);">− Rimuovi</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Proprietà -->
+      <div class="panel" id="panel-properties">
+        <div class="panel-header" data-toggle="properties">
+          ⚙️ Proprietà <span class="arrow">▼</span>
+        </div>
+        <div class="panel-body" id="properties-panel">
+          <p class="hint">Seleziona un voxel o un modulo</p>
+        </div>
+      </div>
+
+      <!-- Fisica -->
+      <div class="panel" id="panel-physics">
+        <div class="panel-header" data-toggle="physics">
+          ⚡ Fisica <span class="arrow">▼</span>
+        </div>
+        <div class="panel-body" id="physics-panel">
+          <p class="hint">Clicca ⚡ Simula per calcolare</p>
+        </div>
+      </div>
+
+      <!-- Materiali custom -->
+      <div class="panel" id="panel-custom-material">
+        <div class="panel-header" data-toggle="custom-material">
+          ➕ Materiale Custom <span class="arrow">▼</span>
+        </div>
+        <div class="panel-body" id="custom-material-panel" style="padding: 8px;">
+          <input type="text" id="custom-mat-name" class="prop-input" placeholder="Nome (es: plastica)" style="width: 100%; margin-bottom: 4px;" />
+          <input type="number" id="custom-mat-density" class="prop-input" placeholder="Densità (kg/m³)" style="width: 100%; margin-bottom: 4px;" />
+          <input type="number" id="custom-mat-strength" class="prop-input" placeholder="Resistenza (MPa)" style="width: 100%; margin-bottom: 4px;" />
+          <input type="number" id="custom-mat-cost" class="prop-input" placeholder="Costo (€/kg)" style="width: 100%; margin-bottom: 4px;" />
+          <div style="display: flex; gap: 4px;">
+            <button id="btn-add-material" class="btn-primary" style="flex:1; padding: 5px 8px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; color: #fff; background: var(--accent);">+ Aggiungi</button>
+            <button id="btn-remove-material" class="btn-secondary" style="flex:1; padding: 5px 8px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; color: var(--text); background: var(--hover);">− Rimuovi</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Viewport 3D -->
+    <main id="viewport">
+      <canvas id="gl-canvas"></canvas>
+      <div id="viewport-info">
+        <span id="voxel-count">Voxel: 0</span>
+        <span id="fps-counter">FPS: --</span>
+        <span id="tool-hint" style="margin-left: auto;">Strumento: Aggiungi (A)</span>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
