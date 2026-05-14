@@ -14,11 +14,13 @@ export class MeshExporter {
    * Converte la griglia voxel in una geometria Three.js triangolata
    * Usa il metodo "cubes" (6 facce per voxel visibile) o "marching cubes"
    */
-  voxelToGeometry(voxels, voxelSize = 1.0, smooth = false) {
+voxelToGeometry(voxels, voxelSize = 1.0, smooth = false) {
+    // Supporta sia Map (VoxelEngine.voxels) che Array
+    const voxelArray = voxels instanceof Map ? Array.from(voxels.values()) : voxels;
     if (smooth) {
-      return this._marchingCubes(voxels, voxelSize);
+      return this._marchingCubes(voxelArray, voxelSize);
     }
-    return this._simpleCubes(voxels, voxelSize);
+    return this._simpleCubes(voxelArray, voxelSize);
   }
 
   /**
