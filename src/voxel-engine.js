@@ -42,6 +42,7 @@ export class VoxelEngine {
     groundGeo.rotateX(-Math.PI / 2);
     const groundMat = new THREE.MeshBasicMaterial({ visible: false });
     this.groundPlane = new THREE.Mesh(groundGeo, groundMat);
+    this.groundPlane.frustumCulled = false; // always test in raycasting
     this.scene.add(this.groundPlane);
 
     this.raycaster = new THREE.Raycaster();
@@ -210,26 +211,27 @@ export class VoxelEngine {
 
     this.raycaster.setFromCamera(this.pointer, this.camera);
 
-    // 1. Controlla prima i voxel (InstancedMesh)
-    const meshes = Array.from(this.instancedMeshes.values());
-    if (meshes.length > 0) {
-      const intersects = this.raycaster.intersectObjects(meshes, false);
-      if (intersects.length > 0) {
-        const hit = intersects[0];
-        if (hit.instanceId !== undefined) {
-          const materialName = hit.object.material.name;
-          const key = this.instanceToKey.get(materialName)?.[hit.instanceId];
-          if (key) {
-            const parts = key.split(',').map(Number);
-            return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal: hit.face.normal, isGround: false };
-          }
-        }
+     // 1. Controlla prima i voxel (InstancedMesh)
+     const meshes = Array.from(this.instancedMeshes.values());
+     if (meshes.length > 0) {
+       const intersects = this.raycaster.intersectObjects(meshes, false);
+       if (intersects.length > 0) {
+         const hit = intersects[0];
+         if (hit.instanceId !== undefined) {
+           const materialName = hit.object.material.name;
+           const key = this.instanceToKey.get(materialName)?.[hit.instanceId];
+           if (key) {
+             const parts = key.split(',').map(Number);
+             return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal: hit.face.normal, isGround: false };
+           }
+         }
+       }
       }
-    }
 
-    // 2. Se nessun voxel colpito, controlla il ground plane
-    const groundIntersects = this.raycaster.intersectObject(this.groundPlane);
-    if (groundIntersects.length > 0) {
+      // 2. Se nessun voxel colpito, controlla il ground plane
+      // force recursive=false so ground plane is tested even if frustum-culled
+      const groundIntersects = this.raycaster.intersectObject(this.groundPlane, false);
+      if (groundIntersects.length > 0) {
       const p = groundIntersects[0].point;
       return {
         x: Math.round(p.x),
@@ -252,21 +254,21 @@ export class VoxelEngine {
     if (!hit) return;
 
     if (!hit.isGround) {
-      // Colpito un voxel esistente
+      // Voxel hit: always update highlight position
       this.highlight.position.copy(this._worldPos({ x: hit.x, y: hit.y, z: hit.z }));
       this.highlight.visible = true;
 
       if (this.activeTool === 'add') {
         const ghostPos = {
-          x: hit.x + Math.round(hit.faceNormal.x),
-          y: hit.y + Math.round(hit.faceNormal.y),
-          z: hit.z + Math.round(hit.faceNormal.z),
+          x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
+          y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
+          z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
         };
         this.ghost.position.copy(this._worldPos(ghostPos));
         this.ghost.visible = true;
       }
     } else {
-      // Colpito il ground plane
+      // Ground hit: show ghost when adding, otherwise nothing to show
       if (this.activeTool === 'add') {
         const ghostPos = { x: hit.x, y: 0.5, z: hit.z };
         this.ghost.position.copy(this._worldPos(ghostPos));
@@ -282,9 +284,9 @@ export class VoxelEngine {
 
     if (this.activeTool === 'add') {
       const pos = {
-        x: hit.x + Math.round(hit.faceNormal.x),
-        y: hit.y + Math.round(hit.faceNormal.y),
-        z: hit.z + Math.round(hit.faceNormal.z),
+        x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
+        y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
+        z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
       };
       this.addVoxel(pos, this.activeMaterial, this.activeModule);
     } else if (this.activeTool === 'remove') {
