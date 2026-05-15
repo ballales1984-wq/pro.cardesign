@@ -1,11 +1,11 @@
 /**
- * BrickAdapter — Wrapper attorno a VoxelEngine esistente
- * Converte voxel in Brick con dimensioni reali, senza modifiche a voxel-engine.js
+ * BrickAdapter — Wrapper around existing VoxelEngine
+ * Converts voxels to Bricks with real dimensions, without modifying voxel-engine.js
  *
- * Strategia:
- *   Ogni voxel → Brick con size = scale[0..2] (default 1×1×1 mm)
+ * Strategy:
+ *   Each voxel → Brick with size = scale[0..2] (default 1×1×1 mm)
  *   Position = voxel.x,y,z * voxelSize (mm)
- *   Manteniamo backward compatibility con VoxelEngine esistente
+ *   Maintain backward compatibility with existing VoxelEngine
  */
 
 import * as THREE from 'three';
@@ -19,7 +19,7 @@ export class BrickAdapter {
     this.SCALE = 0.01;              // 1mm → 0.01 Three.js units
     this.selectedBrickId = null;
     
-    // Observa cambiamenti voxelEngine per sincronizzare
+    // Observe voxelEngine changes to synchronize
     this._syncFromVoxelEngine();
     
     // Register event listener
@@ -27,7 +27,7 @@ export class BrickAdapter {
     window.addEventListener('voxels-updated', this._boundOnVoxelsUpdated);
   }
 
-  // ── Conversione Voxel → Brick ───────────────────────────────
+  // ── Voxel → Brick Conversion ──────────────────────────────
 
   _voxelToBrick(voxel) {
     const scale = voxel.scale || [1, 1, 1];
@@ -54,12 +54,12 @@ export class BrickAdapter {
   }
 
   _onVoxelsUpdated() {
-    // Incrementale: aggiungi/rimuovi solo i changed
-    // Per ora: rebuild completo (semplice)
+    // Incremental: add/remove only changed
+    // For now: complete rebuild (simple)
     this._syncFromVoxelEngine();
   }
 
-  // ── API Brick ───────────────────────────────────────────────
+  // ── Brick API ─────────────────────────────────────────────
 
   getAll() {
     return Array.from(this.bricks.values());
@@ -87,7 +87,7 @@ export class BrickAdapter {
     return null;
   }
 
-  // ── Creazione Brick ─────────────────────────────────────────
+  // ── Brick Creation ────────────────────────────────────────
 
   createBrick(params) {
     // params: { position: {x,y,z}, size: {x,y,z}, material }
@@ -100,7 +100,7 @@ export class BrickAdapter {
     );
     this.bricks.set(brick.id, brick);
     
-    // Aggiungi anche al VoxelEngine (coordinate rounded)
+    // Also add to VoxelEngine (rounded coordinates)
     const voxelPos = {
       x: Math.round(params.position.x),
       y: Math.round(params.position.y),
@@ -108,12 +108,12 @@ export class BrickAdapter {
     };
     this.engine.addVoxel(voxelPos, brick.material, this.engine.activeModule);
     
-    // Applica scala se size ≠ 1
+    // Apply scale if size ≠ 1
     if (params.size && (params.size.x !== 1 || params.size.y !== 1 || params.size.z !== 1)) {
       const voxel = this.engine.getVoxelAt(voxelPos.x, voxelPos.y, voxelPos.z);
       if (voxel) {
         voxel.scale = [params.size.x, params.size.y, params.size.z];
-        // Aggiorna matrice
+        // Update matrix
         const mesh = this.engine.instancedMeshes.get(voxel.material);
         if (mesh) {
           const key = this.engine._gridKey(voxelPos);
@@ -132,7 +132,7 @@ export class BrickAdapter {
     return brick;
   }
 
-  // ── Scala Brick ─────────────────────────────────────────────
+  // ── Scale Brick ───────────────────────────────────────────
 
   scaleBrick(brickId, newSize) {
     const brick = this.bricks.get(brickId);
@@ -141,7 +141,7 @@ export class BrickAdapter {
     const oldSize = { ...brick.size };
     brick.size = { ...newSize };
     
-    // Aggiorna voxelEngine
+    // Update voxelEngine
     const voxelPos = { 
       x: Math.round(brick.position.x), 
       y: Math.round(brick.position.y), 
@@ -168,7 +168,7 @@ export class BrickAdapter {
     return true;
   }
 
-  // ── Rimuovi Brick ───────────────────────────────────────────
+  // ── Remove Brick ──────────────────────────────────────────
 
   removeBrick(brickId) {
     const brick = this.bricks.get(brickId);
@@ -189,7 +189,7 @@ export class BrickAdapter {
     return true;
   }
 
-  // ── Statistiche ─────────────────────────────────────────────
+  // ── Statistics ────────────────────────────────────────────
 
   getTotalVolume() {
     let total = 0;

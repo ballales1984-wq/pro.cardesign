@@ -1,64 +1,64 @@
 # Test Suite — pro.cardesign
 
-## Esecuzione Rapida
+## Quick Execution
 
 ```bash
-# Tutti i test Python
+# All Python tests
 python -m pytest tests/test_coverage.py -v
 
-# Con coverage report HTML
+# With HTML coverage report
 python -m pytest tests/test_coverage.py --cov=core --cov-report=html
 
-# Solo test JavaScript
+# JavaScript tests only
 node tests/test_coverage.js
 ```
 
-## Struttura Test
+## Test Structure
 
 ```
 tests/
-├── test_coverage.py          # 43 test Python (pytest)
-├── test_coverage.js          # 4 test JavaScript (Node assert)
-├── test_coverage_mocks.js    # Mock moduli per test JS
-├── COVERAGE_REPORT.md        # Report coverage generato
-└── README.md                 # Questo file
+├── test_coverage.py          # 43 Python tests (pytest)
+├── test_coverage.js          # 4 JavaScript tests (Node assert)
+├── test_coverage_mocks.js    # Mock modules for JS tests
+├── COVERAGE_REPORT.md        # Generated coverage report
+└── README.md                 # This file
 ```
 
-## Aggiungere un Test Python
+## Adding a Python Test
 
-1. Crea una classe che estende `unittest.TestCase`
-2. Usa `setUp()` per inizializzare dati comuni
-3. Usa `assertX()` per le verifiche
-4. Esegui: `python -m pytest tests/test_coverage.py -v`
+1. Create a class that extends `unittest.TestCase`
+2. Use `setUp()` to initialize common data
+3. Use `assertX()` for verifications
+4. Run: `python -m pytest tests/test_coverage.py -v`
 
-Esempio:
+Example:
 ```python
-class TestMioModulo(unittest.TestCase):
+class TestMyModule(unittest.TestCase):
     def setUp(self):
         self.engine = VoxelEngine(16, 16, 16)
     
-    def test_mia_funzione(self):
+    def test_my_function(self):
         result = self.engine.calculate_mass()
         self.assertGreater(result, 0)
 ```
 
-## Aggiungere un Test JavaScript
+## Adding a JavaScript Test
 
-1. Aggiungi una funzione async `testMiaFeature()` in `test_coverage.js`
-2. Usa `assert.strictEqual()` o `assert.ok()`
-3. Aggiungi il blocco try/catch nel `runAll()`
+1. Add an async function `testMyFeature()` in `test_coverage.js`
+2. Use `assert.strictEqual()` or `assert.ok()`
+3. Add the try/catch block in `runAll()`
 
 ## Coverage Targets
 
-| Modulo | Target | Attuale |
+| Module | Target | Current |
 |--------|--------|---------|
 | `core/brick.py` | 95% | 100% ✅ |
 | `core/component.py` | 80% | 86% ✅ |
 | `src/voxel-engine.js` | 60% | — |
-| `src/material-system.js` | 80% | strutturale ✅ |
+| `src/material-system.js` | 80% | structural ✅ |
 
-## Note
+## Notes
 
-- I test Python usano `pytest` + `pytest-cop` (installato di default)
-- I test JS usano Node.js nativo (no dipendenze esterne per test semplici)
-- Mock globali in `tests/test_coverage_mocks.js` per isolare moduli
+- Python tests use `pytest` + `pytest-cop` (installed by default)
+- JS tests use Node.js native (no external dependencies for simple tests)
+- Global mocks in `tests/test_coverage_mocks.js` to isolate modules

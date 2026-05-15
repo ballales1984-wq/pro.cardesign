@@ -1,5 +1,5 @@
 """
-Brick System - Dati geometrici con misure reali in millimetri
+Brick System - Geometric data with real measurements in millimeters
 """
 from dataclasses import dataclass, field
 from typing import Optional
@@ -7,26 +7,26 @@ import numpy as np
 
 @dataclass
 class Brick:
-    """Un brick con dimensioni reali in mm"""
+    """A brick with real dimensions in mm"""
     id: int
     name: str = "Brick"
     
-    # Posizione dell'angolo inferiore (min corner) in mm
+    # Position of the lower corner (min corner) in mm
     position: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
     
-    # Dimensioni in mm [width(X), height(Y), depth(Z)]
+    # Dimensions in mm [width(X), height(Y), depth(Z)]
     size: np.ndarray = field(default_factory=lambda: np.array([10.0, 10.0, 10.0]))
     
     material: str = "steel"
     module: Optional[str] = None
     
-    # Metadati
+    # Metadata
     is_visible: bool = True
     is_selected: bool = False
 
     @property
     def center(self) -> np.ndarray:
-        """Centro del brick in mm"""
+        """Center of the brick in mm"""
         return self.position + self.size / 2.0
 
     @property
@@ -36,15 +36,15 @@ class Brick:
 
     @property
     def max_corner(self) -> np.ndarray:
-        """Angolo superiore opposto"""
+        """Opposite upper corner"""
         return self.position + self.size
 
     def contains_point(self, point: np.ndarray) -> bool:
-        """Controlla se un punto è dentro il brick"""
+        """Check if a point is inside the brick"""
         return np.all(point >= self.position) and np.all(point <= self.max_corner)
 
     def overlaps(self, other: 'Brick') -> bool:
-        """Controlla se si sovrappone con un altro brick (tocco esatto ≠ sovrapposizione)"""
+        """Check if it overlaps with another brick (exact touch ≠ overlap)"""
         return not (
             np.any(self.max_corner <= other.position) or 
             np.any(other.max_corner <= self.position)
@@ -53,7 +53,7 @@ class Brick:
 
 def create_brick(id: int, name: str, size_mm: list, position_mm: list = None, 
                  material: str = "steel", module: str = None) -> Brick:
-    """Crea un brick con misure reali in mm"""
+    """Create a brick with real measurements in mm"""
     if position_mm is None:
         position_mm = [0.0, 0.0, 0.0]
     
@@ -69,14 +69,14 @@ def create_brick(id: int, name: str, size_mm: list, position_mm: list = None,
 
 def create_cube(id: int, name: str, side_mm: float, position_mm: list = None,
                 material: str = "steel") -> Brick:
-    """Crea un cubo con lato specificato in mm"""
+    """Create a cube with specified side in mm"""
     return create_brick(id, name, [side_mm, side_mm, side_mm], position_mm, material)
 
 
 def create_bar(id: int, name: str, length_mm: float, axis: str = 'x', 
                thickness_mm: float = 20.0, position_mm: list = None,
                material: str = "steel") -> Brick:
-    """Crea una barra tipo Lego"""
+    """Create a Lego-type bar"""
     if axis == 'x':
         size = [length_mm, thickness_mm, thickness_mm]
     elif axis == 'y':
@@ -88,13 +88,13 @@ def create_bar(id: int, name: str, length_mm: float, axis: str = 'x',
 
 def create_wheel_tire(id: int, name: str, radius_mm: float = 270, 
                       width_mm: float = 250, position_mm: list = None) -> Brick:
-    """Approssimazione brick per pneumatico"""
+    """Brick approximation for tire"""
     if position_mm is None:
         position_mm = [0, radius_mm, 0]
     return create_brick(id, name, [width_mm, radius_mm*2, radius_mm*2], position_mm, "rubber")
 
 
-# ID counter per nuovi brick
+# ID counter for new bricks
 _brick_id_counter = 0
 
 def next_brick_id() -> int:

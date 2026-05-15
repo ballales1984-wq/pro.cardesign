@@ -1,5 +1,5 @@
 /**
- * STL Importer — Carica file STL/OBJ scansionati e verifica adattamento
+ * STL Importer — Load scanned STL/OBJ files and verify fit
  */
 
 import * as THREE from 'three';
@@ -17,7 +17,7 @@ export class STLImporter {
   }
 
   parseASCII_STL(text) {
-    // Parser STL ASCII semplice
+    // Simple ASCII STL parser
     const vertices = [];
     const normals = [];
 
@@ -71,19 +71,19 @@ export class STLImporter {
     } else if (ext === 'obj') {
       return this.importOBJ(file);
     } else {
-      throw new Error('Formato non supportato: ' + ext);
+      throw new Error('Unsupported format: ' + ext);
     }
   }
 
   async importOBJ(file) {
-    // Per OBJ usiamo un loader esterno
-    // Per ora semplice implementazione solo per STL
+    // For OBJ we use an external loader
+    // For now simple implementation only for STL
     const text = await file.text();
-    return this.parseASCII_STL(text); // fallback temporaneo
+    return this.parseASCII_STL(text); // temporary fallback
   }
 
   fitToScene(geometry, targetSize = 500) {
-    // Ridimensiona geometry per adattarsi a targetSize (mm)
+    // Resize geometry to fit targetSize (mm)
     geometry.computeBoundingBox();
     const bbox = geometry.boundingBox;
     const size = new THREE.Vector3();
@@ -94,7 +94,7 @@ export class STLImporter {
     const scaled = geometry.clone();
     scaled.scale(scaleFactor, scaleFactor, scaleFactor);
     
-    // Centra
+    // Center
     scaled.center();
     scaled.translate(0, 0, 0);
     
@@ -120,7 +120,7 @@ export class QualityAnalyzer {
       center.z += positions.getZ(i);
     }
     center.divideScalar(vertexCount);
-
+    
     // Distance from center for each vertex
     const distances = [];
     for (let i = 0; i < vertexCount; i++) {
@@ -131,17 +131,17 @@ export class QualityAnalyzer {
       );
       distances.push(v.distanceTo(center));
     }
-
+    
     const meanRadius = distances.reduce((a, b) => a + b, 0) / vertexCount;
     const maxRadius = Math.max(...distances);
     const minRadius = Math.min(...distances);
     const ovality = maxRadius - minRadius;
-
+    
     // Deviation from perfect circle (simplified)
     const deviations = distances.map(d => Math.abs(d - meanRadius));
     const maxDeviation = Math.max(...deviations);
     const avgDeviation = deviations.reduce((a, b) => a + b, 0) / vertexCount;
-
+    
     return {
       vertexCount,
       centroid: { x: center.x.toFixed(2), y: center.y.toFixed(2), z: center.z.toFixed(2) },

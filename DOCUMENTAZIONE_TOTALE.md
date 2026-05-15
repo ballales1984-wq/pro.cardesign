@@ -1,58 +1,58 @@
-# VoxelCAD — Documentazione Totale
+# VoxelCAD — Total Documentation
 
-**Versione:** 1.0  
-**Data:** 2026-05-15  
+**Version:** 1.0  
+**Date:** 2026-05-15  
 **Repository:** github.com/ballales1984-wq/pro.cardesign  
 
 ---
 
-## Indice
+## Index
 
-1. [Panoramica del Progetto](#1-panoramica-del-progetto)
-2. [ Filosofia e Concetti Chiave](#2-filosofia-e-concetti-chiave)
-3. [Architettura del Sistema](#3-architettura-del-sistema)
-4. [Stack Software](#4-stack-software)
-5. [Guida Sviluppatore](#5-guida-sviluppatore)
+1. [Project Overview](#1-project-overview)
+2. [Philosophy and Key Concepts](#2-philosophy-and-key-concepts)
+3. [System Architecture](#3-system-architecture)
+4. [Software Stack](#4-software-stack)
+5. [Developer Guide](#5-developer-guide)
 6. [API Reference](#6-api-reference)
-7. [Guida Utente](#7-guida-utente)
-8. [Piano di Sviluppo](#8-piano-di-sviluppo)
+7. [User Guide](#7-user-guide)
+8. [Development Plan](#8-development-plan)
 
 ---
 
-## 1. Panoramica del Progetto
+## 1. Project Overview
 
-**VoxelCAD** è un software di modellazione 3D ibrido che combina:
+**VoxelCAD** is a hybrid 3D modeling software that combines:
 
-- **Modellazione voxel**: editing diretto di volumi 3D
-- **Proprietà fisiche**: ogni voxel ha materiale, densità, temperatura, attrito, rigidezza
-- **Geometria procedurale**: regole invece di geometria salvata
-- **AI-assisted** (pianificato): riconoscimento immagini → regole procedurali
-- **Esportazione industriale**: OBJ, STL, glTF
+- **Voxel modeling**: Direct editing of 3D volumes
+- **Physical properties**: Each voxel has material, density, temperature, friction, rigidity
+- **Procedural geometry**: Rules instead of saved geometry
+- **AI-assisted** (planned): Image recognition → procedural rules
+- **Industrial export**: OBJ, STL, glTF
 
-### Cosa fa che non fanno gli altri CAD
+### What it does that other CADs don't
 
-| Funzionalità | VoxelCAD | CAD tradizionali | Editor voxel semplici |
-|---|---|---|---|
-| Proprietà fisiche per voxel | ✅ | ❌ (solo superficie) | ❌ |
-| Gerarchia moduli funzionali | ✅ | ✅ (feature tree) | ❌ |
-| Regole procedurali | 🔄 in sviluppo | ✅ | ❌ |
-| AI da immagini | ⏳ pianificato | ❌ | ❌ |
-| Export OBJ/STL | ✅ | ✅ | ✅ |
+| Feature | VoxelCAD | Traditional CADs | Simple voxel editors |
+|---------|----------|------------------|----------------------|
+| Physical properties per voxel | ✅ | ❌ (only surface) | ❌ |
+| Functional module hierarchy | ✅ | ✅ (feature tree) | ❌ |
+| Procedural rules | 🔄 in development | ✅ | ❌ |
+| AI from images | ⏳ planned | ❌ | ❌ |
+| OBJ/STL export | ✅ | ✅ | ✅ |
 
 ---
 
-## 2. Filosofia e Concetti Chiave
+## 2. Philosophy and Key Concepts
 
-### 2.1 Voxel intelligente
+### 2.1 Intelligent Voxel
 
-Ogni voxel non è solo un colore: è un **campione di materia** con proprietà fisiche:
+Each voxel is not just a color: it's a **material sample** with physical properties:
 
 ```javascript
 {
-  x: 0, y: 0, z: 0,      // coordinate griglia
-  material: 'steel',      // nome del materiale
-  moduleId: 3,            // appartiene al modulo "Telaio"
-  // proprietà derivate dal materiale:
+  x: 0, y: 0, z: 0,      // grid coordinates
+  material: 'steel',      // material name
+  moduleId: 3,            // belongs to the "Frame" module
+  // material-derived properties:
   // density = 7850 kg/m³
   // youngsModulus = 210 GPa
   // thermalConductivity = 50 W/(m·K)
@@ -60,217 +60,217 @@ Ogni voxel non è solo un colore: è un **campione di materia** con proprietà f
 }
 ```
 
-### 2.2 Materiali come "ricetta" della materia
+### 2.2 Materials as "recipes" of matter
 
-Il sistema non salva materiali completi, ma **parametri** che possono essere variati:
+The system doesn't save complete materials, but **parameters** that can be varied:
 
 ```
-Materiale = {
-  colore,           → rendering
-  densità,          → massa, inerzia
-  moduloYoung,      → rigidezza, deformazione
-  PoissonRatio,     → comportamento compressione
-  conducibilità termica, → simulazione termica
-  caloreSpecifico,  → accumulo energia termica
-  puntoFusione,     → limiti operativi
-  rugosità,         → attrito superficiale
-  costoPerKg,       → stima economica
+Material = {
+  color,           → rendering
+  density,         → mass, inertia
+  youngModulus,    → rigidity, deformation
+  poissonRatio,    → compression behavior
+  thermalConductivity, → thermal simulation
+  specificHeat,    → thermal energy accumulation
+  meltingPoint,    → operational limits
+  roughness,       → surface friction
+  costPerKg,       → economic estimate
 }
 ```
 
-### 2.3 Moduli funzionali (Scene Graph)
+### 2.3 Functional Modules (Scene Graph)
 
-I voxel sono organizzati in una **gerarchia di moduli** che corrisponde a parti funzionali reali:
-
-```
-Veicolo
- ├── Telaio
- │   ├── Longherone_anteriore
- │   └── Longherone_posteriore
- ├── Carrozzeria
- │   ├── Cofano
- │   ├── Parafango_FL
- │   └── Portiera_sx
- ├── Ruota_FL [modulo]
- │   ├── Cerchio
- │   ├── Pneumatico
- │   └── Disco_freno
- └── Motore
-     ├── Blocco_motore
-     ├── Testata
-     └── Albero_a_camme
-```
-
-Ogni modulo ha:
-- VoxelKeys: lista di voxel che gli appartengono
-- Proprietà: tolleranza, peso target, rigidezza minima, stress massimo
-- Metadati: icona, colore, visibilità, blocco editing
-
-### 2.4 Firma fisica dell'oggetto
-
-L'oggetto finale non è la somma dei voxel: è la **firma emergente**:
+Voxels are organized in a **module hierarchy** corresponding to real functional parts:
 
 ```
-Firma fisica = funzione delle proprietà locali → comportamento globale
+Vehicle
+  ├── Frame
+  │   ├── Front_Longeron
+  │   └── Rear_Longeron
+  ├── Bodywork
+  │   ├── Hood
+  │   ├── Front_Left_Fender
+  │   └── Left_Door
+  ├── Front_Left_Wheel [module]
+  │   ├── Rim
+  │   ├── Tire
+  │   └── Brake_Disc
+  └── Engine
+      ├── Engine_Block
+      ├── Cylinder_Head
+      └── Camshaft
+```
 
-Input:     { voxel_i.material, voxel_i.posizione, voxel_i.temperatura }
+Each module has:
+- VoxelKeys: list of voxels belonging to it
+- Properties: tolerance, target weight, minimum rigidity, maximum stress
+- Metadata: icon, color, visibility, edit lock
+
+### 2.4 Object's Physical Signature
+
+The final object is not the sum of voxels: it's the **emergent signature**:
+
+```
+Physical Signature = function of local properties → global behavior
+
+Input:     { voxel_i.material, voxel_i.position, voxel_i.temperature }
            ↓
-Calcolo:   { massa, CoM, inerzia, distribuzione materiali }
-           { mappa di stress, mappa di temperatura }
-           { superficie esposta, coefficiente aerodinamico }
-Output:    Firma fisica completa dell'oggetto
+Calculation: { mass, CoM, inertia, material distribution }
+             { stress map, temperature map }
+             { exposed surface, aerodynamic coefficient }
+Output:    Complete physical signature of the object
 ```
 
-### 2.5 Il ruolo delle sfere nella rappresentazione della materia
+### 2.5 Role of Spheres in Matter Representation
 
-La materia reale non è una griglia di cubi perfetti. È un insieme di particelle con spazi vuoti:
-
-```
-Voxel (cubo)          Rappresentazione semplificata
-   ┌───┐                  🎱🎱🎱 ← sfere
-   │   │
-   └───┘
-
-Raggio sfera = voxelSize × fillCoefficient
-
-fillCoefficient = 0.5  →  Porosità ~50% (schiuma)
-fillCoefficient = 0.707→  Densità standard (sfere si toccano su spigolo)
-fillCoefficient = 1.0  →  Materiale completamente compatto
-fillCoefficient = 0.3  →  Aerogel / materiali rarefatti
-```
-
-Le sfere sono:
-- **Default di esportazione** per simulazioni CFD/FEM esterne
-- **Base per le simulazioni** (sfere = particelle, spazi vuoti = vuoti o aria)
-
-### 2.6 Tetraedri per simulazioni FEM
-
-Ogni voxel/cella viene suddiviso in tetraedri per le simulazioni di stress:
+Real matter is not a perfect cube grid. It's a collection of particles with empty spaces:
 
 ```
-Voxel 1×1×1 (8 nodi)
-       4──────────7
-      /|         /|
-     0──────────3 |
-    / |        /  |
-   5──────────6   |
-   |  |       |   |
-   |  2───────┘   |
-   | /               |
-   |/               |
-   1───────────────┘
+Voxel (cube)          Simplified representation
+    ┌───┐                  🎱🎱🎱 ← spheres
+    │   │
+    └───┘
 
-Suddivisione MacNeal:
-  Tetraedro A: nodi 0,1,2,4
-  Tetraedro B: nodi 0,2,3,4
-  Tetraedro C: nodi 0,3,7,4
-  Tetraedro D: nodi 0,7,6,4
-  Tetraedro E: nodi 0,6,5,4
+Sphere radius = voxelSize × fillCoefficient
+
+fillCoefficient = 0.5  →  Porosity ~50% (foam)
+fillCoefficient = 0.707→  Standard density (spheres touch at edges)
+fillCoefficient = 1.0  →  Fully compact material
+fillCoefficient = 0.3  →  Aerogel / rarefied materials
 ```
 
-Ogni tetraedro eredita le proprietà del materiale del voxel e calcola:
-- **Matrice di rigidezza locale K** (dipende da E, ν e geometria)
-- **Tensore di tensione σ** (dalle forze applicate)
-- **Deformazione ε** (spostamenti nodi)
+Spheres are:
+- **Default export** for external CFD/FEM simulations
+- **Base for simulations** (spheres = particles, empty spaces = voids or air)
+
+### 2.6 Tetrahedra for FEM Simulations
+
+Each voxel/cell is subdivided into tetrahedra for stress simulations:
+
+```
+Voxel 1×1×1 (8 nodes)
+        4──────────7
+       /|         /|
+      0──────────3 |
+     / |        /  |
+    5──────────6   |
+    |  |       |   |
+    |  2───────┘   |
+    | /               |
+    |/               |
+    1───────────────┘
+
+MacNeal subdivision:
+  Tetrahedron A: nodes 0,1,2,4
+  Tetrahedron B: nodes 0,2,3,4
+  Tetrahedron C: nodes 0,3,7,4
+  Tetrahedron D: nodes 0,7,6,4
+  Tetrahedron E: nodes 0,6,5,4
+```
+
+Each tetrahedron inherits the material properties of the voxel and calculates:
+- **Local stiffness matrix K** (depends on E, ν and geometry)
+- **Stress tensor σ** (from applied forces)
+- **Strain ε** (node displacements)
 
 ---
 
-## 3. Architettura del Sistema
+## 3. System Architecture
 
-### 3.1 Struttura cartelle progetto
+### 3.1 Project Folder Structure
 
 ```
 pro.cardesign/
-├── src/                          # Codice sorgente applicazione
-│   ├── main.js                   # Entry point (init scena, camera, UI)
-│   ├── voxel-engine.js           # Motore voxel centrale
-│   ├── material-system.js        # Database materiali
-│   ├── module-system.js          # Gerarchia moduli
-│   ├── physics-calc.js           # Calcoli fisici
-│   ├── mesh-exporter.js          # Export OBJ/STL/glTF
-│   ├── ui.js                     # Pannelli UI e toolbar
-│   ├── procedural-engine.js      # [FUTURO] Regole procedurali
-│   ├── sphere-system.js          # [FUTURO] Rappresentazione sferica
-│   ├── tetrahedral-mesh.js       # [FUTURO] Suddivisione tetraedrica
-│   ├── stress-analysis.js        # [FUTURO] FEM / analisi stress
-│   └── thermal-sim.js            # [FUTURO] Simulazione termica
-├── dist/                         # Build produzione
-├── public/                       # Asset statici
-├── styles/                       # Fogli CSS
-├── node_modules/                 # Dipendenze
+├── src/                          # Application source code
+│   ├── main.js                   # Entry point (init scene, camera, UI)
+│   ├── voxel-engine.js           # Central voxel engine
+│   ├── material-system.js        # Materials database
+│   ├── module-system.js          # Module hierarchy
+│   ├── physics-calc.js           # Physical calculations
+│   ├── mesh-exporter.js          # OBJ/STL/glTF export
+│   ├── ui.js                     # UI panels and toolbar
+│   ├── procedural-engine.js      # [FUTURE] Procedural rules
+│   ├── sphere-system.js          # [FUTURE] Spherical representation
+│   ├── tetrahedral-mesh.js       # [FUTURE] Tetrahedral subdivision
+│   ├── stress-analysis.js        # [FUTURE] FEM / stress analysis
+│   └── thermal-sim.js            # [FUTURE] Thermal simulation
+├── dist/                         # Production build
+├── public/                       # Static assets
+├── styles/                       # CSS stylesheets
+├── node_modules/                 # Dependencies
 ├── index.html                    # Entry HTML
-├── main.js (root)                # Processo principale Electron
-├── vite.config.js                # Configurazione Vite
-├── package.json                  # Metadati progetto e dipendenze
-├── DEVELOPMENT_PLAN.md           # Piano di sviluppo (stato attuale)
-├── PIANO_SVILUPPO_COMPLETO.md    # Piano completo (questo file)
-├── DOCUMENTAZIONE_TOTALE.md      # Questo file
-└── ARCHITETTURA_VOXEL_PROCEDURALE_AI.md  # Architettura generale AI
+├── main.js (root)                # Main Electron process
+├── vite.config.js                # Vite configuration
+├── package.json                  # Project metadata and dependencies
+├── DEVELOPMENT_PLAN.md           # Development plan (current state)
+├── PIANO_SVILUPPO_COMPLETO.md    # Complete plan (this file)
+├── DOCUMENTAZIONE_TOTALE.md      # This file
+└── ARCHITETTURA_VOXEL_PROCEDURALE_AI.md  # General AI architecture
 ```
 
-### 3.2 Dipendenze
+### 3.2 Dependencies
 
 ```
 pro.cardesign/
-├── three@^0.167.0              # Engine 3D
+├── three@^0.167.0              # 3D Engine
 ├── vite@^5.4.0                 # Build tool
-├── concurrently@^8.0.0          # Avvia Vite + Electron insieme
-├── wait-on@^7.2.0              # Attende che Vite sia pronto
-└── electron@^42.1.0            # Desktop wrapper (volontario)
+├── concurrently@^8.0.0          # Start Vite + Electron together
+├── wait-on@^7.2.0              # Wait for Vite to be ready
+└── electron@^42.1.0            # Desktop wrapper (optional)
 ```
 
 ---
 
-## 4. Stack Software
+## 4. Software Stack
 
-### 4.1 Stack attuale
+### 4.1 Current Stack
 
-| Layer | Libreria | Versione | Ruolo |
-|---|---|---|---|
-| 3D Engine | Three.js | r167 | Rendering WebGL, scene graph, geometrie |
+| Layer | Library | Version | Role |
+|-------|---------|---------|------|
+| 3D Engine | Three.js | r167 | WebGL rendering, scene graph, geometries |
 | Build | Vite | 5.x | HMR, bundle, dev server |
-| Bundle output | ES Modules | — | Import in browser supportati nativamente |
-| Export mesh | Custom writer | — | OBJ ASCII, STL binario/ASCII |
+| Bundle output | ES Modules | — | Native browser-supported imports |
+| Export mesh | Custom writer | — | OBJ ASCII, binary/ASCII STL |
 
-### 4.2 Stack pianificato
+### 4.2 Planned Stack
 
-| Layer | Libreria | Motivo scelta |
-|---|---|---|
-| AI Vision | PyTorch + ONNX.js | Depth estimation, segmentazione, VLM |
-| Segmentazione | SAM (Meta) | Riconoscimento oggetti senza training |
-| Depth | MiDaS / ZoeDepth | Depth da singola immagine |
-| Mesh processing | Open3D / Trimesh | Processing mesh + voxel grid |
-| FEM / Physics | Custom + Numeric.js | Stress analysis termica/strutturale |
-| GPU Compute | WebGPU shaders | Voxel update, marching cubes, simulazioni |
-| Rendering avanzato | Three.js + Nanite-like | LOD adattivo, istanze GPU |
+| Layer | Library | Reason for choice |
+|-------|---------|-------------------|
+| AI Vision | PyTorch + ONNX.js | Depth estimation, segmentation, VLM |
+| Segmentation | SAM (Meta) | Object recognition without training |
+| Depth | MiDaS / ZoeDepth | Depth from single image |
+| Mesh processing | Open3D / Trimesh | Mesh + voxel grid processing |
+| FEM / Physics | Custom + Numeric.js | Thermal/structural stress analysis |
+| GPU Compute | WebGPU shaders | Voxel update, marching cubes, simulations |
+| Advanced Rendering | Three.js + Nanite-like | Adaptive LOD, GPU instances |
 
 ---
 
-## 5. Guida Sviluppatore
+## 5. Developer Guide
 
-### 5.1 Setup ambiente
+### 5.1 Environment Setup
 
 ```powershell
-# Prerequisiti
-node --version  # v18+ raccomandato (v24 OK)
+# Prerequisites
+node --version  # v18+ recommended (v24 OK)
 npm --version
 
-# Installazione dipendenze
+# Install dependencies
 npm install
 
-# Avvio sviluppo (solo frontend Vite, funziona sempre)
+# Start development (frontend Vite only, always works)
 npm run dev
 # → http://localhost:5176
 
-# Build produzione
+# Production build
 npm run build
 # → dist/index.html + dist/assets/
 
-# Solo Vite (senza Electron)
+# Vite only (without Electron)
 npx vite --port 5176 --strictPort
 ```
 
-### 5.2 Struttura di un nuovo modulo
+### 5.2 Structure of a New Module
 
 ```javascript
 // src/nuovo-modulo.js
@@ -280,88 +280,88 @@ export class NuovoModulo {
     this.dependency2 = dependency2;
   }
 
-  // Metodo principale
+  // Main method
   doSomething(param) {
     // ...
   }
 }
 
-// In src/main.js, importa e istanzia:
+// In src/main.js, import and instantiate:
 import { NuovoModulo } from './nuovo-modulo.js';
 const nuovo = new NuovoModulo(engine, materialDB);
 ```
 
-### 5.3 Aggiungere un materiale
+### 5.3 Adding a Material
 
-In `src/material-system.js`, nella `_defaults()`:
+In `src/material-system.js`, in the `_defaults()`:
 
 ```javascript
 {
   name: 'mio_materiale',
-  label: 'Mio Materiale',
+  label: 'My Material',
   color: 0xFF5733,
   density: 4500,                // kg/m³
-  youngsModulus: 50e9,          // Pa (modulo di elasticità)
-  poissonRatio: 0.3,            // senza unità
+  youngsModulus: 50e9,          // Pa (elastic modulus)
+  poissonRatio: 0.3,            // dimensionless
   tensileStrength: 250e6,       // Pa
   thermalConductivity: 100,     // W/(m·K)
   specificHeat: 500,            // J/(kg·K)
   meltingPoint: 1200,           // °C
   costPerKg: 4.5,               // €/kg
   recyclable: true,
-  roughness: 0.4,               // 0 = specchiato, 1 = ruvido
-  metalness: 0.8,               // 0 = dielettrico, 1 = metallico
+  roughness: 0.4,               // 0 = mirror-like, 1 = rough
+  metalness: 0.8,               // 0 = dielectric, 1 = metallic
 }
 ```
 
-### 5.4 Aggiungere una proprietà fisica al voxel
+### 5.4 Adding a Physical Property to Voxel
 
-Modificare `src/voxel-engine.js` nel costruttore `VoxelEngine` e in `addVoxel()`:
+Modify `src/voxel-engine.js` in the `VoxelEngine` constructor and `addVoxel()`:
 
 ```javascript
-// Nel costruttore, quando crei il nuovo voxel data:
+// In the constructor, when creating new voxel data:
 const voxelData = {
   x, y, z,
   material: this.activeMaterial,
   moduleId: this.activeModule?.id || null,
-  densita: mat.density,        // ← nuova proprietà
-  temperatura: 25,              // ← nuova proprietà (°C)
-  stress: 0,                    // ← da simulazione
+  density: mat.density,        // ← new property
+  temperature: 25,              // ← new property (°C)
+  stress: 0,                    // ← from simulation
 };
 
-// Salvalo nella griglia:
+// Save it in the grid:
 this.voxels.set(key, voxelData);
 ```
 
-### 5.5 Debugging raycasting
+### 5.5 Raycasting Debugging
 
-Il raycaster usa `Raycaster.intersectObject()` con il criterio "prima i voxel, poi ground plane":
+The raycaster uses `Raycaster.intersectObject()` with the criterion "first voxels, then ground plane":
 
 ```
-Ray (da camera verso mouse)
+Ray (from camera to mouse)
     ↓
-Intersect voxel InstancedMesh → hit.instanceId → voxelKey → coordinate XYZ
+Intersect voxel InstancedMesh → hit.instanceId → voxelKey → XYZ coordinates
     ↓
-Se nessun voxel → Intersect ground plane → coordinate XZ su Y=0
+If no voxel → Intersect ground plane → XZ coordinates on Y=0
 ```
 
-Per debuggare: apri la console browser (F12) e scrivi:
+To debug: open browser console (F12) and type:
 ```javascript
-// Mostra tutti i voxel in scena
+// Show all voxels in scene
 window.voxelEngine.voxels.forEach((v, k) => console.log(k, v));
 
-// Forza aggiungi voxel a (0,0,0)
+// Force add voxel at (0,0,0)
 window.voxelEngine.addVoxel({x:0,y:0,z:0}, 'steel', null);
 ```
 
-### 5.6 Esportazione mesh
+### 5.6 Mesh Export
 
 ```javascript
-// In console browser:
+// In browser console:
 const exporter = window.voxelEngine.meshExporter;
 const geometry = exporter.voxelToGeometry(window.voxelEngine.voxels, 1.0, false);
 const objString = exporter.exportOBJ(geometry);
-// Scarica il file
+// Download file
 const blob = new Blob([objString], {type: 'text/plain'});
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
@@ -375,26 +375,26 @@ a.href = url; a.download = 'mesh.obj'; a.click();
 ### `VoxelEngine` (`src/voxel-engine.js`)
 
 ```javascript
-// Costruttore
+// Constructor
 new VoxelEngine(scene, materialDB, moduleSystem, camera, renderer, controls)
 
-// Lettura
+// Reading
 getVoxelAt(x, y, z)        → {x, y, z, material, moduleId} | null
 getAllVoxels()              → Array<voxelData>
 getVoxelCount()             → number
 getSelectedVoxel()          → {x, y, z} | null
 
-// Scrittura
+// Writing
 addVoxel(pos, materialName, moduleId) → void
 removeVoxel(x, y, z)                 → void
 selectVoxel(x, y, z)                → void
 clearAll()                           → void
 
-// Strumenti
+// Tools
 setTool('add' | 'remove' | 'select' | 'fill')
 setMaterial(name)
 
-// Salvataggio / caricamento
+// Saving / Loading
 toJSON()  → object
 fromJSON(data) → void
 
@@ -433,9 +433,9 @@ getVoxelsForModule(id, engine) → Array<voxelData>
 assignVoxelToModule(key, moduleId) → boolean
 unassignVoxel(key, moduleId)   → boolean
 
-getTree()    → albero gerarchico completo (root = Veicolo)
-toJSON()     → oggetto serializzabile
-fromJSON(data) → ricostruisce da oggetto
+getTree()    → complete hierarchical tree (root = Vehicle)
+toJSON()     → serializable object
+fromJSON(data) → reconstructs from object
 ```
 
 ### `PhysicsCalc` (`src/physics-calc.js`)
@@ -455,7 +455,7 @@ calculateAllVoxels(voxels)     → {
 calculateModule(moduleId, engine) → { ..., moduleName }
 calculateVehicle(engine)         → { ... }
 
-// Utility statiche
+// Static utilities
 PhysicsCalc.densityFromMassVolume(mass, volume) → number
 PhysicsCalc.massFromDensityVolume(density, volume) → number
 PhysicsCalc.volumeFromMassDensity(mass, density) → number
@@ -475,140 +475,140 @@ thermalAnalysis(voxels, ambientTemp, heatSourceTemp) → {
 new MeshExporter()
 
 voxelToGeometry(voxels, voxelSize, smooth)  → THREE.BufferGeometry
-_exportOBJ(geometry, voxels, voxelSize)       → string (formato OBJ ASCII)
-_exportSTLASCII(geometry)                     → string (formato STL ASCII)
-_exportSTLBinary(geometry)                    → Blob (formato STL binario)
+_exportOBJ(geometry, voxels, voxelSize)       → string (OBJ ASCII format)
+_exportSTLASCII(geometry)                     → string (STL ASCII format)
+_exportSTLBinary(geometry)                    → Blob (binary STL format)
 ```
 
-### `ProceduralEngine` — API prevista (Fase 4)
+### `ProceduralEngine` — Planned API (Phase 4)
 
 ```javascript
-// src/procedural-engine.js [FUTURO]
+// src/procedural-engine.js [FUTURE]
 
 new ProceduralEngine(voxelEngine)
 
-// Registra una regola procedurale
+// Register a procedural rule
 registerRule(name, ruleObject) → void
 
-// Esegui una regola → ritorna i voxel generati
+// Execute a rule → returns generated voxels
 execute(ruleName, params) → Array<voxelData>
 
-// Regole primitiva
-primitives.LINEA({ lunghezza, asse: 'x'|'y'|'z', offset })
+// Primitive rules
+primitives.LINEA({ length, axis: 'x'|'y'|'z', offset })
 primitives.CUBO({ x, y, z, width, height, depth })
-primitives.ESTRUSIONE({ profilo, altezza })
-primitives.SIMMETRIA({ asse, assi })
-primitives.RIVOLUZIONE({ profilo, raggi })
+primitives.ESTRUSIONE({ profile, height })
+primitives.SIMMETRIA({ axis, axes })
+primitives.RIVOLUZIONE({ profile, radii })
 ```
 
 ---
 
-## 7. Guida Utente
+## 7. User Guide
 
-### 7.1 Avvio
+### 7.1 Startup
 
 ```powershell
-# Metodo 1: Vite nel browser (sempre funziona)
+# Method 1: Vite in browser (always works)
 npm run dev
-# → Apri http://localhost:5176 nel browser
+# → Open http://localhost:5176 in browser
 
-# Metodo 2: Electron desktop
-# Attualmente richiede fix Electron su Windows — vedi Problemi Noti
+# Method 2: Electron desktop
+# Currently requires Electron fix on Windows — see Known Issues
 npm start
 ```
 
-### 7.2 Controlli base
+### 7.2 Basic Controls
 
-| Azione | Controllo |
-|---|---|
-| Ruotare camera | Tasto sinistro mouse + trascina |
-| Zoom | Rotella mouse |
-| Pan camera | Tasto destro mouse + trascina |
-| Aggiungi voxel | Tasto sinistro su voxel esistente (tool A) |
-| Rimuovi voxel | Tasto destro su voxel (tool R) |
-| Seleziona voxel | Click sinistro (tool V) |
-| Fill livello | Click sinistro su una faccia (tool F) |
+| Action | Control |
+|--------|---------|
+| Rotate camera | Left mouse button + drag |
+| Zoom | Mouse wheel |
+| Pan camera | Right mouse button + drag |
+| Add voxel | Left click on existing voxel (tool A) |
+| Remove voxel | Right click on voxel (tool R) |
+| Select voxel | Left click (tool V) |
+| Fill level | Left click on a face (tool F) |
 
-### 7.3 Strumenti (toolbar in alto)
+### 7.3 Tools (top toolbar)
 
-| Icona | Strumento | Descrizione |
-|---|---|---|
-| **V** | Seleziona | Seleziona un voxel e mostra proprietà |
-| **A** | Aggiungi | Piazza un nuovo voxel adiacente al voxel cliccato |
-| **R** | Rimuovi | Elimina il voxel cliccato |
-| **F** | Fill | Riempie un livello Y intero con il materiale corrente |
+| Icon | Tool | Description |
+|------|------|-------------|
+| **V** | Select | Select a voxel and show properties |
+| **A** | Add | Place a new voxel adjacent to clicked voxel |
+| **R** | Remove | Delete the clicked voxel |
+| **F** | Fill | Fill an entire Y level with current material |
 
-### 7.4 Selezione materiale
+### 7.4 Material Selection
 
-Pannello laterale sinistro: *Material Palette*
+Left side panel: *Material Palette*
 
-Ogni materiale mostrato con:
-- Nome e colore
-- Densità (kg/m³)
-- Modulo Young (GPa)
-- Conducibilità termica (W/(m·K))
-- Rugosità
+Each material shown with:
+- Name and color
+- Density (kg/m³)
+- Young's Modulus (GPa)
+- Thermal conductivity (W/(m·K))
+- Roughness
 
-Clicca un materiale per renderlo attivo. Il voxel successivo che piazzerai userà questo materiale.
+Click a material to make it active. The next voxel you place will use this material.
 
-### 7.5 Proprietà voxel selezionato
+### 7.5 Selected Voxel Properties
 
-Quando selezioni un voxel (tool V) il pannello *Properties* mostra:
-- Coordinate (x, y, z)
-- Materiale corrente
-- Modulo di appartenenza
+When you select a voxel (tool V), the *Properties* panel shows:
+- Coordinates (x, y, z)
+- Current material
+- Belonging module
 
-### 7.6 Fisica del modello
+### 7.6 Model Physics
 
-Pulsante **Calcola Fisica** nel pannello *Physics*:
-- Massa totale
-- Volume totale
-- Densità media
-- Centro di massa (x, y, z)
-- Inerzia (Ixx, Iyy, Izz)
-- Distribuzione materiali (conta voxel per materiale)
+**Calculate Physics** button in the *Physics* panel:
+- Total mass
+- Total volume
+- Average density
+- Center of mass (x, y, z)
+- Inertia (Ixx, Iyy, Izz)
+- Material distribution (voxel count per material)
 
-### 7.7 Esportazione
+### 7.7 Export
 
-Pulsante **Export Mesh (OBJ/STL)**:
-- Scegli formato: OBJ ASCII, STL ASCII, STL Binario
-- Il file viene scaricato automaticamente
+**Export Mesh (OBJ/STL)** button:
+- Choose format: OBJ ASCII, STL ASCII, STL Binary
+- File downloads automatically
 
-### 7.8 Salvataggio progetto
+### 7.8 Project Save
 
-Pulsante nella toolbar:
-- **Salva Progetto** → salva `progetto.json` (tutti i voxel + moduli + impostazioni)
-- **Carica Progetto** → carica da `progetto.json`
-- **Reset** → svuota la scena
-
----
-
-## 8. Piano di Sviluppo
-
-Vedi [PIANO_SVILUPPO_COMPLETO.md](./PIANO_SVILUPPO_COMPLETO.md) per il piano dettagliato fase per fase.
-
-### Breve riepilogo
-
-| Fase | Nome | Stato |
-|---|---|---|
-| 1 | Motore Voxel Base | ✅ Completata |
-| 2 | Editor 3D | ✅ Completata |
-| 3 | Ottimizzazione Performance | 🔄 In corso (chunk, marching cubes) |
-| 4 | Motore Procedurale | ⏳ Da iniziare |
-| 5 | Rappresentazione Materia (sfere, tetraedri) | ⏳ Nuova — alta priorità |
-| 6 | Simulazioni Fisiche | ⏳ Da iniziare |
-| 7 | Motore AI | ⏳ Da iniziare |
-| 8 | Video Reconstruction | ⏳ Da iniziare |
-
-### Prossima milestone immediata
-
-```
-Fase 3: Chunk System + Marching Cubes completo
-  → Obiettivo: scena fluida a 60fps con 50.000+ voxel
-  → File: voxel-engine.js (refactor), mesh-exporter.js (MC completo)
-```
+Toolbar button:
+- **Save Project** → saves `progetto.json` (all voxels + modules + settings)
+- **Load Project** → loads from `progetto.json`
+- **Reset** → clears the scene
 
 ---
 
-*Documento principale del progetto VoxelCAD*  
-*Vedi anche: [PIANO_SVILUPPO_COMPLETO.md](./PIANO_SVILUPPO_COMPLETO.md) · [ARCHITETTURA_VOXEL_PROCEDURALE_AI.md](./ARCHITETTURA_VOXEL_PROCEDURALE_AI.md)*
+## 8. Development Plan
+
+See [PIANO_SVILUPPO_COMPLETO.md](./PIANO_SVILUPPO_COMPLETO.md) for the detailed phase-by-phase plan.
+
+### Brief Summary
+
+| Phase | Name | Status |
+|-------|------|--------|
+| 1 | Base Voxel Engine | ✅ Completed |
+| 2 | 3D Editor | ✅ Completed |
+| 3 | Performance Optimization | 🔄 In progress (chunk, marching cubes) |
+| 4 | Procedural Engine | ⏳ To start |
+| 5 | Matter Representation (spheres, tetrahedra) | ⏳ New — high priority |
+| 6 | Physical Simulations | ⏳ To start |
+| 7 | AI Engine | ⏳ To start |
+| 8 | Video Reconstruction | ⏳ To start |
+
+### Immediate Next Milestone
+
+```
+Phase 3: Chunk System + Marching Cubes complete
+  → Goal: smooth scene at 60fps with 50,000+ voxels
+  → Files: voxel-engine.js (refactor), mesh-exporter.js (MC complete)
+```
+
+---
+
+*Main document of the VoxelCAD project*  
+*See also: [PIANO_SVILUPPO_COMPLETO.md](./PIANO_SVILUPPO_COMPLETO.md) · [ARCHITETTURA_VOXEL_PROCEDURALE_AI.md](./ARCHITETTURA_VOXEL_PROCEDURALE_AI.md)*

@@ -1,6 +1,6 @@
 /**
- * BrickSystem - Gestisce brick con dimensioni reali in millimetri
- * 1 unità Three.js = 1mm
+ * BrickSystem - Manages bricks with real dimensions in millimeters
+ * 1 Three.js unit = 1mm
  */
 
 import * as THREE from 'three';
@@ -49,7 +49,7 @@ export class BrickSystem {
         this.brickGroup = new THREE.Group();
         voxelEngine.scene.add(this.brickGroup);
 
-        // Instanced rendering per performance
+        // Instanced rendering for performance
         this.instancedMeshes = new Map();
         
         this._setupInteraction();
@@ -249,7 +249,7 @@ export class BrickSystem {
                 this.createBrickFromVoxel(v);
                 processedPositions.add(key);
             } else {
-                 // Group connected voxels into a brick
+                // Group connected voxels into a brick
                 const positions = Array.from(connected.values());
                 const minX = Math.min(...positions.map(v => v.x));
                 const minY = Math.min(...positions.map(v => v.y));

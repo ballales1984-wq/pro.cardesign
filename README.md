@@ -1,22 +1,22 @@
 # Pro.Cardesign - Voxel CAD for Vehicle Design
 
-> Sistema di progettazione voxel con misure reali (mm) per telai biciclette, auto leggere e strutture volumetriche.
+> Voxel design system with real measurements (mm) for bicycle frames, lightweight vehicles, and volumetric structures.
 
-## Stato Attuale
+## Current Status
 
-**v0.3.0** — Brick System + Componenti + Import STL completati. Build: `npm run build` → **16 moduli, 77.2 KB**.
+**v0.3.0** — Brick System + Components + STL Import completed. Build: `npm run build` → **16 modules, 77.2 KB**.
 
 ## Features
 
-- [x] **Brick System** — Mattoni con dimensioni reali in mm (es. 200×20×20mm barre)
-- [x] **Scaling Tool** — Click & drag su facce per ridimensionare con dimensioni live
-- [x] **Material Database** — 8 materiali con densità, Young's modulus, costo (kg/m³)
-- [x] **Component Library** — 11 componenti parametrici predefiniti (ruote, tubi, sella, manubrio)
-- [x] **Project Management** — Salva/carica JSON, export STL/OBJ
-- [x] **Import STL + Quality Check** — Importa parti scannerizzate, analizza ovalità/deformazioni
-- [ ] Aerodinamica (in sviluppo)
+- [x] **Brick System** — Bricks with real dimensions in mm (e.g. 200×20×20mm bars)
+- [x] **Scaling Tool** — Click & drag on faces to resize with live dimensions
+- [x] **Material Database** — 8 materials with density, Young's modulus, cost (kg/m³)
+- [x] **Component Library** — 11 predefined parametric components (wheels, tubes, saddle, handlebar)
+- [x] **Project Management** — Save/load JSON, export STL/OBJ
+- [x] **STL Import + Quality Check** — Import scanned parts, analyze ovality/deformations
+- [ ] Aerodynamics (in development)
 
-## Struttura Progetto
+## Project Structure
 
 ```
 pro.cardesign/
@@ -24,130 +24,128 @@ pro.cardesign/
 │   ├── brick.py            # Brick dataclass (mm, volume, overlap)
 │   ├── component.py        # ComponentDefinition/Instance
 │   ├── __init__.py
-│   └── bike_demo.py        # Demo telaio bici
+│   └── bike_demo.py        # Bike frame demo
 ├── src/                     # JavaScript frontend (ES modules)
 │   ├── voxel-engine.js     # Core rendering: InstancedMesh, raycasting
-│   ├── material-system.js  # Database 8 materiali
-│   ├── module-system.js    # Gerarchia moduli funzionali
-│   ├── physics-calc.js     # Massa, COM, inerzia
+│   ├── material-system.js  # Database of 8 materials
+│   ├── module-system.js    # Functional module hierarchy
+│   ├── physics-calc.js     # Mass, COM, inertia
 │   ├── mesh-exporter.js    # OBJ + STL export
-│   ├── ui.js               # Toolbar, pannelli, eventi
+│   ├── ui.js               # Toolbar, panels, events
 │   ├── main.js             # Entry point Three.js
-│   └── core/               # Moduli aggiuntivi
-│       ├── brick-system.js     # Brick frontend con SCALE=0.01
-│       ├── component-library.js # Libreria componenti UI
+│   └── core/               # Additional modules
+│       ├── brick-system.js     # Brick frontend with SCALE=0.01
+│       ├── component-library.js # UI component library
 │       ├── scaling-tool.js     # Interactive drag-to-scale
 │       └── stl-import.js       # STL parser + QualityAnalyzer
-├── voxel_editor.py         # Engine Python legacy (analisi)
+├── voxel_editor.py         # Legacy Python voxel engine (analysis)
 ├── physics_engine.py       # Stress/thermal analysis Python
-├── cli.py                  # CLI minimale per test
+├── cli.py                  # Minimal CLI for testing
 ├── tests/
-│   ├── test_coverage.py    # 43 test Python
-│   ├── test_coverage.js    # 4 test JS
-│   └── COVERAGE_REPORT.md  # Report coverage
-├── data/                   # Progetti salvati, componenti custom
-├── dist/                   # Build produzione
-├── index.html              # UI principale
-├── requirements.txt        # Dipendenze Python
-├── package.json            # Dipendenze Node.js
+│   ├── test_coverage.py    # 43 Python tests
+│   ├── test_coverage.js    # 4 JS tests
+│   └── COVERAGE_REPORT.md  # Coverage report
+├── data/                   # Saved projects, custom components
+├── dist/                   # Production build
+├── index.html              # Main UI
+├── requirements.txt        # Python dependencies
+├── package.json            # Node.js dependencies
 └── README.md
 ```
 
-## Installazione
+## Installation
 
-### Prerequisiti
-- Node.js 14+ e npm
-- Python 3.8+ (opzionale, per analisi lato server)
+### Prerequisites
+- Node.js 14+ and npm
+- Python 3.8+ (optional, for server-side analysis)
 
-### Setup Rapido
+### Quick Setup
 ```bash
-# 1. Installa dipendenze Node
+# 1. Install Node dependencies
 npm install
 
-# 2. Installa dipendenze Python (opzionale)
+# 2. Install Python dependencies (optional)
 pip install -r requirements.txt
 
-# 3. Avvia development
+# 3. Start development
 npm run dev
 ```
 
-### Build Produzione
+### Production Build
 ```bash
 npm run build   # Output in dist/
 ```
 
-## Utilizzo
+## Usage
 
-### Da linea di comando (Python)
+### From Command Line (Python)
 ```bash
-# Info sul brick system
+# Brick system info
 python cli.py info
 
-# Crea brick di esempio
+# Create example brick
 python cli.py create
 
-# Calcola massa e centro di massa
+# Calculate mass and center of mass
 python cli.py mass
 
-# Lista componenti disponibili
+# List available components
 python cli.py components
 ```
 
-### Interfaccia grafica
+### Graphical Interface
 ```bash
-npm run dev   # Avvia Vite + Electron
+npm run dev   # Starts Vite + Electron
 ```
 
-**Tasti rapidi:**
-| Tasto | Azione |
-|-------|--------|
-| `A` | Aggiungi voxel |
-| `V` | Seleziona |
-| `R` | Rimuovi |
-| `S` | Scalatura |
-| `F` | Fill livello |
+**Keyboard Shortcuts:**
+| Key | Action |
+|-----|--------|
+| `A` | Add voxel |
+| `V` | Select |
+| `R` | Remove |
+| `S` | Scale |
+| `F` | Fill level |
 | `Ctrl+Z` | Undo |
 | `Ctrl+Y` | Redo |
 
 ## Testing
-
 ```bash
-# Python — 43 test
+# Python — 43 tests
 python -m pytest tests/test_coverage.py -v
 
-# Coverage Python
+# Python coverage
 python -m pytest tests/test_coverage.py --cov=core --cov-report=html
 
-# JavaScript — 4 test strutturali
+# JavaScript — 4 structural tests
 node tests/test_coverage.js
 
-# Report coverage completo
+# Full coverage report
 cat tests/COVERAGE_REPORT.md
 ```
 
-**Status attuale:** 43/43 Python ✅ | 4/4 JavaScript ✅
+**Current status:** 43/43 Python ✅ | 4/4 JavaScript ✅
 
 ## Roadmap
+- [x] Phase 1: Brick System with real measurements
+- [x] Phase 2: Interactive Scaling Tool
+- [x] Phase 3: Component Library
+- [x] Phase 4: Project Management
+- [x] Phase 5: STL Import + Quality Check
+- [ ] Phase 6: Aerodynamics visualization
 
-- [x] Fase 1: Brick System con misure reali
-- [x] Fase 2: Interactive Scaling Tool
-- [x] Fase 3: Component Library
-- [x] Fase 4: Project Management
-- [x] Fase 5: Import STL + Quality Check
-- [ ] Fase 6: Aerodinamica visualization
+## Technologies
 
-## Tecnologie
-
-| Layer | Tecnologia |
+| Layer | Technology |
 |-------|-----------|
 | Frontend | Three.js + Vite + Electron |
 | Backend | Python 3 + NumPy |
 | Build | Vite + npm scripts |
 | Test | pytest (Python) + Node assert (JS) |
 
-## Licenza
+## License
 
-MIT — Vedi `LICENSE`
+MIT — See `LICENSE`
 ```bash
 npm install
 ```

@@ -1,38 +1,38 @@
 # Pro.Cardesign - Project Checklist
 
-## ✅ FASE 0: BASE (Completata)
-- [x] Classe Brick con misure mm
-- [x] BrickEngine con massa e COM
-- [x] Sistema Componenti parametrici
-- [x] ComponentLibrary con wheel e beam
+## ✅ PHASE 0: BASE (Completed)
+- [x] Brick class with mm measurements
+- [x] BrickEngine with mass and COM
+- [x] Parametric Components system
+- [x] ComponentLibrary with wheel and beam
 
-## ✅ FASE 1: INTERAZIONE (Completata)
-- [x] InteractionManager per scaling drag su facce
-- [x] Integrazione nel frontend Three.js
-- [x] Sistema per select brick con Shift+Click
-- [x] Ridimensionamento in tempo reale con righello
-- [x] Visualizzazione selezione e wireframe
-- [x] Aggiornamento massa e COM in tempo reale
+## ✅ PHASE 1: INTERACTION (Completed)
+- [x] InteractionManager for face drag scaling
+- [x] Integration in frontend Three.js
+- [x] System for brick selection with Shift+Click
+- [x] Real-time scaling with ruler
+- [x] Selection and wireframe visualization
+- [x] Real-time mass and COM update
 
-## ⏳ FASE 2: VISUALIZZAZIONE
-- [ ] Estrarre superficie esterna (solo mesh visibile)
-- [ ] Wireframe interno opzionale
-- [ ] LOD automatico
+## ⏳ PHASE 2: VISUALIZATION
+- [ ] Extract external surface (visible mesh only)
+- [ ] Optional internal wireframe
+- [ ] Automatic LOD
 
-## ⏳ FASE 3: GESTIONE PROGETTO
-- [ ] Salva/carica progetto
+## ⏳ PHASE 3: PROJECT MANAGEMENT
+- [ ] Save/load project
 - [ ] Export STL
 - [ ] Import STL
 
-## ⏳ FASE 4: FUNZIONALITÀ AVANZATE
-- [ ] Analisi deformazione import
+## ⏳ PHASE 4: ADVANCED FUNCTIONALITY
+- [ ] Import deformation analysis
 - [ ] Collision detection
-- [ ] Aerodinamica base
+- [ ] Basic aerodynamics
 
 ---
 
-## Status Attuale
-- **Backend Python**: BrickEngine operativo con scaling
-- **Frontend Three.js**: BrickSystem con drag scaling (Shift+Click)
-- **Componenti**: wheel_26/27/28, beam_200/400
-- **Prossimo**: Implementare sistema snap griglia 5/10mm
+## Current Status
+- **Backend Python**: BrickEngine operational with scaling
+- **Frontend Three.js**: BrickSystem with drag scaling (Shift+Click)
+- **Components**: wheel_26/27/28, beam_200/400
+- **Next**: Implement 5/10mm grid snap system

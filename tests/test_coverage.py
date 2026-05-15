@@ -1,7 +1,7 @@
 """
-Test Suite Completa — pro.cardesign
+Complete Test Suite — pro.cardesign
 Coverage: Python core modules
-Esegui: python -m unittest discover -s tests -p 'test_*.py'
+Run: python -m unittest discover -s tests -p 'test_*.py'
 """
 
 import unittest
@@ -11,7 +11,7 @@ import json
 import tempfile
 import numpy as np
 
-# Aggiungi root al path
+# Add root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.brick import Brick, create_brick, create_cube, create_bar, create_wheel_tire, next_brick_id
@@ -19,7 +19,7 @@ from core.component import ComponentDefinition, ComponentInstance, ComponentLibr
 
 
 class TestBrick(unittest.TestCase):
-    """Test per il Brick system"""
+    """Tests for the Brick system"""
     
     def setUp(self):
         self.brick = create_brick(1, "Test", [100, 50, 25], [10, 20, 30])
@@ -59,7 +59,7 @@ class TestBrick(unittest.TestCase):
 
 
 class TestCreateHelpers(unittest.TestCase):
-    """Test per le funzioni factory"""
+    """Tests for factory functions"""
     
     def test_create_cube(self):
         cube = create_cube(1, "Cube", 50, [0, 0, 0])
@@ -102,21 +102,21 @@ class TestIDCounter(unittest.TestCase):
 
 
 class TestBrickEdgeCases(unittest.TestCase):
-    """Test casi estremi Brick"""
+    """Edge case tests for Brick"""
     
     def test_brick_with_zero_size(self):
-        """Brick con size zero → volume = 0"""
+        """Brick with zero size → volume = 0"""
         brick = create_brick(1, "Zero", [0, 0, 0], [0, 0, 0])
         self.assertAlmostEqual(brick.volume_mm3, 0)
         np.testing.assert_array_equal(brick.center, [0, 0, 0])
     
     def test_brick_with_negative_position(self):
-        """Coordinate negative sono ammesse"""
+        """Negative coordinates are allowed"""
         brick = create_brick(1, "Neg", [10, 10, 10], [-100, -200, -300])
         np.testing.assert_array_equal(brick.position, [-100, -200, -300])
     
     def test_brick_center_calculation(self):
-        """Centro = position + size/2"""
+        """Center = position + size/2"""
         brick = create_brick(1, "C", [10, 20, 30], [0, 0, 0])
         np.testing.assert_array_almost_equal(brick.center, [5, 10, 15])
     
@@ -153,7 +153,7 @@ class TestBrickEdgeCases(unittest.TestCase):
 
 
 class TestVoxelEngineEdgeCases(unittest.TestCase):
-    """Test casi estremi VoxelEngine"""
+    """Edge case tests for VoxelEngine"""
     
     def test_add_duplicate_voxel(self):
         from voxel_editor import VoxelEngine
@@ -167,7 +167,7 @@ class TestVoxelEngineEdgeCases(unittest.TestCase):
     def test_remove_nonexistent_voxel(self):
         from voxel_editor import VoxelEngine
         engine = VoxelEngine(16, 16, 16)
-        # Non dovrebbe crashare
+        # Should not crash
         engine.remove_voxel(99, 99, 99)
         self.assertEqual(len(engine.voxel_map), 0)
     
@@ -204,12 +204,12 @@ class TestVoxelEngineEdgeCases(unittest.TestCase):
     def test_coordinate_boundaries(self):
         from voxel_editor import VoxelEngine
         engine = VoxelEngine(8, 8, 8)
-        # Coordinate ai bordi
+        # Coordinates at boundaries
         engine.set_voxel(0, 0, 0, "acciaio")
         engine.set_voxel(7, 7, 7, "acciaio")
         self.assertEqual(len(engine.voxel_map), 2)
         
-        # Coordinate fuori bounds → ValueError
+        # Out of bounds coordinates → ValueError
         with self.assertRaises(ValueError):
             engine.set_voxel(-1, 0, 0, "acciaio")
         with self.assertRaises(ValueError):
@@ -225,7 +225,7 @@ class TestVoxelEngineEdgeCases(unittest.TestCase):
 
 
 class TestMaterialsPython(unittest.TestCase):
-    """Test materiali Python"""
+    """Python materials tests"""
     
     def test_all_materials_exist(self):
         from voxel_editor import VoxelEngine
@@ -244,7 +244,7 @@ class TestMaterialsPython(unittest.TestCase):
 
 
 class TestPhysicsPython(unittest.TestCase):
-    """Test fisica Python"""
+    """Physics tests"""
     
     def test_stress_analysis_different_materials(self):
         from voxel_editor import VoxelEngine
@@ -276,61 +276,63 @@ class TestPhysicsPython(unittest.TestCase):
         temps = thermal_analysis = lambda e, hp, p: {}
         issues = check_safety_margins(engine, stress, {})
         self.assertIsInstance(issues, list)
-    """Test per il sistema componenti"""
     
-    def setUp(self):
-        self.library = ComponentLibrary("data/test_components")
-    
-    def test_library_has_defaults(self):
-        comps = self.library.get_all()
-        self.assertGreater(len(comps), 0)
-    
-    def test_get_by_id(self):
-        wheel = self.library.get(1)
-        self.assertIsNotNone(wheel)
-        self.assertIn("Ruota", wheel.name)
-    
-    def test_get_by_category(self):
-        wheels = self.library.get_by_category("wheels")
-        self.assertGreater(len(wheels), 0)
-        for w in wheels:
-            self.assertEqual(w.category, "wheels")
-    
-    def test_get_by_type(self):
-        wheels = self.library.get_by_type("wheel")
-        self.assertGreater(len(wheels), 0)
-    
-    def test_search(self):
-        results = self.library.search("700c")
-        self.assertGreater(len(results), 0)
-    
-    def test_save_and_load_custom(self):
-        comp = self.library.get(1)
-        success = self.library.save_custom(comp)
-        self.assertTrue(success)
+    def test_component_system(self):
+        """Tests for the component system"""
         
-        loaded = self.library.load_custom(f"data/test_components/component_{comp.id}.json")
-        self.assertIsNotNone(loaded)
-        self.assertEqual(loaded.name, comp.name)
-    
-    def test_component_instance(self):
-        defn = self.library.get(1)
-        instance = create_component_instance(defn, [0, 100, 0], {"outer_radius": 360})
-        self.assertEqual(instance.definition_id, 1)
-        np.testing.assert_array_equal(instance.position, [0, 100, 0])
-        self.assertEqual(instance.parameter_overrides["outer_radius"], 360)
+        def setUp(self):
+            self.library = ComponentLibrary("data/test_components")
+        
+        def test_library_has_defaults(self):
+            comps = self.library.get_all()
+            self.assertGreater(len(comps), 0)
+        
+        def test_get_by_id(self):
+            wheel = self.library.get(1)
+            self.assertIsNotNone(wheel)
+            self.assertIn("Wheel", wheel.name)
+        
+        def test_get_by_category(self):
+            wheels = self.library.get_by_category("wheels")
+            self.assertGreater(len(wheels), 0)
+            for w in wheels:
+                self.assertEqual(w.category, "wheels")
+        
+        def test_get_by_type(self):
+            wheels = self.library.get_by_type("wheel")
+            self.assertGreater(len(wheels), 0)
+        
+        def test_search(self):
+            results = self.library.search("700c")
+            self.assertGreater(len(results), 0)
+        
+        def test_save_and_load_custom(self):
+            comp = self.library.get(1)
+            success = self.library.save_custom(comp)
+            self.assertTrue(success)
+            
+            loaded = self.library.load_custom(f"data/test_components/component_{comp.id}.json")
+            self.assertIsNotNone(loaded)
+            self.assertEqual(loaded.name, comp.name)
+        
+        def test_component_instance(self):
+            defn = self.library.get(1)
+            instance = create_component_instance(defn, [0, 100, 0], {"outer_radius": 360})
+            self.assertEqual(instance.definition_id, 1)
+            np.testing.assert_array_equal(instance.position, [0, 100, 0])
+            self.assertEqual(instance.parameter_overrides["outer_radius"], 360)
 
 
 class TestPhysicsIntegration(unittest.TestCase):
-    """Test integrazione fisica"""
+    """Physics integration tests"""
     
     def test_mass_calculation(self):
         from voxel_editor import VoxelEngine
         engine = VoxelEngine(10, 10, 10)
         engine.set_voxel(0, 0, 0, "titanio")
         mass = engine.calculate_mass()
-        # 1 voxel = 1mm³ = 1e-9 m³; densità titanio = 4500 kg/m³
-        # Massa = 4500 * 1e-9 = 4.5e-6 kg
+        # 1 voxel = 1mm³ = 1e-9 m³; titanium density = 4500 kg/m³
+        # Mass = 4500 * 1e-9 = 4.5e-6 kg
         self.assertGreater(mass, 0)
     
     def test_com_calculation(self):
@@ -346,8 +348,8 @@ class TestPhysicsIntegration(unittest.TestCase):
     def test_save_load_json(self):
         from voxel_editor import VoxelEngine
         engine = VoxelEngine(10, 10, 10)
-        engine.set_voxel(1, 2, 3, "carbonio", "telaio")
-        engine.create_module("prova", "test")
+        engine.set_voxel(1, 2, 3, "carbonio", "frame")
+        engine.create_module("test", "test")
         
         with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
             filepath = f.name
@@ -358,7 +360,7 @@ class TestPhysicsIntegration(unittest.TestCase):
             engine2.load_json(filepath)
             
             self.assertEqual(len(engine2.voxel_map), 1)
-            # Accetta sia tupla (1,2,3) che stringa '1,2,3' come chiave
+            # Accept both tuple (1,2,3) and string '1,2,3' as key
             found = any(str(k) == '1,2,3' or k == (1,2,3) for k in engine2.voxel_map.keys())
             self.assertTrue(found, f"Voxel (1,2,3) not found. Keys: {list(engine2.voxel_map.keys())}")
         finally:
