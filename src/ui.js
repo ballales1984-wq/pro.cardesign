@@ -433,6 +433,68 @@ export class UI {
     }
   }
 
+  // ── Import STL ────────────────────────────────────────────────
+  _openImportModal() {
+    var self = this;
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.stl,.obj';
+    input.addEventListener('change', function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      self._runImport(file);
+    });
+    input.click();
+  }
+
+  async _runImport(file) {
+    this._notify('Importazione ' + file.name + '...', 'info');
+    
+    try {
+      const STLImporter = (await import('./core/stl-import.js')).STLImporter;
+      const importer = new STLImporter(this.scene, this.camera, this.renderer);
+      const result = await importer.fitToScene(await importer.importFile(file));
+      
+      // Show analysis
+      const analyzer = new QualityAnalyzer();
+      const analysis = analyzer.analyzeGeometry(result.geometry);
+      
+      this._showImportResults(analysis, result);
+      
+      this._notify('Import completato: ' + file.name, 'success');
+    } catch (err) {
+      this._notify('Errore import: ' + err.message, 'error');
+    }
+  }
+
+  _showImportResults(analysis, importInfo) {
+    var panel = document.createElement('div');
+    panel.className = 'app-notification notification-success';
+    panel.style.zIndex = '10000';
+    panel.style.maxWidth = '400px';
+    panel.innerHTML = `
+      <div style="padding: 16px;">
+        <h3 style="margin:0 0 12px;">📥 Risultati Importazione</h3>
+        <div class="prop-row"><span class="prop-label">Vertici</span><span class="prop-value">${analysis.vertexCount}</span></div>
+        <div class="prop-row"><span class="prop-label">Centroide</span><span class="prop-value">(${analysis.centroid.x}, ${analysis.centroid.y}, ${analysis.centroid.z}) mm</span></div>
+        <div class="prop-row"><span class="prop-label">Raggio medio</span><span class="prop-value">${analysis.meanRadiusMm} mm</span></div>
+        <div class="prop-row"><span class="prop-label">Ovalità</span><span class="prop-value">${analysis.ovalityMm} mm</span></div>
+        <div class="prop-row"><span class="prop-label">Deviazione max</span><span class="prop-value">${analysis.maxDeviationMm} mm</span></div>
+        <div class="prop-row"><span class="prop-label">Circolare</span><span class="prop-value">${analysis.isCircular ? '✅ Si' : '⚠️ No'}</span></div>
+        <hr style="border-color:rgba(255,255,255,0.1); margin:8px 0;">
+        <div class="prop-row"><span class="prop-label">Scala</span><span class="prop-value">${(importInfo.scaleFactor * 100).toFixed(1)}%</span></div>
+        <div class="prop-row"><span class="prop-label">Dim. Originali</span><span class="prop-value">${importInfo.originalSize.x.toFixed(1)} × ${importInfo.originalSize.y.toFixed(1)} × ${importInfo.originalSize.z.toFixed(1)}</span></div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button onclick="this.closest('.app-notification').remove()" style="flex:1;padding:6px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">Chiudi</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(panel);
+    
+    // Auto-remove after 15 seconds
+    setTimeout(() => { if (panel.parentNode) panel.remove(); }, 15000);
+  }
+
 // Keyboard shortcuts
   _setupKeyboard() {
     var self = this;
