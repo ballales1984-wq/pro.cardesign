@@ -215,14 +215,14 @@ export class BrickSystem {
         
         canvas.addEventListener('pointerup', () => {
             this.isDragging = false;
-            const label = document.getElementById('dimension-label');
+            const label = document.getElementById('dimensions-display');
             if (label) label.style.display = 'none';
             this.stopResize();
         });
         
         canvas.addEventListener('pointerleave', () => {
             this.isDragging = false;
-            const label = document.getElementById('dimension-label');
+            const label = document.getElementById('dimensions-display');
             if (label) label.style.display = 'none';
             this.stopResize();
         });
