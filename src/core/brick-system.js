@@ -106,8 +106,7 @@ export class BrickSystem {
         if (brick.isSelected) {
             const edges = new THREE.EdgesGeometry(geometry);
             const lineMat = new THREE.LineBasicMaterial({ 
-                color: 0xe94560, 
-                linewidth: 2 
+                color: 0xe94560
             });
             const wireframe = new THREE.LineSegments(edges, lineMat);
             wireframe.position.copy(mesh.position);
@@ -194,37 +193,6 @@ export class BrickSystem {
                     label.style.display = 'inline';
                 }
             }
-        }
-        
-        canvas.addEventListener('pointerup', () => {
-            this.isDragging = false;
-            const label = document.getElementById('dimensions-display');
-            if (label) label.style.display = 'none';
-            this.stopResize();
-        });
-        
-        canvas.addEventListener('pointerleave', () => {
-            this.isDragging = false;
-            const label = document.getElementById('dimensions-display');
-                if (label) {
-                    label.textContent = this.dimensionsText;
-                    label.style.display = 'block';
-                }
-            }
-        });
-        
-        canvas.addEventListener('pointerup', () => {
-            this.isDragging = false;
-            const label = document.getElementById('dimensions-display');
-            if (label) label.style.display = 'none';
-            this.stopResize();
-        });
-        
-        canvas.addEventListener('pointerleave', () => {
-            this.isDragging = false;
-            const label = document.getElementById('dimensions-display');
-            if (label) label.style.display = 'none';
-            this.stopResize();
         });
     }
 
@@ -284,8 +252,8 @@ export class BrickSystem {
                 const brick = new Brick(
                     this.nextId++,
                     `Merged_${minX}_${minY}_${minZ}`,
-                    { x: minX * this.SCALE, y: minY * this.SCALE, z: minZ * this.SCALE },
-                    { x: width * this.SCALE, y: height * this.SCALE, z: depth * this.SCALE },
+                    { x: minX, y: minY, z: minZ },
+                    { x: width, y: height, z: depth },
                     firstVoxel.material
                 );
                 this.bricks.set(brick.id, brick);

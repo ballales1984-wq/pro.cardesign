@@ -5,6 +5,7 @@
  * instead of one per voxel. Improvement: ~10-50x with large scenes.
  */
 import * as THREE from 'three';
+import { Chunk } from './core/chunk-system.js';
 import { ScalingTool } from './core/scaling-tool.js';
 
 export class VoxelEngine {
@@ -193,16 +194,15 @@ export class VoxelEngine {
          makeLabel('Z', '4488ff', new THREE.Vector3(0, 0, 6));
        }
    
-       _createGhost() {
-         const geo = new THREE.BoxGeometry(this.voxelSize, this.voxelSize, this.voxelSize);
-         const mat = new THREE.MeshBasicMaterial({
-           color: 0x00d2ff,
-           transparent: true,
-           opacity: 0.5,
-           depthWrite: false,
-           wireframe: true,
-           linewidth: 2,
-         });
+_createGhost() {
+          const geo = new THREE.BoxGeometry(this.voxelSize, this.voxelSize, this.voxelSize);
+          const mat = new THREE.MeshBasicMaterial({
+            color: 0x00d2ff,
+            transparent: true,
+            opacity: 0.5,
+            depthWrite: false,
+            wireframe: true,
+          });
          this.ghost = new THREE.Mesh(geo, mat);
          this.ghost.visible = false;
          this.scene.add(this.ghost);
@@ -214,13 +214,12 @@ export class VoxelEngine {
            this.voxelSize * 1.05,
            this.voxelSize * 1.05
          );
-         const edges = new THREE.EdgesGeometry(geo);
-         const mat = new THREE.LineBasicMaterial({
-           color: 0xe94560,
-           linewidth: 2,
-           transparent: true,
-           opacity: 0.8,
-         });
+const edges = new THREE.EdgesGeometry(geo);
+          const mat = new THREE.LineBasicMaterial({
+            color: 0xe94560,
+            transparent: true,
+            opacity: 0.8,
+          });
          this.highlight = new THREE.LineSegments(edges, mat);
          this.highlight.visible = false;
          this.scene.add(this.highlight);
@@ -808,39 +807,22 @@ export class VoxelEngine {
        const el = document.getElementById('voxel-count');
        if (el) el.textContent = 'Voxel: ' + this.getVoxelCount();
        window.dispatchEvent(new CustomEvent('voxels-updated', { detail: { count: this.getVoxelCount() } }));
-     } catch (e) {
-       // silently ignore
-     }
-   }
-   
-         update(deltaTime) {
+            } catch (e) {
+        // silently ignore
+      }
+    }
+
+    // ── Notification helper (implementation lives in ui.js) ──────────────
+    // VoxelEngine calls this; ui.js may override via prototype during init.
+    _notify(message, level = 'info') {
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+            try { window.dispatchEvent(new window.CustomEvent('toast-notify', { detail: { message, level } })); } catch (_) { /* no toast infrastructure in tests */ }
+        }
+    }
+
+    update(deltaTime) {
            if (this.ghost && this.ghost.visible) {
              this.ghost.material.opacity = 0.2 + Math.sin(performance.now() * 0.005) * 0.1;
            }
-         }
-    }
-
-    class Chunk {
-     constructor(chunkX, chunkY, chunkZ, chunkSize) {
-       this.chunkX = chunkX;
-       this.chunkY = chunkY;
-       this.chunkZ = chunkZ;
-       this.chunkSize = chunkSize;
-       this.voxels = new Map(); // localKey -> voxelData
+          }
      }
-   
-     getVoxel(localX, localY, localZ) {
-       const key = `${localX},${localY},${localZ}`;
-       return this.voxels.get(key);
-     }
-   
-     addVoxel(localX, localY, localZ, voxelData) {
-       const key = `${localX},${localY},${localZ}`;
-       this.voxels.set(key, voxelData);
-     }
-   
-     removeVoxel(localX, localY, localZ) {
-       const key = `${localX},${localY},${localZ}`;
-       return this.voxels.delete(key);
-     }
-   }
