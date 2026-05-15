@@ -1,23 +1,153 @@
 # Pro.Cardesign - Voxel CAD for Vehicle Design
 
-A voxel-based CAD application for designing vehicles (bikes, cars, drones) with real-world measurements in millimeters.
+> Sistema di progettazione voxel con misure reali (mm) per telai biciclette, auto leggere e strutture volumetriche.
+
+## Stato Attuale
+
+**v0.3.0** — Brick System + Componenti + Import STL completati. Build: `npm run build` → **16 moduli, 77.2 KB**.
 
 ## Features
 
-- **Brick System**: Create solids with real mm dimensions (e.g., 200×20×20mm bars)
-- **Interactive Scaling**: Click and drag faces to resize bricks with live dimension display
-- **Material System**: Steel, Aluminum, Titanium, Carbon Fiber, Rubber with physical properties
-- **Modular Organization**: Group bricks into functional modules (frame, body, etc.)
-- **Physics Calculations**: Mass, center of mass, and volume calculations
-- **Import/Export**: STL/OBJ support for 3D printing and manufacturing
+- [x] **Brick System** — Mattoni con dimensioni reali in mm (es. 200×20×20mm barre)
+- [x] **Scaling Tool** — Click & drag su facce per ridimensionare con dimensioni live
+- [x] **Material Database** — 8 materiali con densità, Young's modulus, costo (kg/m³)
+- [x] **Component Library** — 11 componenti parametrici predefiniti (ruote, tubi, sella, manubrio)
+- [x] **Project Management** — Salva/carica JSON, export STL/OBJ
+- [x] **Import STL + Quality Check** — Importa parti scannerizzate, analizza ovalità/deformazioni
+- [ ] Aerodinamica (in sviluppo)
 
-## Getting Started
+## Struttura Progetto
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v14+)
-- npm
+```
+pro.cardesign/
+├── core/                    # Python core
+│   ├── brick.py            # Brick dataclass (mm, volume, overlap)
+│   ├── component.py        # ComponentDefinition/Instance
+│   ├── __init__.py
+│   └── bike_demo.py        # Demo telaio bici
+├── src/                     # JavaScript frontend (ES modules)
+│   ├── voxel-engine.js     # Core rendering: InstancedMesh, raycasting
+│   ├── material-system.js  # Database 8 materiali
+│   ├── module-system.js    # Gerarchia moduli funzionali
+│   ├── physics-calc.js     # Massa, COM, inerzia
+│   ├── mesh-exporter.js    # OBJ + STL export
+│   ├── ui.js               # Toolbar, pannelli, eventi
+│   ├── main.js             # Entry point Three.js
+│   └── core/               # Moduli aggiuntivi
+│       ├── brick-system.js     # Brick frontend con SCALE=0.01
+│       ├── component-library.js # Libreria componenti UI
+│       ├── scaling-tool.js     # Interactive drag-to-scale
+│       └── stl-import.js       # STL parser + QualityAnalyzer
+├── voxel_editor.py         # Engine Python legacy (analisi)
+├── physics_engine.py       # Stress/thermal analysis Python
+├── cli.py                  # CLI minimale per test
+├── tests/
+│   ├── test_coverage.py    # 43 test Python
+│   ├── test_coverage.js    # 4 test JS
+│   └── COVERAGE_REPORT.md  # Report coverage
+├── data/                   # Progetti salvati, componenti custom
+├── dist/                   # Build produzione
+├── index.html              # UI principale
+├── requirements.txt        # Dipendenze Python
+├── package.json            # Dipendenze Node.js
+└── README.md
+```
 
-### Installation
+## Installazione
+
+### Prerequisiti
+- Node.js 14+ e npm
+- Python 3.8+ (opzionale, per analisi lato server)
+
+### Setup Rapido
+```bash
+# 1. Installa dipendenze Node
+npm install
+
+# 2. Installa dipendenze Python (opzionale)
+pip install -r requirements.txt
+
+# 3. Avvia development
+npm run dev
+```
+
+### Build Produzione
+```bash
+npm run build   # Output in dist/
+```
+
+## Utilizzo
+
+### Da linea di comando (Python)
+```bash
+# Info sul brick system
+python cli.py info
+
+# Crea brick di esempio
+python cli.py create
+
+# Calcola massa e centro di massa
+python cli.py mass
+
+# Lista componenti disponibili
+python cli.py components
+```
+
+### Interfaccia grafica
+```bash
+npm run dev   # Avvia Vite + Electron
+```
+
+**Tasti rapidi:**
+| Tasto | Azione |
+|-------|--------|
+| `A` | Aggiungi voxel |
+| `V` | Seleziona |
+| `R` | Rimuovi |
+| `S` | Scalatura |
+| `F` | Fill livello |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Y` | Redo |
+
+## Testing
+
+```bash
+# Python — 43 test
+python -m pytest tests/test_coverage.py -v
+
+# Coverage Python
+python -m pytest tests/test_coverage.py --cov=core --cov-report=html
+
+# JavaScript — 4 test strutturali
+node tests/test_coverage.js
+
+# Report coverage completo
+cat tests/COVERAGE_REPORT.md
+```
+
+**Status attuale:** 43/43 Python ✅ | 4/4 JavaScript ✅
+
+## Roadmap
+
+- [x] Fase 1: Brick System con misure reali
+- [x] Fase 2: Interactive Scaling Tool
+- [x] Fase 3: Component Library
+- [x] Fase 4: Project Management
+- [x] Fase 5: Import STL + Quality Check
+- [ ] Fase 6: Aerodinamica visualization
+
+## Tecnologie
+
+| Layer | Tecnologia |
+|-------|-----------|
+| Frontend | Three.js + Vite + Electron |
+| Backend | Python 3 + NumPy |
+| Build | Vite + npm scripts |
+| Test | pytest (Python) + Node assert (JS) |
+
+## Licenza
+
+MIT — Vedi `LICENSE`
 ```bash
 npm install
 ```

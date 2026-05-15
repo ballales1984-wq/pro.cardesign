@@ -16,14 +16,16 @@ export class VoxelEngine {
         this.renderer = renderer;
         this.controls = controls;
 
-        this.voxels = new Map();
+        // Chunk-based storage: Map<"chunkX,chunkY,chunkZ", Chunk>
+        this.chunks = new Map();
+        this.chunkSize = 16; // voxels per chunk dimension
 
         // Instanced rendering: un InstancedMesh per materiale
-        this.instancedMeshes = new Map();  // materialName -> THREE.InstancedMesh
-        this.instanceToKey = new Map();    // materialName -> [voxelKey[]] indexed by instanceId
-        this.keyToInstance = new Map();    // materialName -> Map(voxelKey -> instanceId)
-        this.freeIndices = new Map();      // materialName -> [liberi instanceId]
-        this.maxInstances = 200000;        // max per materiale
+        this.instancedMeshes = new Map();
+        this.instanceToKey = new Map();
+        this.keyToInstance = new Map();
+        this.freeIndices = new Map();
+        this.maxInstances = 200000;
 
         this.voxelGroup = new THREE.Group();
         this.scene.add(this.voxelGroup);

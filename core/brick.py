@@ -44,10 +44,10 @@ class Brick:
         return np.all(point >= self.position) and np.all(point <= self.max_corner)
 
     def overlaps(self, other: 'Brick') -> bool:
-        """Controlla se si sovrappone con un altro brick"""
+        """Controlla se si sovrappone con un altro brick (tocco esatto ≠ sovrapposizione)"""
         return not (
-            np.any(self.max_corner < other.position) or 
-            np.any(other.max_corner < self.position)
+            np.any(self.max_corner <= other.position) or 
+            np.any(other.max_corner <= self.position)
         )
 
 
