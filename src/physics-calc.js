@@ -120,7 +120,7 @@ export class PhysicsCalc {
    * Calcola fisica per l'intero veicolo
    */
   calculateVehicle(voxelEngine) {
-    const allVoxels = Array.from(voxelEngine.voxels.values());
+    const allVoxels = Array.from(voxelEngine.voxelsIterator());
     return this.calculateAllVoxels(allVoxels);
   }
 

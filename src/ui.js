@@ -313,7 +313,7 @@ export class UI {
   // Physics simulation
   _runSimulation() {
     var physicsPanel = document.getElementById('physics-panel');
-    var allVoxels = Array.from(this.voxelEngine.voxels.values());
+    var allVoxels = Array.from(this.voxelEngine.voxelsIterator());
 
     if (allVoxels.length === 0) {
       physicsPanel.innerHTML = '<p class="hint">Nessun voxel da simulare</p>';
@@ -407,7 +407,7 @@ export class UI {
           self._refreshModules();
           self._refreshProperties();
           var physicsPanel = document.getElementById('physics-panel');
-          if (self.voxelEngine.voxels.size > 0) {
+          if (self.voxelEngine.getVoxelCount() > 0) {
             physicsPanel.innerHTML = '<p class="hint">Clicca per calcolare</p>';
           } else {
             physicsPanel.innerHTML = '<p class="hint">Nessun voxel da simulare</p>';
@@ -728,4 +728,4 @@ export class UI {
   }
 }
 
-export default ComponentLibrary;
+export default UI;

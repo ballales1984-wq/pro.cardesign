@@ -22,9 +22,11 @@ export class Chunk {
    * @returns {string} Local key "lx,ly,lz"
    */
   getLocalKey(x, y, z) {
-    const lx = x - this.chunkX * this.chunkSize;
-    const ly = y - this.chunkY * this.chunkSize;
-    const lz = z - this.chunkZ * this.chunkSize;
+    const chunkSize = this.chunkSize;
+    // Using modulo that works for negative numbers
+    const lx = ((x % chunkSize) + chunkSize) % chunkSize;
+    const ly = ((y % chunkSize) + chunkSize) % chunkSize;
+    const lz = ((z % chunkSize) + chunkSize) % chunkSize;
     return `${lx},${ly},${lz}`;
   }
 

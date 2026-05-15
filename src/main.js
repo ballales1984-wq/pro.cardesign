@@ -60,7 +60,7 @@ scene.add(axesHelper);
 
 // Dimension Display
 const dimensionDiv = document.createElement('div');
-dimensionDiv.id = 'dimension-label';
+dimensionDiv.id = 'dimensions-display';
 dimensionDiv.style.position = 'absolute';
 dimensionDiv.style.top = '20px';
 dimensionDiv.style.left = '20px';

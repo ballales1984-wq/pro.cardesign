@@ -46,7 +46,7 @@ export class BrickAdapter {
 
   _syncFromVoxelEngine() {
     this.bricks.clear();
-    for (const [key, voxel] of this.engine.voxels) {
+    for (const voxel of this.engine.voxelsIterator()) {
       const brick = this._voxelToBrick(voxel);
       this.bricks.set(brick.id, brick);
     }

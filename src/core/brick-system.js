@@ -188,7 +188,24 @@ export class BrickSystem {
             if (!this.isDragging) return;
             const newSize = this.updateResize(e.clientX);
             if (newSize) {
-                const label = document.getElementById('dimension-label');
+                const label = document.getElementById('dimensions-display');
+                if (label) {
+                    label.textContent = this.dimensionsText;
+                    label.style.display = 'inline';
+                }
+            }
+        }
+        
+        canvas.addEventListener('pointerup', () => {
+            this.isDragging = false;
+            const label = document.getElementById('dimensions-display');
+            if (label) label.style.display = 'none';
+            this.stopResize();
+        });
+        
+        canvas.addEventListener('pointerleave', () => {
+            this.isDragging = false;
+            const label = document.getElementById('dimensions-display');
                 if (label) {
                     label.textContent = this.dimensionsText;
                     label.style.display = 'block';
@@ -233,103 +250,84 @@ export class BrickSystem {
     }
 
     _convertExistingVoxels() {
-        // Convert existing voxels to bricks
-        const voxelMap = this.voxelEngine.voxels;
+        // Build voxelMap from the chunk system (voxelEngine.voxels was removed after chunk refactor)
+        const voxelMap = new Map();
+        for (const voxel of this.voxelEngine.voxelsIterator()) {
+            const key = `${voxel.x},${voxel.y},${voxel.z}`;
+            voxelMap.set(key, voxel);
+        }
         const processedPositions = new Set();
-        
-        for (const [key, voxel] of voxelMap.entries()) {
+
+        for (const [key, voxel] of voxelMap) {
             if (processedPositions.has(key)) continue;
-            
-            // Find connected voxels of same material to merge into bricks
+
             const connected = this._findConnectedVoxels(voxel, voxelMap);
-            
+
             if (connected.size === 1) {
-                // Single voxel -> 1x1x1 brick
                 const v = connected.values().next().value;
                 this.createBrickFromVoxel(v);
                 processedPositions.add(key);
             } else {
-                // Group connected voxels into a brick
                 const positions = Array.from(connected.values());
-                const minX = Math.min(...positions.map(v => v.x));
-                const minY = Math.min(...positions.map(v => v.y));
-                const minZ = Math.min(...positions.map(v => v.z));
-                const maxX = Math.max(...positions.map(v => v.x));
-                const maxY = Math.max(...positions.map(v => v.y));
-                const maxZ = Math.max(...positions.map(v => v.z));
-                
-                const width = (maxX - minX + 1) * 1; // 1 unit per voxel
-                const height = (maxY - minY + 1) * 1;
-                const depth = (maxZ - minZ + 1) * 1;
-                
+                const xs = positions.map(v => v.x);
+                const ys = positions.map(v => v.y);
+                const zs = positions.map(v => v.z);
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+                const minY = Math.min(...ys), maxY = Math.max(...ys);
+                const minZ = Math.min(...zs), maxZ = Math.max(...zs);
+
+                const width  = maxX - minX + 1;
+                const height = maxY - minY + 1;
+                const depth  = maxZ - minZ + 1;
+
                 const firstVoxel = positions[0];
-                this.createBrickFromVoxel({
-                    x: minX,
-                    y: minY,
-                    z: minZ
-                });
-                // Actually create with proper size
                 const brick = new Brick(
                     this.nextId++,
                     `Merged_${minX}_${minY}_${minZ}`,
-                    { x: minX, y: minY, z: minZ },
-                    { x: width, y: height, z: depth },
+                    { x: minX * this.SCALE, y: minY * this.SCALE, z: minZ * this.SCALE },
+                    { x: width * this.SCALE, y: height * this.SCALE, z: depth * this.SCALE },
                     firstVoxel.material
                 );
                 this.bricks.set(brick.id, brick);
                 this.updateBrickVisual(brick);
-                
-                // Mark all positions as processed
+
                 for (const v of positions) {
-                    const vKey = `${v.x},${v.y},${v.z}`;
-                    processedPositions.add(vKey);
+                    processedPositions.add(`${v.x},${v.y},${v.z}`);
                 }
             }
         }
     }
 
     _findConnectedVoxels(startVoxel, voxelMap) {
-        const visited = new Set();
+        const visited = new Map();
         const queue = [startVoxel];
         const startKey = `${startVoxel.x},${startVoxel.y},${startVoxel.z}`;
-        visited.add(startKey);
-        
+        visited.set(startKey, startVoxel);
+
         while (queue.length > 0) {
             const current = queue.shift();
-            const currentKey = `${current.x},${current.y},${current.z}`;
-            
-            // Check 6 neighbors
             const neighbors = [
                 { x: current.x + 1, y: current.y, z: current.z },
                 { x: current.x - 1, y: current.y, z: current.z },
                 { x: current.x, y: current.y + 1, z: current.z },
                 { x: current.x, y: current.y - 1, z: current.z },
                 { x: current.x, y: current.y, z: current.z + 1 },
-                { x: current.x, y: current.y, z: current.z - 1 }
+                { x: current.x, y: current.y, z: current.z - 1 },
             ];
-            
-            for (const neighbor of neighbors) {
-                const neighborKey = `${neighbor.x},${neighbor.y},${neighbor.z}`;
-                if (!visited.has(neighborKey)) {
-                    const neighborVoxel = voxelMap.get(neighborKey);
-                    if (neighborVoxel && neighborVoxel.material === current.material) {
-                        visited.add(neighborKey);
-                        queue.push(neighborVoxel);
+
+            for (const n of neighbors) {
+                const nKey = `${n.x},${n.y},${n.z}`;
+                if (!visited.has(nKey)) {
+                    const nVoxel = voxelMap.get(nKey);
+                    if (nVoxel && nVoxel.material === current.material) {
+                        visited.set(nKey, nVoxel);
+                        queue.push(nVoxel);
                     }
                 }
             }
         }
-        
-        // Return the voxels
-        const result = new Map();
-        for (const key of visited) {
-            const [x, y, z] = key.split(',').map(Number);
-            const voxel = voxelMap.get(key);
-            if (voxel) {
-                result.set(key, voxel);
-            }
-        }
-        return result;
+
+        return visited;
     }
 }
 

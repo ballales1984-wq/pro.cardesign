@@ -141,30 +141,30 @@ export class VoxelEngine {
          return map ? map.size : 0;
        }
    
-         _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
-             const matrix = new THREE.Matrix4();
-             matrix.makeScale(scale.x, scale.y, scale.z);
-             matrix.setPosition(new THREE.Vector3(position.x, position.y, position.z));
-             mesh.setMatrixAt(instanceId, matrix);
-             mesh.instanceMatrix.needsUpdate = true;
-         }
-   
-         _applyVoxelScaleToVoxel(voxel, scaleX, scaleY, scaleZ) {
-             // Update voxel data
-             voxel.scale = [scaleX, scaleY, scaleZ];
-   
-             // Update InstancedMesh
-             const materialName = voxel.material;
-             const mesh = this.instancedMeshes.get(materialName);
-             if (mesh) {
-                 const key = this._gridKey({ x: voxel.x, y: voxel.y, z: voxel.z });
-                 const instanceId = this.keyToInstance.get(materialName).get(key);
-                 if (instanceId !== undefined) {
-                     this._setInstanceMatrix(mesh, instanceId, this._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z }), 
-                                            new THREE.Vector3(scaleX, scaleY, scaleZ));
-                 }
-             }
-         }
+        _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
+              const matrix = new THREE.Matrix4();
+              matrix.makeScale(scale.x, scale.y, scale.z);
+              matrix.setPosition(new THREE.Vector3(position.x, position.y, position.z));
+              mesh.setMatrixAt(instanceId, matrix);
+              mesh.instanceMatrix.needsUpdate = true;
+          }
+
+        _applyVoxelScaleToVoxel(voxel, scaleX, scaleY, scaleZ) {
+              // Update voxel data
+              voxel.scale = [scaleX, scaleY, scaleZ];
+
+              // Update InstancedMesh
+              const materialName = voxel.material;
+              const mesh = this.instancedMeshes.get(materialName);
+              if (mesh) {
+                  const key = this._gridKey({ x: voxel.x, y: voxel.y, z: voxel.z });
+                  const instanceId = this.keyToInstance.get(materialName).get(key);
+                  if (instanceId !== undefined) {
+                      this._setInstanceMatrix(mesh, instanceId, this._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z }), 
+                                             new THREE.Vector3(scaleX, scaleY, scaleZ));
+           }
+       }
+      }
    
        // ── Rendering ────────────────────────────────────────────────
    
@@ -536,17 +536,16 @@ export class VoxelEngine {
          return added;
        }
    
-       selectVoxel(x, y, z) {
-         this.selectedVoxel = { x, y, z };
-         const key = this._gridKey({ x, y, z });
-         const voxel = this.voxels.get(key);
-         if (voxel) {
-           this.highlight.position.copy(this._worldPos(voxel));
-           this.highlight.visible = true;
-         }
-         window.dispatchEvent(new CustomEvent('voxel-selected', { detail: voxel || null }));
-         return voxel;
-       }
+   selectVoxel(x, y, z) {
+     this.selectedVoxel = { x, y, z };
+     const voxel = this.getVoxelAt(x, y, z);
+     if (voxel) {
+       this.highlight.position.copy(this._worldPos(voxel));
+       this.highlight.visible = true;
+     }
+     window.dispatchEvent(new CustomEvent('voxel-selected', { detail: voxel || null }));
+     return voxel;
+   }
    
         getVoxelAt(x, y, z) {
           const chunkKey = this._getChunkKey({ x, y, z });
@@ -556,45 +555,58 @@ export class VoxelEngine {
           return chunk.getVoxel(localKey.x, localKey.y, localKey.z);
         }
    
-   getVoxelsInModule(moduleId) {
-     const result = [];
-     for (const chunk of this.chunks.values()) {
-       for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
-         if (voxelData.module === moduleId) {
-           result.push(voxelData);
-         }
+    getVoxelsInModule(moduleId) {
+      const result = [];
+      for (const chunk of this.chunks.values()) {
+        for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
+          if (voxelData.module === moduleId) {
+            result.push(voxelData);
+          }
+        }
+      }
+      return result;
+    }
+
+    *voxelsIterator() {
+      for (const chunk of this.chunks.values()) {
+        for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
+          yield { x, y, z, material: voxelData.material, density: voxelData.density };
+        }
+      }
+    }
+   
+   // ── Internal remove (without history push) ───────────────────
+
+   _removeVoxelSilently(x, y, z) {
+     const chunkKey = this._getChunkKey({ x, y, z });
+     const localKey = this._getLocalKey({ x, y, z });
+     const chunk = this.chunks.get(chunkKey);
+     if (!chunk) return;
+     const voxel = chunk.getVoxel(localKey.x, localKey.y, localKey.z);
+     if (!voxel) return;
+
+     const worldKey = this._gridKey({ x, y, z });
+     const matName = voxel.material;
+     const instMap = this.keyToInstance.get(matName);
+     const idxMap = this.instanceToKey.get(matName);
+     const mesh = this.instancedMeshes.get(matName);
+
+     if (instMap && idxMap && mesh) {
+       const instanceId = instMap.get(worldKey);
+       if (instanceId !== undefined) {
+         const hiddenMatrix = new THREE.Matrix4();
+         hiddenMatrix.makeScale(0, 0, 0);
+         mesh.setMatrixAt(instanceId, hiddenMatrix);
+         mesh.instanceMatrix.needsUpdate = true;
+
+         instMap.delete(worldKey);
+         idxMap[instanceId] = null;
+         this.freeIndices.get(matName)?.push(instanceId);
        }
      }
-     return result;
+     chunk.removeVoxel(localKey.x, localKey.y, localKey.z);
+     // Optional: if chunk becomes empty, we could remove it to save memory, but not required.
    }
-   
-       // ── Internal remove (without history push) ───────────────────
-   
-       _removeVoxelSilently(x, y, z) {
-         const key = this._gridKey({ x, y, z });
-         const voxel = this.voxels.get(key);
-         if (!voxel) return;
-   
-         const matName = voxel.material;
-         const instMap = this.keyToInstance.get(matName);
-         const idxMap = this.instanceToKey.get(matName);
-         const mesh = this.instancedMeshes.get(matName);
-   
-         if (instMap && idxMap && mesh) {
-           const instanceId = instMap.get(key);
-           if (instanceId !== undefined) {
-             const hiddenMatrix = new THREE.Matrix4();
-             hiddenMatrix.makeScale(0, 0, 0);
-             mesh.setMatrixAt(instanceId, hiddenMatrix);
-             mesh.instanceMatrix.needsUpdate = true;
-   
-             instMap.delete(key);
-             idxMap[instanceId] = null;
-             this.freeIndices.get(matName)?.push(instanceId);
-           }
-         }
-         this.voxels.delete(key);
-       }
    
        // ── Undo / Redo ──────────────────────────────────────────────
    
@@ -801,16 +813,14 @@ export class VoxelEngine {
      }
    }
    
-       update(deltaTime) {
-         if (this.ghost && this.ghost.visible) {
-           this.ghost.material.opacity = 0.2 + Math.sin(performance.now() * 0.005) * 0.1;
+         update(deltaTime) {
+           if (this.ghost && this.ghost.visible) {
+             this.ghost.material.opacity = 0.2 + Math.sin(performance.now() * 0.005) * 0.1;
+           }
          }
-       }
-   
-       // Chunk class definition
-   }
+    }
 
-   class Chunk {
+    class Chunk {
      constructor(chunkX, chunkY, chunkZ, chunkSize) {
        this.chunkX = chunkX;
        this.chunkY = chunkY;

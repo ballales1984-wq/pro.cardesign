@@ -17,8 +17,8 @@ export class MeshExporter {
    * Usa il metodo "cubes" (6 facce per voxel visibile) o "marching cubes"
    */
 voxelToGeometry(voxels, voxelSize = 1.0, smooth = false) {
-    // Supporta sia Map (VoxelEngine.voxels) che Array
-    const voxelArray = voxels instanceof Map ? Array.from(voxels.values()) : voxels;
+    // Accepts Array of voxel objects; Map/Iterator callers must call .values() or .voxelsIterator() first
+    const voxelArray = Array.isArray(voxels) ? voxels : Array.from(voxels);
     if (smooth) {
       return this._marchingCubes(voxelArray, voxelSize);
     }
