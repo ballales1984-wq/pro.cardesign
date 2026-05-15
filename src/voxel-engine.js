@@ -5,62 +5,67 @@
  * anziché uno per voxel. Miglioramento: ~10-50x con scene grandi.
  */
 import * as THREE from 'three';
+import { ScalingTool } from './core/scaling-tool.js';
 
 export class VoxelEngine {
-  constructor(scene, materialDB, moduleSystem, camera, renderer, controls) {
-    this.scene = scene;
-    this.materialDB = materialDB;
-    this.moduleSystem = moduleSystem;
-    this.camera = camera;
-    this.renderer = renderer;
-    this.controls = controls;
+    constructor(scene, materialDB, moduleSystem, camera, renderer, controls) {
+        this.scene = scene;
+        this.materialDB = materialDB;
+        this.moduleSystem = moduleSystem;
+        this.camera = camera;
+        this.renderer = renderer;
+        this.controls = controls;
 
-    this.voxels = new Map();
+        this.voxels = new Map();
 
-    // Instanced rendering: un InstancedMesh per materiale
-    this.instancedMeshes = new Map();  // materialName -> THREE.InstancedMesh
-    this.instanceToKey = new Map();    // materialName -> [voxelKey[]] indexed by instanceId
-    this.keyToInstance = new Map();    // materialName -> Map(voxelKey -> instanceId)
-    this.freeIndices = new Map();      // materialName -> [liberi instanceId]
-    this.maxInstances = 200000;        // max per materiale
+        // Instanced rendering: un InstancedMesh per materiale
+        this.instancedMeshes = new Map();  // materialName -> THREE.InstancedMesh
+        this.instanceToKey = new Map();    // materialName -> [voxelKey[]] indexed by instanceId
+        this.keyToInstance = new Map();    // materialName -> Map(voxelKey -> instanceId)
+        this.freeIndices = new Map();      // materialName -> [liberi instanceId]
+        this.maxInstances = 200000;        // max per materiale
 
-    this.voxelGroup = new THREE.Group();
-    this.scene.add(this.voxelGroup);
+        this.voxelGroup = new THREE.Group();
+        this.scene.add(this.voxelGroup);
 
-    this.ghost = null;
-    this._createGhost();
+        this.ghost = null;
+        this._createGhost();
 
-    this.highlight = null;
-    this._createHighlight();
+        this.highlight = null;
+        this._createHighlight();
 
-    this.sharedGeometry = new THREE.BoxGeometry(1.0, 1.0, 1.0);
+        this.sharedGeometry = new THREE.BoxGeometry(1.0, 1.0, 1.0);
 
-    this._createAxisLabels();
+        this._createAxisLabels();
 
-    // Ground plane invisibile per il raycast (primo voxel)
-    const groundGeo = new THREE.PlaneGeometry(200, 200);
-    groundGeo.rotateX(-Math.PI / 2);
-    const groundMat = new THREE.MeshBasicMaterial({ visible: false });
-    this.groundPlane = new THREE.Mesh(groundGeo, groundMat);
-    this.groundPlane.frustumCulled = false; // always test in raycasting
-    this.scene.add(this.groundPlane);
+        // Ground plane invisibile per il raycast (primo voxel)
+        const groundGeo = new THREE.PlaneGeometry(200, 200);
+        groundGeo.rotateX(-Math.PI / 2);
+        const groundMat = new THREE.MeshBasicMaterial({ visible: false });
+        this.groundPlane = new THREE.Mesh(groundGeo, groundMat);
+        this.groundPlane.frustumCulled = false; // always test in raycasting
+        this.scene.add(this.groundPlane);
 
-    this.raycaster = new THREE.Raycaster();
-    this.pointer = new THREE.Vector2();
+        this.raycaster = new THREE.Raycaster();
+        this.pointer = new THREE.Vector2();
 
-    this.selectedVoxel = null;
-    this.activeMaterial = 'steel';
-    this.activeModule = null;
-    this.activeTool = 'add';
-    this.voxelSize = 1.0;
+        this.selectedVoxel = null;
+        this.activeMaterial = 'steel';
+        this.activeModule = null;
+        this.activeTool = 'add';
+        this.voxelSize = 1.0;
 
-    this._history = [];
-    this._redoStack = [];
-    this._maxHistory = 50;
-    this._maxRedo = 50;
+        this._history = [];
+        this._redoStack = [];
+        this._maxHistory = 50;
+        this._maxRedo = 50;
 
-    this._setupEvents();
-  }
+        this._setupEvents();
+        this._setupScalePanelListeners();
+        
+        // Inizializza ScalingTool
+        this.scalingTool = new ScalingTool(this, this.scene, this.camera, this.renderer);
+      }
 
   // ── InstancedMesh management ──────────────────────────────────
 
@@ -106,12 +111,30 @@ export class VoxelEngine {
     return map ? map.size : 0;
   }
 
-  _setInstanceMatrix(mesh, instanceId, position) {
-    const matrix = new THREE.Matrix4();
-    matrix.makeTranslation(position.x, position.y, position.z);
-    mesh.setMatrixAt(instanceId, matrix);
-    mesh.instanceMatrix.needsUpdate = true;
-  }
+    _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
+        const matrix = new THREE.Matrix4();
+        matrix.makeScale(scale.x, scale.y, scale.z);
+        matrix.setPosition(new THREE.Vector3(position.x, position.y, position.z));
+        mesh.setMatrixAt(instanceId, matrix);
+        mesh.instanceMatrix.needsUpdate = true;
+    }
+
+    _applyVoxelScaleToVoxel(voxel, scaleX, scaleY, scaleZ) {
+        // Update voxel data
+        voxel.scale = [scaleX, scaleY, scaleZ];
+
+        // Update InstancedMesh
+        const materialName = voxel.material;
+        const mesh = this.instancedMeshes.get(materialName);
+        if (mesh) {
+            const key = this._gridKey({ x: voxel.x, y: voxel.y, z: voxel.z });
+            const instanceId = this.keyToInstance.get(materialName).get(key);
+            if (instanceId !== undefined) {
+                this._setInstanceMatrix(mesh, instanceId, this._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z }), 
+                                       new THREE.Vector3(scaleX, scaleY, scaleZ));
+            }
+        }
+    }
 
   // ── Rendering ────────────────────────────────────────────────
 
@@ -173,13 +196,83 @@ export class VoxelEngine {
     this.scene.add(this.highlight);
   }
 
-  _setupEvents() {
-    const canvas = this.renderer.domElement;
-    canvas.addEventListener('pointermove', (e) => this._onPointerMove(e));
-    canvas.addEventListener('click', (e) => this._onPointerClick(e));
-    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    window.addEventListener('keydown', (e) => this._onKeyDown(e));
-  }
+    _setupEvents() {
+        const canvas = this.renderer.domElement;
+        canvas.addEventListener('pointermove', (e) => this._onPointerMove(e));
+        canvas.addEventListener('click', (e) => this._onPointerClick(e));
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        window.addEventListener('keydown', (e) => this._onKeyDown(e));
+    }
+
+    _setupScalePanelListeners() {
+        const self = this;
+        
+        // Apply scale button
+        document.getElementById('apply-scale').addEventListener('click', function() {
+            if (!self.selectedVoxel) {
+                self._notify('Seleziona un voxel prima di applicare la scala', 'warn');
+                return;
+            }
+            
+            const scaleX = parseFloat(document.getElementById('scale-x').value) || 1.0;
+            const scaleY = parseFloat(document.getElementById('scale-y').value) || 1.0;
+            const scaleZ = parseFloat(document.getElementById('scale-z').value) || 1.0;
+            
+            self.scaleSelectedVoxel(scaleX, scaleY, scaleZ);
+        });
+        
+        // Update scale inputs when voxel is selected
+        window.addEventListener('voxel-selected', function(e) {
+            const voxel = e.detail;
+            if (voxel) {
+                document.getElementById('scale-x').value = voxel.scale ? voxel.scale[0] : 1;
+                document.getElementById('scale-y').value = voxel.scale ? voxel.scale[1] : 1;
+                document.getElementById('scale-z').value = voxel.scale ? voxel.scale[2] : 1;
+                document.getElementById('scale-panel').style.display = 'block';
+            } else {
+                document.getElementById('scale-panel').style.display = 'none';
+            }
+        });
+    }
+    
+    scaleSelectedVoxel(scaleX, scaleY, scaleZ) {
+        if (!this.selectedVoxel) return false;
+        
+        const voxel = this.getVoxelAt(this.selectedVoxel.x, this.selectedVoxel.y, this.selectedVoxel.z);
+        if (!voxel) return false;
+        
+        // Store old values for undo
+        const oldScale = voxel.scale ? [...voxel.scale] : [1, 1, 1];
+        
+        // Apply new scale
+        voxel.scale = [scaleX, scaleY, scaleZ];
+        
+        // Update the InstancedMesh matrix
+        const materialName = voxel.material;
+        const mesh = this.instancedMeshes.get(materialName);
+        if (mesh) {
+            const key = this._gridKey(this.selectedVoxel);
+            const instanceId = this.keyToInstance.get(materialName).get(key);
+            if (instanceId !== undefined) {
+                this._setInstanceMatrix(mesh, instanceId, this._worldPos(this.selectedVoxel), 
+                                       new THREE.Vector3(scaleX, scaleY, scaleZ));
+            }
+        }
+        
+        // Push to history for undo/redo
+        this._pushHistory({ 
+            type: 'scale', 
+            x: this.selectedVoxel.x, 
+            y: this.selectedVoxel.y, 
+            z: this.selectedVoxel.z,
+            oldScale: oldScale,
+            newScale: [scaleX, scaleY, scaleZ]
+        });
+        
+        this._onVoxelChanged();
+        this._notify(`Voxel scalato: ${scaleX}x ${scaleY}y ${scaleZ}z`, 'success');
+        return true;
+    }
 
   _gridPos(worldPos) {
     return {
@@ -281,6 +374,11 @@ export class VoxelEngine {
     if (event.button !== 0) return;
     const hit = this._raycast(event);
     if (!hit) return;
+    
+    // In scaling mode, let the scaling tool handle click-selection
+    if (this.activeTool === 'scaling') {
+      return; // Scaling tool gestisce il click direttamente
+    }
 
     if (this.activeTool === 'add') {
       const pos = {
@@ -303,6 +401,8 @@ export class VoxelEngine {
     const key = event.key.toLowerCase();
     if (key === 'v') {
       this.setTool('select');
+    } else if (key === 's') {
+      this.setTool('scaling');
     } else if (key === 'a') {
       this.setTool('add');
     } else if (key === 'r') {
@@ -336,39 +436,40 @@ export class VoxelEngine {
     return this._addVoxelInternal(pos, materialName, moduleId);
   }
 
-  _addVoxelInternal(pos, materialName, moduleId) {
-    const material = this.materialDB.get(materialName);
-    if (!material) return false;
+    _addVoxelInternal(pos, materialName, moduleId) {
+        const material = this.materialDB.get(materialName);
+        if (!material) return false;
 
-    const key = this._gridKey(pos);
-    const voxelData = {
-      x: pos.x, y: pos.y, z: pos.z,
-      material: materialName,
-      module: moduleId,
-      density: material.density,
-      temperature: 293,
-      damage: 0,
-    };
-    this.voxels.set(key, voxelData);
+        const key = this._gridKey(pos);
+        const voxelData = {
+          x: pos.x, y: pos.y, z: pos.z,
+          material: materialName,
+          module: moduleId,
+          density: material.density,
+          temperature: 293,
+          damage: 0,
+          scale: [1, 1, 1] // Default scale: 1x1x1
+        };
+        this.voxels.set(key, voxelData);
 
-    const mesh = this._getInstancedMesh(materialName);
-    if (!mesh) return false;
+        const mesh = this._getInstancedMesh(materialName);
+        if (!mesh) return false;
 
-    const instanceId = this._getInstanceId(materialName);
-    this._setInstanceMatrix(mesh, instanceId, this._worldPos(pos));
+        const instanceId = this._getInstanceId(materialName);
+        this._setInstanceMatrix(mesh, instanceId, this._worldPos(pos), voxelData.scale);
 
-    this.keyToInstance.get(materialName).set(key, instanceId);
-    this.instanceToKey.get(materialName)[instanceId] = key;
+        this.keyToInstance.get(materialName).set(key, instanceId);
+        this.instanceToKey.get(materialName)[instanceId] = key;
 
-    // Update instance count to ensure voxel is rendered
-    if (instanceId + 1 > mesh.count) {
-      mesh.count = instanceId + 1;
-    }
+        // Update instance count to ensure voxel is rendered
+        if (instanceId + 1 > mesh.count) {
+          mesh.count = instanceId + 1;
+        }
 
-    this._pushHistory({ type: 'add', x: pos.x, y: pos.y, z: pos.z, material: materialName, module: moduleId });
-    this._onVoxelChanged();
-    return true;
-  }
+        this._pushHistory({ type: 'add', x: pos.x, y: pos.y, z: pos.z, material: materialName, module: moduleId });
+        this._onVoxelChanged();
+        return true;
+      }
 
   removeVoxel(x, y, z) {
     const key = this._gridKey({ x, y, z });
@@ -474,9 +575,19 @@ export class VoxelEngine {
 
   setTool(tool) {
     this.activeTool = tool;
+    
+    // Activate/deactivate scaling tool
+    if (this.scalingTool) {
+      if (tool === 'scaling') {
+        this.scalingTool.activate();
+      } else {
+        this.scalingTool.deactivate();
+      }
+    }
+    
     const btns = document.querySelectorAll('.tool');
     for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-    const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill' };
+    const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling' };
     const el = document.getElementById(btnMap[tool]);
     if (el) el.classList.add('active');
     window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));
@@ -493,29 +604,41 @@ export class VoxelEngine {
     if (this._redoStack.length > this._maxRedo) this._redoStack.shift();
   }
 
-  undo() {
-    if (this._history.length === 0) return;
-    const action = this._history.pop();
-    this._pushRedo(action);
-    if (action.type === 'add') {
-      this._removeVoxelSilently(action.x, action.y, action.z);
-    } else if (action.type === 'remove') {
-      this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
+    undo() {
+        if (this._history.length === 0) return;
+        const action = this._history.pop();
+        this._pushRedo(action);
+        if (action.type === 'add') {
+            this._removeVoxelSilently(action.x, action.y, action.z);
+        } else if (action.type === 'remove') {
+            this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
+        } else if (action.type === 'scale') {
+            // Revert to old scale
+            const voxel = this.getVoxelAt(action.x, action.y, action.z);
+            if (voxel) {
+                this._applyVoxelScaleToVoxel(voxel, action.oldScale[0], action.oldScale[1], action.oldScale[2]);
+            }
+        }
+        this._onVoxelChanged();
     }
-    this._onVoxelChanged();
-  }
 
-  redo() {
-    if (this._redoStack.length === 0) return;
-    const action = this._redoStack.pop();
-    this._pushHistory(action);
-    if (action.type === 'add') {
-      this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
-    } else if (action.type === 'remove') {
-      this._removeVoxelSilently(action.x, action.y, action.z);
+    redo() {
+        if (this._redoStack.length === 0) return;
+        const action = this._redoStack.pop();
+        this._pushHistory(action);
+        if (action.type === 'add') {
+            this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
+        } else if (action.type === 'remove') {
+            this._removeVoxelSilently(action.x, action.y, action.z);
+        } else if (action.type === 'scale') {
+            // Apply the new scale again
+            const voxel = this.getVoxelAt(action.x, action.y, action.z);
+            if (voxel) {
+                this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2]);
+            }
+        }
+        this._onVoxelChanged();
     }
-    this._onVoxelChanged();
-  }
 
   clearHistory() {
     this._history = [];
@@ -525,10 +648,23 @@ export class VoxelEngine {
   // ── Persistenza ──────────────────────────────────────────────
 
   toJSON() {
+    const voxels = [];
+    for (const [key, voxel] of this.voxels) {
+      voxels.push({
+        x: voxel.x,
+        y: voxel.y,
+        z: voxel.z,
+        material: voxel.material,
+        module: voxel.module,
+        scale: voxel.scale || [1, 1, 1],
+        temperature: voxel.temperature,
+        damage: voxel.damage
+      });
+    }
     return {
-      voxels: Array.from(this.voxels.values()),
+      voxels,
       modules: this.moduleSystem.toJSON(),
-      version: '0.2.0',
+      version: '0.3.0'
     };
   }
 
@@ -556,7 +692,28 @@ export class VoxelEngine {
       }
       const key = this._gridKey(v);
       if (this.voxels.has(key)) continue;
-      this._addVoxelInternal({ x: v.x, y: v.y, z: v.z }, v.material, v.module);
+      
+      const voxelData = this._addVoxelInternal({ x: v.x, y: v.y, z: v.z }, v.material, v.module);
+      
+      // Restore scale if present
+      if (voxelData && v.scale) {
+        voxelData.scale = v.scale;
+        const materialName = voxelData.material;
+        const mesh = this.instancedMeshes.get(materialName);
+        if (mesh) {
+          const instMap = this.keyToInstance.get(materialName);
+          const instanceId = instMap?.get(key);
+          if (instanceId !== undefined) {
+            this._setInstanceMatrix(
+              mesh, 
+              instanceId, 
+              this._worldPos({ x: v.x, y: v.y, z: v.z }),
+              new THREE.Vector3(v.scale[0], v.scale[1], v.scale[2])
+            );
+          }
+        }
+      }
+      
       loaded++;
     }
     this._onVoxelChanged();

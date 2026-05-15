@@ -19,6 +19,7 @@
         <button id="tool-add" class="tool" title="Aggiungi Voxel (A)"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNOSAydjJoMHYyeiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik03IDB2Mmgydi16IiBmaWxsPSIjZmZmIi8+PC9zdmc+" alt=""/> Aggiungi</button>
         <button id="tool-remove" class="tool" title="Rimuovi Voxel (R)"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNNCA4aDd2LTEiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOCA3djdoLTJ2LTNIMHYzeiIgcGxhY2VUcmFuc2Zvcm09InJvdGF0ZSgxODApIiBmaWxsPSIjZmZmIi8+PC9zdmc+" alt=""/> Rimuovi</button>
         <button id="tool-fill" class="tool" title="Riempimento (F)"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNNSAwaDYgNkg1eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==" alt=""/> Fill</button>
+        <button id="tool-scaling" class="tool" title="Scaling"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNMyAwaDR2MUMzIDBWM0gzVjBoNHYxYzNoLTJ2LTRoMnYtNmg4djJ6bTAgM2gtMnYtMmg2djJIMnptMCAzaC0ydi0yaDZ2Mmgyem0wIDNoLTJ2LTJoNHYyaC0yeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==" alt=""/> Scala</button>
         <!-- Input livello fill -->
         <div class="fill-input-wrap" title="Livello Y per Fill">
           <input type="number" id="fill-y-prompt" value="0" min="-20" max="20" step="1" />
@@ -31,13 +32,35 @@
         <button id="btn-save" title="Salva progetto">💾 Salva</button>
         <button id="btn-load" title="Carica progetto">📂 Carica</button>
         <button id="btn-export" title="Esporta mesh">📦 Esporta</button>
+        <button id="btn-import" title="Importa STL/OBJ">📥 Importa</button>
         <button id="btn-sim" title="Calcola fisica">⚡ Simula</button>
         <button id="btn-reset-cam" title="Reset camera">🎯 Reset Cam</button>
         <button id="btn-clear" title="Pulisci tutto">🗑️ Pulisci</button>
-      </div>
-    </header>
+       </div>
+     </header>
 
-    <!-- Pannello laterale -->
+     <!-- Scale Panel (initially hidden) -->
+     <div id="scale-panel" class="panel" style="display: none; padding: 10px; border-top: 1px solid var(--border);">
+       <div class="panel-header">
+         ⚖️ Scala Voxel <span class="arrow">▼</span>
+       </div>
+       <div class="panel-body" style="padding: 8px;">
+         <div style="margin-bottom: 6px;">
+           <label>Scala X: <input type="number" id="scale-x" step="0.1" value="1.0"></label>
+         </div>
+         <div style="margin-bottom: 6px;">
+           <label>Scala Y: <input type="number" id="scale-y" step="0.1" value="1.0"></label>
+         </div>
+         <div style="margin-bottom: 6px;">
+           <label>Scala Z: <input type="number" id="scale-z" step="0.1" value="1.0"></label>
+         </div>
+         <div style="text-align: right;">
+           <button id="apply-scale" class="btn-primary" style="padding: 5px 10px; font-size: 11px;">Applica Scala</button>
+         </div>
+       </div>
+     </div>
+
+     <!-- Pannello laterale -->
     <aside id="sidebar">
       <!-- Materiali -->
       <div class="panel" id="panel-materials">
@@ -98,14 +121,39 @@
           </div>
         </div>
       </div>
+
+      <!-- Component Library -->
+      <div class="panel" id="panel-library">
+        <div class="panel-header" data-toggle="library">
+          🧩 Libreria <span class="arrow">▼</span>
+        </div>
+        <div class="panel-body" id="library-body">
+          <select id="library-category" class="prop-input" style="width: 100%; margin-bottom: 8px; padding: 4px;">
+            <option value="all">Tutte le categorie</option>
+            <option value="wheels">⚫ Ruote</option>
+            <option value="frame">🔧 Telaio</option>
+            <option value="interior">🪑 Interni</option>
+            <option value="body">🚗 Carrozzeria</option>
+            <option value="misc">📦 Altro</option>
+          </select>
+          <div id="component-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px;"></div>
+        </div>
+      </div>
+
+      <!-- Selected Component Panel -->
+      <div class="panel" id="panel-component-selected" style="display: none;">
+        <div class="panel-header">Modifica Componente <span class="close" onclick="this.parentElement.style.display='none'">✕</span></div>
+        <div class="panel-body" id="component-editor" style="padding: 8px;"></div>
+      </div>
     </aside>
 
     <!-- Viewport 3D -->
     <main id="viewport">
       <canvas id="gl-canvas"></canvas>
-      <div id="viewport-info">
+        <div id="viewport-info">
         <span id="voxel-count">Voxel: 0</span>
         <span id="fps-counter">FPS: --</span>
+        <span id="dimensions-display" style="margin-left: 10px; color: #00d2ff; font-family: monospace;"></span>
         <span id="tool-hint" style="margin-left: auto;">Strumento: Aggiungi (A)</span>
       </div>
     </main>

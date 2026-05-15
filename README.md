@@ -1,51 +1,63 @@
-# pro.cardesign Desktop Application
+# Pro.Cardesign - Voxel CAD for Vehicle Design
 
-A desktop application for the pro.cardesign design system built with Electron.
+A voxel-based CAD application for designing vehicles (bikes, cars, drones) with real-world measurements in millimeters.
 
 ## Features
 
-- Cross-platform desktop application (Windows, macOS, Linux)
-- Simple interface showcasing the design system
-- Built with Electron for native desktop capabilities
+- **Brick System**: Create solids with real mm dimensions (e.g., 200×20×20mm bars)
+- **Interactive Scaling**: Click and drag faces to resize bricks with live dimension display
+- **Material System**: Steel, Aluminum, Titanium, Carbon Fiber, Rubber with physical properties
+- **Modular Organization**: Group bricks into functional modules (frame, body, etc.)
+- **Physics Calculations**: Mass, center of mass, and volume calculations
+- **Import/Export**: STL/OBJ support for 3D printing and manufacturing
 
 ## Getting Started
 
 ### Prerequisites
-
-- [Node.js](https://nodejs.org/) (version 14 or higher)
-- npm (comes with Node.js)
+- [Node.js](https://nodejs.org/) (v14+)
+- npm
 
 ### Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 ### Development
-
-To start the application in development mode:
 ```bash
 npm run dev
 ```
 
-### Packaging
-
-To package the application for distribution:
-```bash
-npm run package
-```
-
-This will create platform-specific installers in the `dist/` directory.
+This starts Vite dev server and Electron.
 
 ## Project Structure
 
-- `main.js` - Main Electron process
-- `preload.js` - Preload script for secure communication between main and renderer processes
-- `index.html` - Main application window
-- `package.json` - Project metadata and dependencies
+```
+pro.cardesign/
+├── core/                    # Python core (future physics, analysis)
+│   └── brick.py            # Brick dataclass with mm measurements
+├── src/                     # JavaScript frontend
+│   ├── voxel-engine.js     # Core Three.js rendering
+│   ├── material-system.js  # Material database with properties
+│   ├── module-system.js    # Hierarchical module organization
+│   └── core/
+│       └── brick-system.js # Brick management with real dimensions
+├── voxel_editor.py         # Python voxel engine (legacy/analysis)
+└── index.html              # Main UI
+```
 
-## License
+## Usage
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Press `A` to add voxels/bricks
+2. Press `V` to select and inspect
+3. Press `R` to remove
+4. Use mouse to navigate (orbit), scroll to zoom
+5. Select materials from sidebar
+
+## Development Roadmap
+
+- [ ] Phase 1: Brick System with Real-World Measurements
+- [ ] Phase 2: Interactive Scaling Tool
+- [ ] Phase 3: Component Library (wheels, tubes)
+- [ ] Phase 4: Project Management
+- [ ] Phase 5: Import & Real Part Verification
+- [ ] Phase 6: Aerodynamics Visualization

@@ -3,6 +3,9 @@
  * Gestisce toolbar, pannelli laterali, e interazione
  */
 
+import { ComponentLibrary } from './core/component-library.js';
+import { ScalingTool } from './core/scaling-tool.js';
+
 export class UI {
   constructor(opts) {
     this.voxelEngine = opts.voxelEngine;
@@ -22,6 +25,7 @@ export class UI {
     this._populateMaterials();
     this._populateModules();
     this._subscribeEvents();
+    this._setupLibrary();
     this._addDemoVoxels();
   }
 
@@ -51,6 +55,7 @@ export class UI {
     document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
 
     document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
+    document.getElementById('btn-import').addEventListener('click', function() { self._openImportModal(); });
     document.getElementById('btn-sim').addEventListener('click', function() { self._runSimulation(); });
     document.getElementById('btn-clear').addEventListener('click', function() { self._confirmClear(); });
     document.getElementById('btn-undo').addEventListener('click', function() { self.voxelEngine.undo(); self._refreshProperties(); });
@@ -271,6 +276,18 @@ export class UI {
 
     var mat = this.materialDB.get(voxel.material);
     var matInfo = '';
+    
+    // Dimension display (1 voxel = 1mm)
+    var dimsHtml = '<hr style="border-color: var(--border); margin: 8px 0;"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">📏 Dimensioni (mm)</div>' +
+      '<div class="prop-row"><span class="prop-label">Posizione</span><span class="prop-value">' + voxel.x + ', ' + voxel.y + ', ' + voxel.z + '</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Volume voxel</span><span class="prop-value">1 mm³</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Materiale</span><span class="prop-value">' + (mat ? mat.label : voxel.material) + '</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Densita</span><span class="prop-value">' + (mat ? mat.density : 'N/A') + ' kg/m3</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Massa voxel</span><span class="prop-value">' + this.physics.voxelMass(voxel).toFixed(4) + ' kg</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Peso</span><span class="prop-value">' + this.physics.voxelWeight(voxel).toFixed(4) + ' N</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Modulo</span><span class="prop-value">' + (voxel.module || 'Nessuno') + '</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Temperatura</span><span class="prop-value">' + voxel.temperature + ' K</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Danno</span><span class="prop-value">' + (voxel.damage * 100).toFixed(1) + '%</span></div>';
     if (mat) {
       matInfo = '<div class="prop-row"><span class="prop-label">E (Young)</span><span class="prop-value">' + (mat.youngsModulus / 1e9).toFixed(1) + ' GPa</span></div>' +
         '<div class="prop-row"><span class="prop-label">Sigma max</span><span class="prop-value">' + (mat.tensileStrength / 1e6).toFixed(0) + ' MPa</span></div>' +
@@ -279,14 +296,7 @@ export class UI {
         '<div class="prop-row"><span class="prop-label">Riciclabile</span><span class="prop-value">' + (mat.recyclable ? '✅' : '❌') + '</span></div>';
     }
 
-    container.innerHTML = '<div class="prop-row"><span class="prop-label">Materiale</span><span class="prop-value">' + (mat ? mat.label : voxel.material) + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Densita</span><span class="prop-value">' + (mat ? mat.density : 'N/A') + ' kg/m3</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Massa voxel</span><span class="prop-value">' + this.physics.voxelMass(voxel).toFixed(4) + ' kg</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Peso</span><span class="prop-value">' + this.physics.voxelWeight(voxel).toFixed(4) + ' N</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Modulo</span><span class="prop-value">' + (voxel.module || 'Nessuno') + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Temperatura</span><span class="prop-value">' + voxel.temperature + ' K</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Danno</span><span class="prop-value">' + (voxel.damage * 100).toFixed(1) + '%</span></div>' +
-      matInfo;
+    container.innerHTML = dimsHtml + matInfo;
   }
 
   _refreshProperties() {
@@ -494,4 +504,166 @@ export class UI {
     console.log('%c◆ VoxelCAD UI pronto. Strumenti: V=Seleziona A=Aggiungi R=Rimuovi F=Fill', 'color: #4caf50');
     this._notify('VoxelCAD pronto - Demo caricato', 'success');
   }
+
+  // ── Component Library ───────────────────────────────────────────────
+  _setupLibrary() {
+    const self = this;
+    this.componentLibrary = new ComponentLibrary();
+    this._currentEditingComponent = null;
+
+    // Category filter
+    document.getElementById('library-category').addEventListener('change', function() {
+      self._populateComponentList(this.value);
+    });
+
+    this._populateComponentList('all');
+  }
+
+  _populateComponentList(category) {
+    const listEl = document.getElementById('component-list');
+    listEl.innerHTML = '';
+
+    const components = category === 'all'
+      ? this.componentLibrary.getAll()
+      : this.componentLibrary.getByCategory(category);
+
+    components.forEach(comp => {
+      const item = document.createElement('div');
+      item.className = 'component-item';
+      item.style.cssText = 'padding:8px; margin:4px; background:var(--surface); border:1px solid var(--border); border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:8px;';
+      item.innerHTML = `
+        <span style="font-size:18px;">${comp.icon}</span>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:12px;">${comp.name}</div>
+          <div style="font-size:10px; color:var(--text-dim);">${comp.description || ''}</div>
+        </div>
+      `;
+
+      item.addEventListener('click', () => this._showComponentEditor(comp));
+      listEl.appendChild(item);
+    });
+  }
+
+  _showComponentEditor(comp) {
+    this._currentEditingComponent = comp;
+
+    const editor = document.getElementById('component-editor');
+    const panel = document.getElementById('panel-component-selected');
+
+    // Build parameter controls
+    const paramsHtml = Object.entries(comp.parameters).map(([key, spec]) => `
+      <div style="margin-bottom:6px;">
+        <label style="font-size:10px; color:var(--text-dim); display:block; margin-bottom:2px;">${key}</label>
+        <input type="range" min="${spec.min}" max="${spec.max}" step="0.1" value="${spec.value}"
+               id="param-${key}"
+               style="width:100%;"
+               oninput="this.nextElementSibling.textContent = this.value + '${spec.unit || ''}'">
+        <span style="font-size:11px; color:var(--accent);">${spec.value}${spec.unit || ''}</span>
+      </div>
+    `).join('');
+
+    editor.innerHTML = `
+      <div style="margin-bottom:8px;">
+        <div style="font-size:14px; font-weight:600;">${comp.icon} ${comp.name}</div>
+        <div style="font-size:10px; color:var(--text-dim); margin-bottom:6px;">${comp.description}</div>
+      </div>
+      ${paramsHtml}
+      <hr style="border-color:var(--border); margin:8px 0;">
+      <div style="display:flex; gap:4px;">
+        <button id="btn-add-component" class="btn-primary" style="flex:1; padding:6px; font-size:11px; border:none; border-radius:4px; color:#fff; background:var(--accent); cursor:pointer;">➕ Aggiungi</button>
+        <button id="btn-reset-component" class="btn-secondary" style="flex:1; padding:6px; font-size:11px; border:none; border-radius:4px; color:var(--text); background:var(--hover); cursor:pointer;">Reset</button>
+      </div>
+    `;
+
+    panel.style.display = 'block';
+
+    // Button handlers
+    document.getElementById('btn-add-component').onclick = () => this._addComponentToScene(comp);
+    document.getElementById('btn-reset-component').onclick = () => this._showComponentEditor(comp);
+  }
+
+  _addComponentToScene(comp) {
+    // Read current parameter values from sliders
+    const params = {};
+    for (const key of Object.keys(comp.parameters)) {
+      const input = document.getElementById(`param-${key}`);
+      if (input) params[key] = parseFloat(input.value);
+    }
+
+    // Generate voxels based on component type
+    let voxels = [];
+
+    if (comp.type === 'wheel') {
+      voxels = this._createWheelVoxels(params);
+    } else if (comp.type === 'tube') {
+      voxels = this._createTubeVoxels(params);
+    } else {
+      this._notify('Tipo componente non ancora supportato', 'warn');
+      return;
+    }
+
+    // Add voxels to scene
+    for (const v of voxels) {
+      this.voxelEngine.addVoxel(v, comp.type === 'wheel' ? 'rubber' : 'aluminum');
+    }
+
+    this._notify(`Aggiunto ${comp.name} (${voxels.length} voxel)`, 'success');
+    this.voxelEngine._onVoxelChanged();
+  }
+
+  _createWheelVoxels(params) {
+    const rOuter = Math.round(params.outer_radius / 2);
+    const rInner = Math.round(params.inner_radius / 2);
+    const width = Math.round(params.width);
+    const voxels = [];
+
+    // Outer ring (pneumatico)
+    for (let x = -rOuter; x <= rOuter; x++) {
+      for (let z = -rOuter; z <= rOuter; z++) {
+        const dist = Math.sqrt(x*x + z*z);
+        if (dist <= rOuter && dist >= rOuter - 2) {
+          for (let y = 0; y < width; y++) {
+            voxels.push({ x, y, z });
+          }
+        }
+      }
+    }
+
+    // Inner ring (cerchio)
+    for (let x = -rInner; x <= rInner; x++) {
+      for (let z = -rInner; z <= rInner; z++) {
+        const dist = Math.sqrt(x*x + z*z);
+        if (dist <= rInner && dist >= rInner - 2) {
+          for (let y = 0; y < width; y++) {
+            voxels.push({ x, y, z });
+          }
+        }
+      }
+    }
+
+    return voxels;
+  }
+
+  _createTubeVoxels(params) {
+    const length = Math.round(params.length);
+    const radius = Math.round(params.diameter / 2);
+    const thickness = Math.round(params.wall_thickness);
+    const voxels = [];
+
+    // Tubo orizzontale asse X
+    for (let x = 0; x < length; x++) {
+      for (let y = -radius; y <= radius; y++) {
+        for (let z = -radius; z <= radius; z++) {
+          const dist = Math.sqrt(y*y + z*z);
+          if (dist <= radius && dist >= radius - thickness) {
+            voxels.push({ x, y, z });
+          }
+        }
+      }
+    }
+
+    return voxels;
+  }
 }
+
+export default ComponentLibrary;

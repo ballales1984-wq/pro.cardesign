@@ -10,6 +10,9 @@ import { ModuleSystem } from './module-system.js';
 import { PhysicsCalc } from './physics-calc.js';
 import { MeshExporter } from './mesh-exporter.js';
 import { UI } from './ui.js';
+import { BrickSystem } from './core/brick-system.js';
+import { ComponentLibrary } from './core/component-library.js';
+import { STLImporter, QualityAnalyzer } from './core/stl-import.js';
 
 // Three.js Setup
 var canvas = document.getElementById('gl-canvas');
@@ -55,12 +58,29 @@ scene.add(gridHelper);
 var axesHelper = new THREE.AxesHelper(3);
 scene.add(axesHelper);
 
+// Dimension Display
+const dimensionDiv = document.createElement('div');
+dimensionDiv.id = 'dimension-label';
+dimensionDiv.style.position = 'absolute';
+dimensionDiv.style.top = '20px';
+dimensionDiv.style.left = '20px';
+dimensionDiv.style.background = 'rgba(0,0,0,0.7)';
+dimensionDiv.style.color = 'cyan';
+dimensionDiv.style.padding = '8px 12px';
+dimensionDiv.style.borderRadius = '4px';
+dimensionDiv.style.fontFamily = 'monospace';
+dimensionDiv.style.fontSize = '14px';
+dimensionDiv.style.zIndex = '1000';
+dimensionDiv.style.display = 'none';
+document.body.appendChild(dimensionDiv);
+
 // Core Systems
 var materialDB = new MaterialSystem();
 var moduleSystem = new ModuleSystem(materialDB);
 var physics = new PhysicsCalc(materialDB, moduleSystem);
 var meshExporter = new MeshExporter();
 var voxelEngine = new VoxelEngine(scene, materialDB, moduleSystem, camera, renderer, controls);
+var brickSystem = new BrickSystem(voxelEngine);
 
 // UI
 var ui = new UI({
