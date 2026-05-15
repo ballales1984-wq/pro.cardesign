@@ -3,7 +3,7 @@
  * Three.js-based voxel editor with physics & module system
  */
 import * as THREE from 'three';
-import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelEngine } from './voxel-engine.js';
 import { MaterialSystem } from './material-system.js';
 import { ModuleSystem } from './module-system.js';
@@ -30,6 +30,8 @@ var controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI / 2.1;
+controls.mouseButtons.LEFT = undefined;
+controls.touches.ONE = undefined;
 
 // Lights
 var ambientLight = new THREE.AmbientLight(0x404060, 0.6);
@@ -59,14 +61,6 @@ var moduleSystem = new ModuleSystem(materialDB);
 var physics = new PhysicsCalc(materialDB, moduleSystem);
 var meshExporter = new MeshExporter();
 var voxelEngine = new VoxelEngine(scene, materialDB, moduleSystem, camera, renderer, controls);
-
-// Controls
-var controls = new THREE.FlyControls(camera, renderer.domElement);
-controls.movementSpeed = 10;
-controls.domElement = renderer.domElement;
-controls.rollSpeed = Math.PI / 24;
-controls.autoForward = false;
-controls.dragToLook = false;
 
 // UI
 var ui = new UI({

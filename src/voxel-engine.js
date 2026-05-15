@@ -37,6 +37,13 @@ export class VoxelEngine {
 
     this._createAxisLabels();
 
+    // Ground plane invisibile per il raycast (primo voxel)
+    const groundGeo = new THREE.PlaneGeometry(200, 200);
+    groundGeo.rotateX(-Math.PI / 2);
+    const groundMat = new THREE.MeshBasicMaterial({ visible: false });
+    this.groundPlane = new THREE.Mesh(groundGeo, groundMat);
+    this.scene.add(this.groundPlane);
+
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
 
@@ -75,6 +82,7 @@ export class VoxelEngine {
     }
 
     const material = new THREE.MeshStandardMaterial(opts);
+    material.name = materialName;
     mesh = new THREE.InstancedMesh(this.sharedGeometry, material, this.maxInstances);
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     mesh.castShadow = true;
@@ -93,7 +101,6 @@ export class VoxelEngine {
   _getInstanceId(materialName) {
     const free = this.freeIndices.get(materialName);
     if (free && free.length > 0) return free.pop();
-    // Crescita lineare — limite maxInstances
     const map = this.keyToInstance.get(materialName);
     return map ? map.size : 0;
   }
@@ -134,11 +141,13 @@ export class VoxelEngine {
 
   _createGhost() {
     const geo = new THREE.BoxGeometry(this.voxelSize, this.voxelSize, this.voxelSize);
-    const mat = new THREE.MeshStandardMaterial({
+    const mat = new THREE.MeshBasicMaterial({
       color: 0x00d2ff,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.5,
       depthWrite: false,
+      wireframe: true,
+      linewidth: 2,
     });
     this.ghost = new THREE.Mesh(geo, mat);
     this.ghost.visible = false;
@@ -191,7 +200,7 @@ export class VoxelEngine {
     );
   }
 
-  // ── Raycast con supporto InstancedMesh ───────────────────────
+  // ── Raycast con supporto InstancedMesh e ground plane ───────────────────────
 
   _raycast(event) {
     const canvas = this.renderer.domElement;
@@ -201,27 +210,49 @@ export class VoxelEngine {
 
     this.raycaster.setFromCamera(this.pointer, this.camera);
 
+    // 1. Controlla prima i voxel (InstancedMesh)
     const meshes = Array.from(this.instancedMeshes.values());
-    if (meshes.length === 0) return null;
-
-    const intersects = this.raycaster.intersectObjects(meshes, false);
-    if (intersects.length > 0) {
-      const hit = intersects[0];
-      if (hit.instanceId !== undefined) {
-        const materialName = hit.object.material.name;
-        const key = this.instanceToKey.get(materialName)?.[hit.instanceId];
-        if (key) {
-          const parts = key.split(',').map(Number);
-          return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal: hit.face.normal };
+    if (meshes.length > 0) {
+      const intersects = this.raycaster.intersectObjects(meshes, false);
+      if (intersects.length > 0) {
+        const hit = intersects[0];
+        if (hit.instanceId !== undefined) {
+          const materialName = hit.object.material.name;
+          const key = this.instanceToKey.get(materialName)?.[hit.instanceId];
+          if (key) {
+            const parts = key.split(',').map(Number);
+            return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal: hit.face.normal, isGround: false };
+          }
         }
       }
     }
+
+    // 2. Se nessun voxel colpito, controlla il ground plane
+    const groundIntersects = this.raycaster.intersectObject(this.groundPlane);
+    if (groundIntersects.length > 0) {
+      const p = groundIntersects[0].point;
+      return {
+        x: Math.round(p.x),
+        y: 0,
+        z: Math.round(p.z),
+        point: p,
+        faceNormal: new THREE.Vector3(0, 1, 0),
+        isGround: true,
+      };
+    }
+
     return null;
   }
 
   _onPointerMove(event) {
     const hit = this._raycast(event);
-    if (hit) {
+    this.highlight.visible = false;
+    this.ghost.visible = false;
+
+    if (!hit) return;
+
+    if (!hit.isGround) {
+      // Colpito un voxel esistente
       this.highlight.position.copy(this._worldPos({ x: hit.x, y: hit.y, z: hit.z }));
       this.highlight.visible = true;
 
@@ -233,12 +264,14 @@ export class VoxelEngine {
         };
         this.ghost.position.copy(this._worldPos(ghostPos));
         this.ghost.visible = true;
-      } else {
-        this.ghost.visible = false;
       }
     } else {
-      this.highlight.visible = false;
-      this.ghost.visible = false;
+      // Colpito il ground plane
+      if (this.activeTool === 'add') {
+        const ghostPos = { x: hit.x, y: 0.5, z: hit.z };
+        this.ghost.position.copy(this._worldPos(ghostPos));
+        this.ghost.visible = true;
+      }
     }
   }
 
@@ -290,12 +323,9 @@ export class VoxelEngine {
     const key = this._gridKey(pos);
 
     if (this.voxels.has(key)) {
-      // Aggiorna materiale se diverso
       const existing = this.voxels.get(key);
       if (existing.material !== materialName) {
-        // Rimuovi dalla vecchia istanza
         this._removeVoxelSilently(existing.x, existing.y, existing.z);
-        // Aggiungi con nuovo materiale
         return this._addVoxelInternal(pos, materialName, moduleId);
       }
       return false;
@@ -327,6 +357,11 @@ export class VoxelEngine {
 
     this.keyToInstance.get(materialName).set(key, instanceId);
     this.instanceToKey.get(materialName)[instanceId] = key;
+
+    // Update instance count to ensure voxel is rendered
+    if (instanceId + 1 > mesh.count) {
+      mesh.count = instanceId + 1;
+    }
 
     this._pushHistory({ type: 'add', x: pos.x, y: pos.y, z: pos.z, material: materialName, module: moduleId });
     this._onVoxelChanged();
@@ -397,7 +432,6 @@ export class VoxelEngine {
     if (instMap && idxMap && mesh) {
       const instanceId = instMap.get(key);
       if (instanceId !== undefined) {
-        // Nascondi l'istanza impostando scala a 0
         const hiddenMatrix = new THREE.Matrix4();
         hiddenMatrix.makeScale(0, 0, 0);
         mesh.setMatrixAt(instanceId, hiddenMatrix);
@@ -415,7 +449,6 @@ export class VoxelEngine {
 
   clearAll() {
     for (const [matName, mesh] of this.instancedMeshes) {
-      // Reset tutte le istanze
       const identity = new THREE.Matrix4();
       for (let i = 0; i < mesh.count; i++) {
         mesh.setMatrixAt(i, identity);
@@ -467,25 +500,25 @@ export class VoxelEngine {
     } else if (action.type === 'remove') {
       this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
     }
-      this._onVoxelChanged();
+    this._onVoxelChanged();
+  }
+
+  redo() {
+    if (this._redoStack.length === 0) return;
+    const action = this._redoStack.pop();
+    this._pushHistory(action);
+    if (action.type === 'add') {
+      this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
+    } else if (action.type === 'remove') {
+      this._removeVoxelSilently(action.x, action.y, action.z);
     }
+    this._onVoxelChanged();
+  }
 
-    redo() {
-     if (this._redoStack.length === 0) return;
-     const action = this._redoStack.pop();
-     this._pushHistory(action);
-     if (action.type === 'add') {
-       this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
-     } else if (action.type === 'remove') {
-       this._removeVoxelSilently(action.x, action.y, action.z);
-     }
-     this._onVoxelChanged();
-   }
-
-   clearHistory() {
-     this._history = [];
-     this._redoStack = [];
-   }
+  clearHistory() {
+    this._history = [];
+    this._redoStack = [];
+  }
 
   // ── Persistenza ──────────────────────────────────────────────
 

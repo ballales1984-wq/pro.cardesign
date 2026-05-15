@@ -1,8 +1,10 @@
 /**
  * MeshExporter — Converte i voxel in mesh Three.js esportabili
  * Supporta: OBJ, STL, glTF (base64)
- * Usa Marching Cubes per superfici lisce (opzionale)
+ * Usa Marching Cubes per superfici lisse (opzionale)
  */
+
+import * as THREE from 'three';
 
 export class MeshExporter {
   constructor() {
