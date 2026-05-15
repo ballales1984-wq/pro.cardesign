@@ -38,3 +38,11 @@ venv/
 *.stl
 !full_model.json
 !test_model.json
+
+# Misc temp/debug files
+test.txt
+check-electron.js
+check-checksums.js
+
+# Temp test projects
+temp_electron_test/
