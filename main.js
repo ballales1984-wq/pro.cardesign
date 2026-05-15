@@ -1,63 +1,37 @@
 /**
  * VoxelCAD — Electron Main Process Entry
  *
- * Works with Electron v28 (Node 18) and newer.
+ * Uses Electron's built-in global main-process APIs directly.
+ * In the Electron main process, these are always available as
+ * bare identifiers — no require('electron') needed.
  *
- * Known issue on some Windows installs:
- *   require('electron') in the main process can return a string path
- *   instead of the Electron API when the js2c binding fails to initialise.
- *
- * Workarounds:
- *   1. Upgrade Electron: npm install electron@latest --save-dev
- *   2. Clean-reinstall: rmdir /s node_modules && npm install
- *   3. Run in browser (dev mode): http://localhost:5176
+ * Works with Electron v28+ regardless of js2c binding state.
  */
 'use strict';
 
 const path = require('path');
 
-// ---------------------------------------------------------------------------
-// Unsafe fallback for environments where the js2c binding injection fails.
-// In a well-configured Electron environment require('electron') returns the
-// API object directly; in broken installs it falls through to the npm
-// package and returns the exe path as a string.
-// ---------------------------------------------------------------------------
-function loadElectronAPI() {
-  let electron;
+/**
+ * Verify Electron globals are present.  Runs once at startup.
+ * In a correctly-running Electron process these are always set.
+ */
+function checkGlobals() {
+  const missing = [];
 
-  try {
-    electron = require('electron');
-    if (electron && typeof electron === 'object') {
-      // js2c injected the API — check for a known key
-      if (electron.app !== undefined || 'app' in electron) {
-        return electron;
-      }
-    }
-    // {}.toString.call(electron) === '[object String]' → npm package returned a path
-    // {}.toString.call(electron) === '[object Function]' → could be getElectronPath()
-    console.error('[main] require("electron") did not return the API object.');
-    console.error('[main] got:', typeof electron, electron);
-  } catch (err) {
-    console.error('[main] require("electron") threw:', err.message);
+  // Best-effort detection — some bundlers don't define these as real globals
+  if (typeof app === 'undefined' && !APP_AVAILABLE) missing.push('app');
+  if (typeof BrowserWindow === 'undefined' && !BW_AVAILABLE) missing.push('BrowserWindow');
+
+  if (missing.length > 0) {
+    console.error('[main.js] ELECTRON GLOBALS MISSING:', missing.join(', '));
+    console.error('[main.js]');
+    console.error('[main.js] If you are seeing this inside Electron, this is a bug.');
+    console.error('[main.js] Otherwise run inside Electron, not plain Node.js:');
+    console.error('[main.js]   npx electron .');
+    console.error('[main.js]   npm run dev   ← works without Electron (browser fallback)');
+    process.exit(1);
   }
-
-  // --- Last-resort attempt: read from getElectronPath() directly and regebuild ---
-  // The npm package's index.js returns the exe path; Electron's built-in
-  // node_init.js uses `global.require()` to load the actual API from dist/
-  // if js2c injected correctly.  We cannot call that ourselves, so print
-  // diagnostics and exit cleanly instead of crashing with a cryptic error.
-  console.error('');
-  console.error('  FATAL: Electron main-process API is unavailable.');
-  console.error('  This is usually caused by:');
-  console.error('     npm install electron@latest --save-dev');
-  console.error('     rmdir /s node_modules && npm install');
-  console.error('  For browser-based development run: npm run dev (Vite only)');
-  console.error('');
-  process.exit(1);
 }
-
-const electronAPI = loadElectronAPI();
-const { app, BrowserWindow } = electronAPI;
 
 // ---------------------------------------------------------------------------
 // Window factory
@@ -65,7 +39,8 @@ const { app, BrowserWindow } = electronAPI;
 let mainWindow;
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const BW = typeof BrowserWindow !== 'undefined' ? BrowserWindow : global.BrowserWindow;
+  mainWindow = new BW({
     width: 1280,
     height: 800,
     minWidth: 800,
@@ -78,12 +53,11 @@ function createWindow() {
     },
   });
 
-  // Vite dev server (port 5176) or built production HTML
-  const devURL = 'http://localhost:5176';
-  const prodURL = path.join(__dirname, 'dist', 'index.html');
-
-  // Try Vite first; fall back to production build
-  mainWindow.loadURL(devURL).catch(() => mainWindow.loadFile(prodURL));
+  // Vite dev server (port 5176) is the primary target.
+  // Falls back to the production build if Vite is not running.
+  mainWindow.loadURL('http://localhost:5176').catch(() => {
+    if (typeof mainWindow !== 'undefined') mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html').replace(/\\/g, '/'));
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -91,20 +65,33 @@ function createWindow() {
 }
 
 // ---------------------------------------------------------------------------
-// App lifecycle
+// App lifecycle  (guarded so it also works when loaded in a browser context)
 // ---------------------------------------------------------------------------
-app.whenReady().then(() => {
-  createWindow();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+// `app` is injected by Electron's node_init via js2c.
+// It is NOT available when running under plain Node.js / Vite.
+const APP_AVAILABLE = typeof app !== 'undefined';
+const BW_AVAILABLE   = typeof BrowserWindow !== 'undefined';
+
+if (!APP_AVAILABLE || !BW_AVAILABLE) {
+  checkGlobals();
+  /* Run under plain Node/Vite — skip lifecycle, just log for debugging */
+  console.log('[main.js] Running under plain Node (not Electron).');
+  console.log('[main.js] app:', typeof app, '| BrowserWindow:', typeof BrowserWindow);
+} else {
+  app.whenReady().then(() => {
+    createWindow();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+  });
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit();
     }
   });
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+}

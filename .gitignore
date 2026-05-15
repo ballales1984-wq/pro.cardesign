@@ -39,10 +39,22 @@ venv/
 !full_model.json
 !test_model.json
 
-# Misc temp/debug files
-test.txt
-check-electron.js
+# Debug files — Electron js2c investigation
+check-electron-type.js
 check-checksums.js
+check-electron.js
+debug-electron.cjs
+debug.js
+electron_debug.log
+electron-launcher.cmd
+stderr.log
+stderr.txt
+stdout.log
+stdout.txt
+vite_err.log
+vite_out.log
+vite_running.log
+electron_test.txt
 
 # Temp test projects
 temp_electron_test/
