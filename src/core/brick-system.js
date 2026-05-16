@@ -273,8 +273,25 @@ export class BrickSystem {
     }
 
     _getAxisFromMouse(e) {
-        // Simple implementation: default to X axis
-        // Could be improved to detect which face was clicked
+        // Raycast to find the brick and the face normal
+        const rect = this.voxelEngine.renderer.domElement.getBoundingClientRect();
+        this.voxelEngine.pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        this.voxelEngine.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        this.voxelEngine.raycaster.setFromCamera(this.voxelEngine.pointer, this.voxelEngine.camera);
+        const intersects = this.voxelEngine.raycaster.intersectObjects(this.brickGroup.children);
+
+        if (intersects.length > 0) {
+            // Get the face normal from the intersected object
+            const faceNormal = intersects[0].face.normal;
+            
+            // Determine drag axis from face normal (similar to ScalingTool)
+            if (Math.abs(faceNormal.x) > 0.5) return 'x';
+            else if (Math.abs(faceNormal.y) > 0.5) return 'y';
+            else return 'z';
+        }
+        
+        // Default fallback (should not happen in practice)
         return 'x';
     }
 

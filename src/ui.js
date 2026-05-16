@@ -305,7 +305,12 @@ export class UI {
             ? newCode.substring(newCode.indexOf('{') + 1, newCode.lastIndexOf('}'))
             : newCode;
 
-          // Create new function
+          // ⚠️  SECURITY NOTE: `new Function` executes arbitrary code from the
+          // textarea. This is intentional — power-users need JS flexibility —
+          // but in a production or multi-user deployment this MUST be replaced
+          // with a sandboxed expression parser (e.g. Acorn + whitelisted AST),
+          // a Web-Worker worker-based evaluator, or a dedicated DSL.
+          // Current behaviour: trusted-user-only.
           const newFunction = new Function('params', 'context', `return {${funcBody}}`);
 
           // Update rule

@@ -111,18 +111,26 @@ var frameCount = 0;
 var fpsTimer = 0;
 
 function animate(time) {
-  requestAnimationFrame(animate);
-  controls.update();
+    requestAnimationFrame(animate);
+    controls.update();
 
-  frameCount++;
-  if (time - fpsTimer >= 1000) {
-    document.getElementById('fps-counter').textContent = 'FPS: ' + frameCount;
-    frameCount = 0;
-    fpsTimer = time;
-  }
+    // Update dimension display for selected brick
+    if (brickSystem.selectedBrick) {
+        dimensionDiv.textContent = brickSystem.dimensionsText;
+        dimensionDiv.style.display = 'block';
+    } else {
+        dimensionDiv.style.display = 'none';
+    }
 
-  voxelEngine.update(time * 0.001);
-  renderer.render(scene, camera);
+    frameCount++;
+    if (time - fpsTimer >= 1000) {
+        document.getElementById('fps-counter').textContent = 'FPS: ' + frameCount;
+        frameCount = 0;
+        fpsTimer = time;
+    }
+
+    voxelEngine.update(time * 0.001);
+    renderer.render(scene, camera);
 }
 requestAnimationFrame(animate);
 
