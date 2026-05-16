@@ -636,6 +636,32 @@ endsolid test`;
     });
   } catch(e) { failed++; console.log('  [FAIL] STLImporter import: ' + e.message); }
 
+  // ── 16. RuleEditorUI ─────────────────────────────────────────────────────────
+  try {
+    const { RuleEditorUI } = await loadESM('src/core/rule-editor-ui.js');
+    runTest('RuleEditorUI', () => {
+      const mockEngine = { execute: () => [] };
+      const container = { innerHTML: '', addEventListener: () => {} };
+      const editor = new RuleEditorUI(container, mockEngine);
+      assert.ok(editor);
+    });
+
+    runTest('RuleEditorUI.createNewRule', () => {
+      // Simplified test - just verify the method exists
+      const mockEngine = { execute: () => [] };
+      const editor = new RuleEditorUI({}, mockEngine);
+      assert.ok(typeof editor._createNewRule === 'function');
+    });
+
+    runTest('RuleEditorUI.toJSON', () => {
+      const mockEngine = { execute: () => [] };
+      const editor = new RuleEditorUI({}, mockEngine);
+      editor.rules = [{ id: '1', name: 'test', type: 'cube', params: {} }];
+      const json = editor.toJSON();
+      assert.deepStrictEqual(json.rules.length, 1);
+    });
+  } catch(e) { failed++; console.log('  [FAIL] RuleEditorUI import: ' + e.message); }
+
    // ── Summary ────────────────────────────────────────────────────────────────
   const total = passed + failed;
   console.log(`\nResults: ${passed}/${total} passed, ${failed} failed`);
