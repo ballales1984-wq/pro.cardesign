@@ -514,28 +514,28 @@ FASE 1 ✅ Completata
 FASE 2 ✅ Completata
    Editor 3D interattivo, UI, undo/redo, salvataggio progetto
 
-FASE 3 🔄 20% — IN CORSO
-   Chunk/Sparse storage 🔲
-   Marching Cubes completo 🔲
-   LOD dinamico 🔲
-   GPU Compute 🔲
+FASE 3 ✅ Completata (base)
+    Chunk/Sparse storage ✅
+    Marching Cubes completo ✅
+    LOD dinamico ✅ (LODManager)
+    GPU Compute 🔲
 
-FASE 4 ⏳ — Da iniziare
-   Procedural Rule Engine
-   Editor di regole procedurali
-   Operazioni booleane
+FASE 4 ✅ Completata (base)
+    Procedural Rule Engine ✅ (ProceduralEngine)
+    Editor di regole procedurali 🔲
+    Operazioni booleane 🔲
 
-FASE 5 ⏳ Nuova, priorità alta
-   Sfere → coefficiente di riempimento materia
-   Tetraedri → FEM element
-   Metadati materiale estesi
-   Proprietà locali voxel
+FASE 5 ✅ Completata (base)
+    Sfere → coefficiente di riempimento materia ✅
+    Tetraedri → FEM element ✅
+    Metadati materiale estesi ✅ (fillCoefficient, friction, fatigue, thermal)
+    Proprietà locali voxel 🔲
 
-FASE 6 ⏳ — Da iniziare
-   Stress analysis (FEM)
-   Simulazione termica
-   Aerodinamica superficiale
-   Firma fisica oggetto
+FASE 6 ✅ Completata (base)
+    Stress analysis (FEM) ✅ (StressAnalysis.js)
+    Simulazione termica ✅ (già in physics-calc.js)
+    Aerodinamica superficiale 🔲
+    Firma fisica oggetto 🔲
 
 FASE 7 ⏳ — Da iniziare
    AI: Depth estimation
@@ -556,14 +556,14 @@ FASE 8 ⏳ — Da iniziare
 
 - [x] Raycasting robustness (bugground plane + faceNormal)
 - [x] InstancedMesh + frustum culling guard
-- [ ] Chunk System: refactor `voxels` Map → `Map<string, Chunk>`
+- [x] Chunk System: integrato `chunks Map<String, Chunk>` in voxel-engine.js
 - [ ] Chunk caricamento dinamico in base camera
 
 ### Questa settimana
 
-- [ ] Marching Cubes algoritmo completo (sostituisce `_simpleCubes`)
-- [ ] Sfere: `SphereSystem.js` — voxel → sfere con `fillCoefficient`
-- [ ] Tetraedri: `TetrahedralMesh.js` — cubo → 5 tetraedri
+- [x] Marching Cubes algoritmo completo (sostituisce `_simpleCubes`)
+- [x] Sfere: `SphereSystem.js` — voxel → sfere con `fillCoefficient`
+- [x] Tetraedri: `TetrahedralMesh.js` — cubo → 5 tetraedri
 
 ### Prossima settimana
 
@@ -579,5 +579,5 @@ FASE 8 ⏳ — Da iniziare
 
 ---
 
-*Ultimo aggiornamento: 2026-05-15*  
+*Ultimo aggiornamento: 2026-05-16*  
 *Repository: github.com/ballales1984-wq/pro.cardesign*

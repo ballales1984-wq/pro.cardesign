@@ -24,6 +24,16 @@ export class MaterialSystem {
         recyclable: true,
         roughness: 0.3,
         metalness: 0.9,
+        fillCoefficient: 0.707,  // spheres touch on edge
+        roughnessProfile: 'Ra=0.8μm',
+        porosity: 0.0,            // 0 = compact
+        fatigueLimit: 200e6,      // Pa
+        thermalExpansion: 11e-6,  // 1/°C
+        dampingRatio: 0.02,       // vibration damping
+        magneticPermeability: 100,// relative permeability
+        staticFriction: 0.74,     // μs
+        kineticFriction: 0.57,    // μk
+        restitution: 0.5,         // coefficient of restitution
       },
       {
         name: 'aluminum',

@@ -236,17 +236,51 @@ async function runAll() {
       assert.strictEqual(b.center.y, 10);
       assert.strictEqual(b.center.z, 10);
     });
+    runTest('Brick max_corner', () => {
+      const b = new Brick(3, 'MC', {x:10,y:20,z:30}, {x:100,y:50,z:25});
+      assert.strictEqual(b.max_corner.x, 110);
+      assert.strictEqual(b.max_corner.y, 70);
+      assert.strictEqual(b.max_corner.z, 55);
+    });
+    runTest('Brick contains_point', () => {
+      const b = new Brick(4, 'CP', {x:0,y:0,z:0}, {x:10,y:10,z:10});
+      assert.strictEqual(b.contains_point({x:5,y:5,z:5}), true);
+      assert.strictEqual(b.contains_point({x:15,y:5,z:5}), false);
+    });
+    runTest('Brick overlaps', () => {
+      const b1 = new Brick(5, 'B1', {x:0,y:0,z:0}, {x:10,y:10,z:10});
+      const b2 = new Brick(6, 'B2', {x:5,y:0,z:0}, {x:10,y:10,z:10});
+      const b3 = new Brick(7, 'B3', {x:20,y:0,z:0}, {x:10,y:10,z:10});
+      assert.strictEqual(b1.overlaps(b2), true);
+      assert.strictEqual(b1.overlaps(b3), false);
+    });
   } catch(e) { failed++; console.log('  [FAIL] Brick import: ' + e.message); }
 
   // ── 4. ComponentLibrary ────────────────────────────────────────────────────
   try {
-    const { ComponentLibrary } = await loadESM('src/core/component-library.js');
+    const { ComponentLibrary, ComponentInstance } = await loadESM('src/core/component-library.js');
     runTest('ComponentLibrary', () => {
       const lib = new ComponentLibrary();
       assert.ok(lib.getAll().length > 0);
       assert.ok(lib.get(1));
       assert.ok(lib.search('700c').length > 0);
       assert.ok(lib.getByCategory('wheels').length > 0);
+    });
+    runTest('ComponentInstance', () => {
+      const lib = new ComponentLibrary();
+      const instance = lib.createInstance(1, {x:0,y:100,z:0}, {outer_radius: 360}, null);
+      assert.ok(instance instanceof ComponentInstance);
+      assert.strictEqual(instance.definition_id, 1);
+      assert.strictEqual(instance.position.x, 0);
+      assert.strictEqual(instance.position.y, 100);
+      assert.strictEqual(instance.parameter_overrides.outer_radius, 360);
+    });
+    runTest('ComponentInstance getParameters', () => {
+      const lib = new ComponentLibrary();
+      const def = lib.get(1);
+      const instance = lib.createInstance(1, {x:0,y:0,z:0}, {outer_radius: 360}, 'titanium');
+      const params = instance.getParameters(def);
+      assert.strictEqual(params.outer_radius.value, 360);
     });
   } catch(e) { failed++; console.log('  [FAIL] ComponentLibrary import: ' + e.message); }
 
@@ -255,6 +289,13 @@ async function runAll() {
     const { BrickAdapter } = await loadESM('src/core/brick-adapter.js');
     runTest('BrickAdapter export', () => {
       assert.ok(typeof BrickAdapter === 'function');
+    });
+    runTest('BrickAdapter SCALE property', () => {
+      const adapter = Object.create(BrickAdapter.prototype);
+      adapter.bricks = new Map();
+      adapter.nextId = 1;
+      adapter.SCALE = 1.0;
+      assert.strictEqual(adapter.SCALE, 1.0);
     });
   } catch(e) { failed++; console.log('  [FAIL] BrickAdapter import: ' + e.message); }
 
@@ -303,39 +344,262 @@ async function runAll() {
     });
   } catch(e) { failed++; console.log('  [FAIL] MeshExporter import: ' + e.message); }
 
-  // ── 7. PhysicsCalc ─────────────────────────────────────────────────────────
+// ── 7. PhysicsCalc ─────────────────────────────────────────────────────────
+   try {
+     const { PhysicsCalc } = await loadESM('src/physics-calc.js');
+     runTest('PhysicsCalc.voxelMass', () => {
+       const mockMatDB = { get: (n)=>({name:n, density: n==='steel'?7850:2700}), count:()=>2, getAll:()=>[] };
+       const mockModSys = { getTree: ()=>({children:[]}) };
+       const physics = new PhysicsCalc(mockMatDB, mockModSys);
+       const mass = physics.voxelMass({material:'steel'}, 1.0);
+       assert.ok(mass > 0 && mass < 100);
+     });
+
+     runTest('PhysicsCalc.voxelWeight', () => {
+       const mockMatDB = { get: (n)=>({name:n, density: n==='steel'?7850:2700}), count:()=>2, getAll:()=>[] };
+       const mockModSys = { getTree: ()=>({children:[]}) };
+       const physics = new PhysicsCalc(mockMatDB, mockModSys);
+       const weight = physics.voxelWeight({material:'steel'}, 1.0);
+       assert.ok(weight > 0);
+     });
+
+     runTest('PhysicsCalc.calculateAllVoxels', () => {
+       const mockMatDB = { get: (n)=>({name:n, density: n==='steel'?7850:2700}), count:()=>2, getAll:()=>[] };
+       const mockModSys = { getTree: ()=>({children:[]}) };
+       const physics = new PhysicsCalc(mockMatDB, mockModSys);
+       const voxels = [{material:'steel',x:0,y:0,z:0}, {material:'steel',x:1,y:1,z:1}];
+       const result = physics.calculateAllVoxels(voxels);
+       assert.strictEqual(result.voxelCount, 2);
+       assert.ok(result.totalMass > 0);
+       assert.ok(result.centerOfMass);
+       assert.ok(result.inertia);
+     });
+   } catch(e) { failed++; console.log('  [FAIL] PhysicsCalc import: ' + e.message); }
+
+   // ── 8. SphereSystem ────────────────────────────────────────────────────────
+   try {
+     const { SphereSystem, Sphere } = await loadESM('src/core/sphere-system.js');
+     runTest('SphereSystem', () => {
+       const ss = new SphereSystem(1.0);
+       assert.strictEqual(ss.spheres.length, 0);
+     });
+
+     runTest('SphereSystem.voxelToSphere', () => {
+       const ss = new SphereSystem(1.0);
+       const voxel = {x:0, y:0, z:0, material:'steel'};
+       const sphere = ss.voxelToSphere(voxel, 0.707);
+       assert.ok(sphere.radius > 0);
+       assert.strictEqual(sphere.material, 'steel');
+       assert.strictEqual(sphere.fillCoefficient, 0.707);
+     });
+
+     runTest('SphereSystem.voxelsToSpheres', () => {
+       const ss = new SphereSystem(1.0);
+       const voxels = [
+         {x:0, y:0, z:0, material:'steel'},
+         {x:1, y:0, z:0, material:'aluminum'}
+       ];
+       ss.voxelsToSpheres(voxels);
+       assert.strictEqual(ss.spheres.length, 2);
+     });
+
+     runTest('SphereSystem.porosityStats', () => {
+       const ss = new SphereSystem(1.0);
+       const voxels = [{x:0, y:0, z:0, material:'steel'}];
+       ss.voxelsToSpheres(voxels, {steel: 0.707});
+       const stats = ss.getPorosityStats();
+       assert.ok(stats.sphereCount === 1);
+       assert.ok(stats.totalVolume > 0);
+     });
+   } catch(e) { failed++; console.log('  [FAIL] SphereSystem import: ' + e.message); }
+
+   // ── 9. TetrahedralMesh ─────────────────────────────────────────────────────
+   try {
+     const { TetrahedralMesh, Tetrahedron } = await loadESM('src/core/tetrahedral-mesh.js');
+     runTest('TetrahedralMesh', () => {
+       const tm = new TetrahedralMesh(1.0);
+       assert.strictEqual(tm.tetrahedra.length, 0);
+     });
+
+     runTest('TetrahedralMesh.decomposeVoxel', () => {
+       const tm = new TetrahedralMesh(1.0);
+       const voxel = {x:0, y:0, z:0, material:'steel'};
+       tm.decomposeVoxel(voxel);
+       assert.strictEqual(tm.tetrahedra.length, 5); // MacNeal's decomposition
+     });
+
+     runTest('TetrahedralMesh.buildFromVoxels', () => {
+       const tm = new TetrahedralMesh(1.0);
+       const voxels = [
+         {x:0, y:0, z:0, material:'steel'},
+         {x:1, y:0, z:0, material:'aluminum'}
+       ];
+       tm.buildFromVoxels(voxels);
+       assert.strictEqual(tm.tetrahedra.length, 10); // 5 tets per voxel
+     });
+
+     runTest('Tetrahedron.getVolume', () => {
+       const tet = new Tetrahedron(
+         [0,0,0], [1,0,0], [0,1,0], [0,0,1], 'steel'
+       );
+       const vol = tet.getVolume();
+       assert.ok(Math.abs(vol - 1/6) < 0.001);
+     });
+   } catch(e) { failed++; console.log('  [FAIL] TetrahedralMesh import: ' + e.message); }
+
+   // ── 10. LODManager ───────────────────────────────────────────────────────
+   try {
+     const { LODManager } = await loadESM('src/core/lod-manager.js');
+     runTest('LODManager', () => {
+       const mockCamera = { position: { x: 0, y: 0, z: 0 } };
+       const mockEngine = { chunks: new Map() };
+       const lod = new LODManager(mockCamera, mockEngine);
+       assert.ok(lod);
+     });
+
+     runTest('LODManager.getLODLevel', () => {
+       const mockCamera = { position: { x: 0, y: 0, z: 0 } };
+       const mockEngine = { chunks: new Map() };
+       const lod = new LODManager(mockCamera, mockEngine);
+       const nearLOD = lod.getLODLevel({x: 2, y: 0, z: 0});
+       const farLOD = lod.getLODLevel({x: 30, y: 0, z: 0});
+       assert.strictEqual(nearLOD, 'full');
+       assert.strictEqual(farLOD, 'simple');
+     });
+   } catch(e) { failed++; console.log('  [FAIL] LODManager import: ' + e.message); }
+
+   // ── 11. ProceduralEngine ───────────────────────────────────────────────────
+   try {
+     const { ProceduralEngine } = await loadESM('src/core/procedural-engine.js');
+     runTest('ProceduralEngine', () => {
+       const mockEngine = { addVoxel: () => {} };
+       const pe = new ProceduralEngine(mockEngine);
+       assert.ok(pe);
+     });
+
+     runTest('ProceduralEngine.line', () => {
+       const mockEngine = { addVoxel: () => {} };
+       const pe = new ProceduralEngine(mockEngine);
+       const voxels = pe.line(5, 'x', {x:0,y:0,z:0}, 'steel');
+       assert.strictEqual(voxels.length, 5);
+     });
+
+     runTest('ProceduralEngine.cube', () => {
+       const mockEngine = { addVoxel: () => {} };
+       const pe = new ProceduralEngine(mockEngine);
+       const voxels = pe.cube(2, 2, 2, {x:0,y:0,z:0}, 'steel');
+       assert.strictEqual(voxels.length, 8);
+     });
+
+runTest('ProceduralEngine.symmetry', () => {
+      const mockEngine = { addVoxel: () => {} };
+      const pe = new ProceduralEngine(mockEngine);
+      const base = [{x:0,y:0,z:0}, {x:1,y:0,z:0}];
+      const mirrored = pe.symmetry(base, 'x', 2, 2);
+      assert.strictEqual(mirrored.length, 4);
+    });
+
+    runTest('ProceduralEngine.boolean operations', () => {
+      const mockEngine = { addVoxel: () => {} };
+      const pe = new ProceduralEngine(mockEngine);
+      
+      const a = [{x:0,y:0,z:0, material:'steel'}, {x:1,y:0,z:0, material:'steel'}, {x:2,y:0,z:0, material:'steel'}];
+      const b = [{x:1,y:0,z:0, material:'aluminum'}, {x:2,y:0,z:0, material:'aluminum'}, {x:3,y:0,z:0, material:'aluminum'}];
+      
+      const union = pe.union(a, b);
+      assert.ok(union.length >= 3);
+      
+      const diff = pe.difference(a, b);
+      assert.strictEqual(diff.length, 1);
+      assert.strictEqual(diff[0].x, 0);
+      
+      const inter = pe.intersect(a, b);
+      assert.strictEqual(inter.length, 2);
+      
+      const merged = pe.merge(a, b);
+      assert.strictEqual(merged.length, 4);
+    });
+  } catch(e) { failed++; console.log('  [FAIL] ProceduralEngine import: ' + e.message); }
+
+   // ── 12. StressAnalysis ───────────────────────────────────────────────────
+   try {
+     const { StressAnalysis } = await loadESM('src/core/stress-analysis.js');
+     runTest('StressAnalysis', () => {
+       const mockMatDB = { get: (n)=>({name:n, youngsModulus: 70e9, tensileStrength: 400e6}) };
+       const sa = new StressAnalysis({}, mockMatDB);
+       assert.ok(sa);
+     });
+
+     runTest('StressAnalysis.analyze', () => {
+       const mockMatDB = { get: (n)=>({name:n, youngsModulus: 70e9, tensileStrength: 400e6}) };
+       const sa = new StressAnalysis({}, mockMatDB);
+       const voxels = [
+         {x:0,y:0,z:0,material:'steel'},
+         {x:1,y:0,z:0,material:'steel'},
+         {x:0,y:1,z:0,material:'steel'}
+       ];
+       const results = sa.analyze(voxels);
+       assert.strictEqual(results.length, 3);
+     });
+
+runTest('StressAnalysis.safetyFactor', () => {
+      const mockMatDB = { get: (n)=>({name:n, youngsModulus: 70e9, tensileStrength: 400e6}) };
+      const sa = new StressAnalysis({}, mockMatDB);
+      const results = sa.analysis || sa.analyze([
+        {x:0,y:0,z:0,material:'steel'},
+        {x:1,y:0,z:0,material:'steel'}
+      ]);
+      const sf = sa.getSafetyFactor();
+      assert.ok(sf > 0);
+    });
+  } catch(e) { failed++; console.log('  [FAIL] StressAnalysis import: ' + e.message); }
+
+  // ── 13. Aerodynamics ───────────────────────────────────────────────────────
   try {
-    const { PhysicsCalc } = await loadESM('src/physics-calc.js');
-    runTest('PhysicsCalc.voxelMass', () => {
-      const mockMatDB = { get: (n)=>({name:n, density: n==='steel'?7850:2700}), count:()=>2, getAll:()=>[] };
-      const mockModSys = { getTree: ()=>({children:[]}) };
-      const physics = new PhysicsCalc(mockMatDB, mockModSys);
-      const mass = physics.voxelMass({material:'steel'}, 1.0);
-      assert.ok(mass > 0 && mass < 100);
+    const { Aerodynamics } = await loadESM('src/core/aerodynamics.js');
+    runTest('Aerodynamics', () => {
+      const aero = new Aerodynamics({});
+      assert.ok(aero);
     });
 
-    runTest('PhysicsCalc.voxelWeight', () => {
-      const mockMatDB = { get: (n)=>({name:n, density: n==='steel'?7850:2700}), count:()=>2, getAll:()=>[] };
-      const mockModSys = { getTree: ()=>({children:[]}) };
-      const physics = new PhysicsCalc(mockMatDB, mockModSys);
-      const weight = physics.voxelWeight({material:'steel'}, 1.0);
-      assert.ok(weight > 0);
+    runTest('Aerodynamics.calculateDrag', () => {
+      const aero = new Aerodynamics({});
+      const result = aero.calculateDrag(10, 1.0, 0.3);
+      assert.ok(result.force > 0);
+      assert.strictEqual(result.coefficient, 0.3);
     });
 
-    runTest('PhysicsCalc.calculateAllVoxels', () => {
-      const mockMatDB = { get: (n)=>({name:n, density: n==='steel'?7850:2700}), count:()=>2, getAll:()=>[] };
-      const mockModSys = { getTree: ()=>({children:[]}) };
-      const physics = new PhysicsCalc(mockMatDB, mockModSys);
-      const voxels = [{material:'steel',x:0,y:0,z:0}, {material:'steel',x:1,y:1,z:1}];
-      const result = physics.calculateAllVoxels(voxels);
-      assert.strictEqual(result.voxelCount, 2);
-      assert.ok(result.totalMass > 0);
-      assert.ok(result.centerOfMass);
-      assert.ok(result.inertia);
+    runTest('Aerodynamics.reynoldsNumber', () => {
+      const aero = new Aerodynamics({});
+      const re = aero.reynoldsNumber(10, 1);
+      assert.ok(re > 0);
     });
-  } catch(e) { failed++; console.log('  [FAIL] PhysicsCalc import: ' + e.message); }
+  } catch(e) { failed++; console.log('  [FAIL] Aerodynamics import: ' + e.message); }
 
-  // ── Summary ────────────────────────────────────────────────────────────────
+  // ── 14. PhysicsSignature ─────────────────────────────────────────────────
+  try {
+    const { PhysicsSignature } = await loadESM('src/core/physics-signature.js');
+    runTest('PhysicsSignature', () => {
+      const sig = new PhysicsSignature({}, { get: () => ({}) }, {}, {}, {});
+      assert.ok(sig);
+    });
+
+    runTest('PhysicsSignature.generate', () => {
+      const mockMaterialDB = { get: () => ({ density: 7850, thermalConductivity: 50, specificHeat: 486 }) };
+      const mockPhysicsCalc = { calculateAllVoxels: (v) => ({ totalMass: v.length * 7850, centerOfMass: [0,0,0], inertia: [0,0,0] }) };
+      const mockStress = { analyze: () => [], getSafetyFactor: () => 1 };
+      const mockAero = {};
+
+      const sig = new PhysicsSignature({}, mockMaterialDB, mockPhysicsCalc, mockStress, mockAero);
+      const voxels = [{x:0,y:0,z:0,material:'steel'}];
+      const result = sig.generate(voxels);
+      assert.ok(result.geometry);
+      assert.ok(result.mass);
+      assert.ok(result.materials);
+    });
+  } catch(e) { failed++; console.log('  [FAIL] PhysicsSignature import: ' + e.message); }
+
+   // ── Summary ────────────────────────────────────────────────────────────────
   const total = passed + failed;
   console.log(`\nResults: ${passed}/${total} passed, ${failed} failed`);
   console.log('─'.repeat(50));

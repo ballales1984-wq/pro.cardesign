@@ -276,51 +276,6 @@ class TestPhysicsPython(unittest.TestCase):
         temps = thermal_analysis = lambda e, hp, p: {}
         issues = check_safety_margins(engine, stress, {})
         self.assertIsInstance(issues, list)
-    
-    def test_component_system(self):
-        """Tests for the component system"""
-        
-        def setUp(self):
-            self.library = ComponentLibrary("data/test_components")
-        
-        def test_library_has_defaults(self):
-            comps = self.library.get_all()
-            self.assertGreater(len(comps), 0)
-        
-        def test_get_by_id(self):
-            wheel = self.library.get(1)
-            self.assertIsNotNone(wheel)
-            self.assertIn("Wheel", wheel.name)
-        
-        def test_get_by_category(self):
-            wheels = self.library.get_by_category("wheels")
-            self.assertGreater(len(wheels), 0)
-            for w in wheels:
-                self.assertEqual(w.category, "wheels")
-        
-        def test_get_by_type(self):
-            wheels = self.library.get_by_type("wheel")
-            self.assertGreater(len(wheels), 0)
-        
-        def test_search(self):
-            results = self.library.search("700c")
-            self.assertGreater(len(results), 0)
-        
-        def test_save_and_load_custom(self):
-            comp = self.library.get(1)
-            success = self.library.save_custom(comp)
-            self.assertTrue(success)
-            
-            loaded = self.library.load_custom(f"data/test_components/component_{comp.id}.json")
-            self.assertIsNotNone(loaded)
-            self.assertEqual(loaded.name, comp.name)
-        
-        def test_component_instance(self):
-            defn = self.library.get(1)
-            instance = create_component_instance(defn, [0, 100, 0], {"outer_radius": 360})
-            self.assertEqual(instance.definition_id, 1)
-            np.testing.assert_array_equal(instance.position, [0, 100, 0])
-            self.assertEqual(instance.parameter_overrides["outer_radius"], 360)
 
 
 class TestPhysicsIntegration(unittest.TestCase):
