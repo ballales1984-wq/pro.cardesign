@@ -277,10 +277,14 @@ export class UI {
     var mat = this.materialDB.get(voxel.material);
     var matInfo = '';
     
-    // Dimension display (1 voxel = 1mm)
+    // Dimension display — use real scale from voxel data
+    var sc = voxel.scale ? voxel.scale : [1,1,1];
+    var sx = Math.round(sc[0]*100)/100, sy = Math.round(sc[1]*100)/100, sz = Math.round(sc[2]*100)/100;
+    var vVol = Math.round(sx * sy * sz * 100)/100;
     var dimsHtml = '<hr style="border-color: var(--border); margin: 8px 0;"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">📏 Dimensioni (mm)</div>' +
       '<div class="prop-row"><span class="prop-label">Posizione</span><span class="prop-value">' + voxel.x + ', ' + voxel.y + ', ' + voxel.z + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Volume voxel</span><span class="prop-value">1 mm³</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Scala voxel</span><span class="prop-value">' + sx.toFixed(1) + ' x ' + sy.toFixed(1) + ' x ' + sz.toFixed(1) + '</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Volume voxel</span><span class="prop-value">' + vVol.toFixed(1) + ' mm³</span></div>' +
       '<div class="prop-row"><span class="prop-label">Materiale</span><span class="prop-value">' + (mat ? mat.label : voxel.material) + '</span></div>' +
       '<div class="prop-row"><span class="prop-label">Densita</span><span class="prop-value">' + (mat ? mat.density : 'N/A') + ' kg/m3</span></div>' +
       '<div class="prop-row"><span class="prop-label">Massa voxel</span><span class="prop-value">' + this.physics.voxelMass(voxel).toFixed(4) + ' kg</span></div>' +

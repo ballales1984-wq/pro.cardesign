@@ -4,7 +4,7 @@ Instructions for AI assistants working on this project.
 
 ## Philosophy
 
-- Real measurements in mm (1 Three.js unit = 1mm, viewport SCALE=0.01)
+- Real measurements in mm (1 Three.js unit = 1mm)
 - Brick with independent size[X,Y,Z] (not just identical cubes)
 - Always separate geometry (Python) from rendering (Three.js)
 - Functional modules: `core/` (Python), `src/` + `src/core/` (JS)
@@ -42,7 +42,7 @@ node tests/test_coverage.js                        # JavaScript
 - `mesh-exporter.js` — OBJ, STL export
 - `ui.js` — Toolbar, panels, DOM events
 - `main.js` — Entry point Three.js
-- `src/core/brick-system.js` — Brick with SCALE=0.01
+- `src/core/brick-system.js` — Brick with SCALE=1.0
 - `src/core/component-library.js` — UI component library
 - `src/core/scaling-tool.js` — Interactive drag-to-scale tool
 - `src/core/stl-import.js` — STL parser + QualityAnalyzer
