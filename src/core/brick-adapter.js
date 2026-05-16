@@ -16,7 +16,7 @@ export class BrickAdapter {
     this.engine = voxelEngine;
     this.bricks = new Map();        // brickId → Brick
     this.nextId = 1;
-    this.SCALE = 0.01;              // 1mm → 0.01 Three.js units
+    this.SCALE = 1.0; // 1 Three.js unit = 1mm
     this.selectedBrickId = null;
     
     // Observe voxelEngine changes to synchronize
