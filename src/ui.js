@@ -53,6 +53,7 @@ export class UI {
     document.getElementById('tool-add').addEventListener('click', function() { self.voxelEngine.setTool('add'); });
     document.getElementById('tool-remove').addEventListener('click', function() { self.voxelEngine.setTool('remove'); });
     document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
+    document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
 
     document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
     document.getElementById('btn-import').addEventListener('click', function() { self._openImportModal(); });
