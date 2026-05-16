@@ -189,35 +189,60 @@ export class UI {
          rulesList.innerHTML = '<p class="hint">Nessuna regola definita</p>';
          return;
        }
-       rules.forEach(ruleName => {
-         const ruleDiv = document.createElement('div');
-         ruleDiv.className = 'procedural-rule-item';
-         ruleDiv.innerHTML = `
-           <span class="rule-name">${ruleName}</span>
-           <button class="rule-edit-btn" data-rule="${ruleName}">Modifica</button>
-           <button class="rule-delete-btn" data-rule="${ruleName}">Elimina</button>
-         `;
-         rulesList.appendChild(ruleDiv);
-       });
+        rules.forEach(ruleName => {
+          const ruleDiv = document.createElement('div');
+          ruleDiv.className = 'procedural-rule-item';
+          ruleDiv.innerHTML = `
+            <span class="rule-name">${ruleName}</span>
+            <button class="rule-apply-btn" data-rule="${ruleName}" title="Applica regola nella scena" style="background:var(--accent);color:#fff;border:none;border-radius:3px;padding:2px 7px;font-size:10px;cursor:pointer;">▶ Applica</button>
+            <button class="rule-edit-btn" data-rule="${ruleName}">Modifica</button>
+            <button class="rule-delete-btn" data-rule="${ruleName}">Elimina</button>
+          `;
+          rulesList.appendChild(ruleDiv);
+        });
 
-       // Add event listeners to edit/delete buttons
-       document.querySelectorAll('.rule-edit-btn').forEach(btn => {
-         btn.addEventListener('click', function() {
-           const ruleName = this.getAttribute('data-rule');
-           self._editRule(ruleName);
-         });
-       });
+        // Apply button
+        document.querySelectorAll('.rule-apply-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const ruleName = this.getAttribute('data-rule');
+            // Read offset from inputs (with fallback to 0)
+            const ox = parseInt(document.getElementById('rule-offset-x')?.value) || 0;
+            const oy = parseInt(document.getElementById('rule-offset-y')?.value) || 0;
+            const oz = parseInt(document.getElementById('rule-offset-z')?.value) || 0;
+            try {
+              const voxels = self.proceduralEngine.build(ruleName, {
+                position: { x: ox, y: oy, z: oz },
+                material: self.voxelEngine.activeMaterial
+              });
+              if (!voxels || voxels.length === 0) {
+                self._notify(`Regola "${ruleName}" non ha generato voxel`, 'warn');
+              } else {
+                self._notify(`Regola "${ruleName}" applicata: ${voxels.length} voxel`, 'success');
+              }
+            } catch(e) {
+              self._notify(`Errore nell'applicare "${ruleName}": ` + e.message, 'error');
+            }
+          });
+        });
 
-       document.querySelectorAll('.rule-delete-btn').forEach(btn => {
-         btn.addEventListener('click', function() {
-           const ruleName = this.getAttribute('data-rule');
-           if (confirm(`Eliminare la regola "${ruleName}"?`)) {
-             self.proceduralEngine.rules.delete(ruleName);
-             populateRulesList();
-             self._notify(`Regola "${ruleName}" eliminata`, 'success');
-           }
-         });
-       });
+        // Add event listeners to edit/delete buttons
+        document.querySelectorAll('.rule-edit-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const ruleName = this.getAttribute('data-rule');
+            self._editRule(ruleName);
+          });
+        });
+
+        document.querySelectorAll('.rule-delete-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const ruleName = this.getAttribute('data-rule');
+            if (confirm(`Eliminare la regola "${ruleName}"?`)) {
+              self.proceduralEngine.rules.delete(ruleName);
+              populateRulesList();
+              self._notify(`Regola "${ruleName}" eliminata`, 'success');
+            }
+          });
+        });
      }
 
      // Add new rule
@@ -475,7 +500,7 @@ export class UI {
   }
 
   // Physics simulation
-  _runSimulation() {
+  async _runSimulation() {
     var physicsPanel = document.getElementById('physics-panel');
     var allVoxels = Array.from(this.voxelEngine.voxelsIterator());
 
@@ -525,6 +550,36 @@ export class UI {
         '<div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">Bounding Box:</div>' +
         '<div class="prop-row"><span class="prop-label">Dimensioni</span><span class="prop-value">' + dimsX + ' x ' + dimsY + ' x ' + dimsZ + '</span></div>';
     }
+
+    // ── Stress Analysis ──────────────────────────────────────────
+    try {
+      const { StressAnalysis } = await import('./core/stress-analysis.js');
+      const sa = new StressAnalysis(this.voxelEngine, this.materialDB);
+      sa.analyze(allVoxels);
+      const sf = sa.getSafetyFactor();
+      const crit = sa.getCriticalZones();
+      const maxS = crit.length > 0 ? crit[0].stress : 0;
+      html += '<hr style="border-color:var(--border);margin:8px 0;">' +
+        '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">🔬 Stress Strutturale:</div>' +
+        '<div class="prop-row"><span class="prop-label">Stress max</span><span class="prop-value" style="color:var(--orange);">' + (maxS / 1e6).toFixed(2) + ' MPa</span></div>' +
+        '<div class="prop-row"><span class="prop-label">Zone critiche</span><span class="prop-value">' + crit.length + '</span></div>' +
+        '<div class="prop-row"><span class="prop-label">Safety Factor</span><span class="prop-value" style="color:' + (sf >= 2 ? 'var(--accent)' : 'var(--orange)') + ';">' + sf.toFixed(2) + '</span></div>';
+    } catch(e) { /* modulo non disponibile */ }
+
+    // ── Aerodynamics ─────────────────────────────────────────────
+    try {
+      const { Aerodynamics } = await import('./core/aerodynamics.js');
+      const aero = new Aerodynamics(this.meshExporter);
+      const summary = aero.getSummary(allVoxels);
+      const drag10 = summary.estimatedDragAt10ms;
+      const drag30 = aero.calculateDrag(30, summary.estimatedFrontalArea).force;
+      html += '<hr style="border-color:var(--border);margin:8px 0;">' +
+        '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">💨 Aerodinamica (stima):</div>' +
+        '<div class="prop-row"><span class="prop-label">Area frontale est.</span><span class="prop-value">' + summary.estimatedFrontalArea.toFixed(2) + ' m²</span></div>' +
+        '<div class="prop-row"><span class="prop-label">Drag a 10 m/s</span><span class="prop-value">' + drag10.toFixed(2) + ' N</span></div>' +
+        '<div class="prop-row"><span class="prop-label">Drag a 30 m/s</span><span class="prop-value">' + drag30.toFixed(2) + ' N</span></div>' +
+        '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">0.30</span></div>';
+    } catch(e) { /* modulo non disponibile */ }
 
     physicsPanel.innerHTML = html;
     this._notify('Simulazione completata', 'success');
@@ -597,6 +652,80 @@ export class UI {
     }
   }
 
+  // ── Export Mesh ───────────────────────────────────────────────
+  _openExportModal() {
+    const self = this;
+    const allVoxels = Array.from(this.voxelEngine.voxelsIterator());
+    if (allVoxels.length === 0) { this._notify('Nessun voxel da esportare', 'warn'); return; }
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    overlay.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;min-width:360px;box-shadow:0 24px 64px rgba(0,0,0,.6);">
+        <h2 style="margin:0 0 18px;font-size:16px;">📦 Esporta Mesh</h2>
+        <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;">Formato</label>
+        <select id="ex-fmt" style="width:100%;padding:7px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;">
+          <option value="stl-ascii">STL ASCII (.stl)</option>
+          <option value="stl-binary">STL Binario (.stl)</option>
+          <option value="obj">OBJ Wavefront (.obj)</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px;font-size:12px;">
+          <input type="checkbox" id="ex-smooth"> Smooth surface (Marching Cubes)
+        </label>
+        <div style="padding:10px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--text-dim);margin-bottom:18px;">
+          Voxel: <strong style="color:var(--accent);">${allVoxels.length}</strong>
+          <div id="ex-info" style="margin-top:4px;"></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button id="ex-cancel" style="padding:8px 18px;background:var(--hover);color:var(--text);border:none;border-radius:6px;cursor:pointer;">Annulla</button>
+          <button id="ex-ok" style="padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">⬇ Scarica</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const upd = () => {
+      const s = document.getElementById('ex-smooth').checked;
+      document.getElementById('ex-info').textContent = s
+        ? 'Superficie: Marching Cubes (smooth)'
+        : `Superficie: Cubi (~${allVoxels.length * 12} triangoli est.)`;
+    };
+    document.getElementById('ex-smooth').addEventListener('change', upd);
+    upd();
+
+    document.getElementById('ex-cancel').onclick = () => overlay.remove();
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    document.getElementById('ex-ok').onclick = async () => {
+      const fmt = document.getElementById('ex-fmt').value;
+      const smooth = document.getElementById('ex-smooth').checked;
+      const btn = document.getElementById('ex-ok');
+      btn.textContent = '⏳ Generando...'; btn.disabled = true;
+      try {
+        const geom = self.meshExporter.voxelToGeometry(allVoxels, 1.0, smooth);
+        let content, fn, mime;
+        if (fmt === 'obj') {
+          content = self.meshExporter.exportOBJ(geom);
+          fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.obj';
+          mime = 'text/plain';
+        } else if (fmt === 'stl-binary') {
+          content = self.meshExporter.exportSTL(geom, false);
+          fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.stl';
+          mime = 'application/octet-stream';
+        } else {
+          content = self.meshExporter.exportSTL(geom, true);
+          fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.stl';
+          mime = 'text/plain';
+        }
+        self.meshExporter.download(fn, content, mime);
+        overlay.remove();
+        self._notify('Mesh esportata: ' + fn, 'success');
+      } catch (err) {
+        self._notify('Errore export: ' + err.message, 'error');
+        btn.textContent = '⬇ Scarica'; btn.disabled = false;
+      }
+    };
+  }
+
   // ── Import STL ────────────────────────────────────────────────
   _openImportModal() {
     var self = this;
@@ -613,18 +742,15 @@ export class UI {
 
   async _runImport(file) {
     this._notify('Importazione ' + file.name + '...', 'info');
-    
     try {
-      const STLImporter = (await import('./core/stl-import.js')).STLImporter;
+      const mod = await import('./core/stl-import.js');
+      const STLImporter = mod.STLImporter;
+      const QualityAnalyzer = mod.QualityAnalyzer;
       const importer = new STLImporter(this.scene, this.camera, this.renderer);
       const result = await importer.fitToScene(await importer.importFile(file));
-      
-      // Show analysis
       const analyzer = new QualityAnalyzer();
       const analysis = analyzer.analyzeGeometry(result.geometry);
-      
       this._showImportResults(analysis, result);
-      
       this._notify('Import completato: ' + file.name, 'success');
     } catch (err) {
       this._notify('Errore import: ' + err.message, 'error');
@@ -666,6 +792,26 @@ export class UI {
       if (e.key === 'Escape') {
         self.voxelEngine.selectedVoxel = null;
         self._showVoxelProperties(null);
+      }
+      // Ctrl+Z → Undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        self.voxelEngine.undo();
+        self._refreshProperties();
+        self._notify('Undo', 'info');
+      }
+      // Ctrl+Y or Ctrl+Shift+Z → Redo
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        self.voxelEngine.redo();
+        self._refreshProperties();
+        self._notify('Redo', 'info');
+      }
+      // Tool shortcuts
+      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === 'a' || e.key === 'A') self.voxelEngine.setTool('add');
+        if (e.key === 'r' || e.key === 'R') self.voxelEngine.setTool('remove');
+        if (e.key === 'v' || e.key === 'V') self.voxelEngine.setTool('select');
       }
     });
   }

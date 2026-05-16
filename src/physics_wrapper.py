@@ -4,6 +4,7 @@ try:
     HAS_C_API = True
 except ImportError:
     HAS_C_API = False
+    print("[physics_wrapper] C extension not available — using pure Python fallback")
 
 def calculate_mass(bricks):
     if HAS_C_API:

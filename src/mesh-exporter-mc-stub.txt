@@ -1,0 +1,8 @@
+/**
+  * Marching Cubes per superfici lisse
+  * TODO: ripristinare implementazione completa dopo fix triangolazione
+  */
+ _marchingCubes(voxels, voxelSize) {
+   // Temporarily delegate to simple cubes to avoid import error
+   return this._simpleCubes(voxels, voxelSize);
+ }

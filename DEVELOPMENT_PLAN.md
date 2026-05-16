@@ -36,14 +36,16 @@ Vedi `src/voxel-engine.js`, `src/material-system.js`, `src/module-system.js`.
 
 ### ✅ FASE 2 — Editor 3D [COMPLETATO]
 
-- Strumenti: Seleziona (V), Aggiungi (A), Rimuovi (R), Fill livello (F)
+- Strumenti: Seleziona (V), Aggiungi (A), Rimuovi (R), Fill livello (F), Ridimensiona mattoni (Shift+Click)
 - Selezione materiale da palette (8 materiali predefiniti + custom)
 - Click per piazzare/rimuovere voxel con preview ghost + highlight
 - Undo / Redo (50 passi)
 - Pannelli laterali: Materiali, Moduli (albero gerarchico), Proprietà voxel, Fisica
-- Simulazione fisica click-to-run: massa, CoM, inerzia, distribuzione
+- Simulazione fisica click-to-run: massa, CoM, inerzia, distribuzione materiali
 - Salvataggio/Caricamento progetti JSON
 - Esportazione mesh da interfaccia
+- Visualizzazione dimensioni in tempo reale per mattoni selezionati
+- Ridimensionamento mattoni basato sulla normale della faccia (simile allo strumento di ridimensionamento libero)
 
 ### ⚡ FASE 3 — Ottimizzazione Performance [IN CORSO]
 

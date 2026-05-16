@@ -133,6 +133,12 @@
              <input type="text" id="new-rule-name" class="prop-input" placeholder="Nome regola" style="flex: 1;" />
              <button id="btn-add-rule" class="btn-primary" style="flex: 0 0 auto; padding: 5px 8px; font-size: 11px;">+ Aggiungi</button>
            </div>
+           <div style="display:flex; gap:4px; margin-bottom:8px; align-items:center;">
+             <span style="font-size:10px;color:var(--text-dim);white-space:nowrap;">Offset:</span>
+             <input type="number" id="rule-offset-x" value="0" step="1" style="width:44px;padding:3px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:10px;" title="Offset X">
+             <input type="number" id="rule-offset-y" value="0" step="1" style="width:44px;padding:3px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:10px;" title="Offset Y">
+             <input type="number" id="rule-offset-z" value="0" step="1" style="width:44px;padding:3px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:10px;" title="Offset Z">
+           </div>
            <div id="rule-editor" style="border: 1px solid var(--border); border-radius: 4px; padding: 8px;">
              <div id="rule-editor-header" style="font-weight: bold; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--hover);">
                Seleziona una regola per modificarla
