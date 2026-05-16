@@ -599,6 +599,43 @@ runTest('StressAnalysis.safetyFactor', () => {
     });
   } catch(e) { failed++; console.log('  [FAIL] PhysicsSignature import: ' + e.message); }
 
+  // ── 15. STLImporter ─────────────────────────────────────────────────────────
+  try {
+    const { STLImporter, QualityAnalyzer } = await loadESM('src/core/stl-import.js');
+    runTest('STLImporter (ASCII)', () => {
+      const stlText = `solid test
+facet normal 0 0 1
+  outer loop
+    vertex 0 0 0
+    vertex 1 0 0
+    vertex 0 1 0
+  endloop
+endfacet
+endsolid test`;
+      const importer = new STLImporter({}, {}, {});
+      const geom = importer.parseASCII_STL(stlText);
+      assert.ok(geom.attributes.position.count > 0);
+    });
+
+    runTest('QualityAnalyzer.analyzeGeometry', () => {
+      const importer = new STLImporter({}, {}, {});
+      const qa = new QualityAnalyzer();
+      const stlText = `solid test
+facet normal 0 0 1
+  outer loop
+    vertex 0 0 0
+    vertex 1 0 0
+    vertex 0 1 0
+  endloop
+endfacet
+endsolid test`;
+      const geom = importer.parseASCII_STL(stlText);
+      const analysis = qa.analyzeGeometry(geom);
+      assert.ok(analysis.vertexCount > 0);
+      assert.ok(analysis.meanRadiusMm);
+    });
+  } catch(e) { failed++; console.log('  [FAIL] STLImporter import: ' + e.message); }
+
    // ── Summary ────────────────────────────────────────────────────────────────
   const total = passed + failed;
   console.log(`\nResults: ${passed}/${total} passed, ${failed} failed`);

@@ -12,8 +12,56 @@ export class STLImporter {
   }
 
   async importSTL(file) {
-    const text = await file.text();
+    const arrayBuffer = await file.arrayBuffer();
+    const header = String.fromCharCode(...new Uint8Array(arrayBuffer, 0, 80));
+    
+    // Check if binary (first 80 bytes are text in ASCII, binary in STL binary)
+    const isBinary = header.includes('\x00') || header.length < 10;
+    
+    if (isBinary) {
+      return this.parseBinarySTL(arrayBuffer);
+    }
+    const text = new TextDecoder().decode(arrayBuffer);
     return this.parseASCII_STL(text);
+  }
+
+  parseBinarySTL(arrayBuffer) {
+    const data = new DataView(arrayBuffer);
+    const triangleCount = data.getUint32(80, true);
+    
+    const vertices = [];
+    const normals = [];
+    
+    for (let i = 0; i < triangleCount; i++) {
+      const offset = 84 + i * 50;
+      
+      const normal = new THREE.Vector3(
+        data.getFloat32(offset, true),
+        data.getFloat32(offset + 4, true),
+        data.getFloat32(offset + 8, true)
+      );
+      
+      for (let v = 0; v < 3; v++) {
+        const vOffset = offset + 12 + v * 12;
+        vertices.push(new THREE.Vector3(
+          data.getFloat32(vOffset, true),
+          data.getFloat32(vOffset + 4, true),
+          data.getFloat32(vOffset + 8, true)
+        ));
+        normals.push(normal);
+      }
+    }
+    
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(
+      vertices.flatMap(v => [v.x, v.y, v.z]), 3
+    ));
+    geometry.setAttribute('normal', new THREE.Float32BufferAttribute(
+      normals.flatMap(n => [n.x, n.y, n.z]), 3
+    ));
+    geometry.computeBoundingSphere();
+    
+    return geometry;
   }
 
   parseASCII_STL(text) {
@@ -295,6 +343,69 @@ export class QualityAnalyzer {
 
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     return geometry;
+  }
+
+  /**
+   * Convert mesh to voxel grid using occupancy grid approach
+   */
+  meshToVoxels(geometry, voxelSize = 1.0) {
+    const positions = geometry.getAttribute('position');
+    const bbox = geometry.boundingBox;
+    
+    // Calculate grid dimensions
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+    
+    const gridSizeX = Math.ceil(size.x / voxelSize) + 1;
+    const gridSizeY = Math.ceil(size.y / voxelSize) + 1;
+    const gridSizeZ = Math.ceil(size.z / voxelSize) + 1;
+    
+    // Create occupancy grid
+    const occupied = new Set();
+    for (let i = 0; i < positions.count; i += 3) {
+      // Sample triangle centroid
+      const cx = (positions.getX(i) + positions.getX(i+1) + positions.getX(i+2)) / 3;
+      const cy = (positions.getY(i) + positions.getY(i+1) + positions.getY(i+2)) / 3;
+      const cz = (positions.getZ(i) + positions.getZ(i+1) + positions.getZ(i+2)) / 3;
+      
+      const gx = Math.floor((cx - bbox.min.x) / voxelSize);
+      const gy = Math.floor((cy - bbox.min.y) / voxelSize);
+      const gz = Math.floor((cz - bbox.min.z) / voxelSize);
+      
+      occupied.add(`${gx},${gy},${gz}`);
+    }
+    
+    // Fill interior voxels
+    const voxels = [];
+    for (let x = 0; x < gridSizeX; x++) {
+      for (let y = 0; y < gridSizeY; y++) {
+        for (let z = 0; z < gridSizeZ; z++) {
+          // Check if this voxel is inside the mesh (simplified: surface + adjacent)
+          const key = `${x},${y},${z}`;
+          if (occupied.has(key)) {
+            voxels.push({
+              x: x, y: y, z: z,
+              material: 'steel',
+              scale: [1, 1, 1]
+            });
+          } else {
+            // Check neighbors for surface voxels
+            for (const [dx, dy, dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]) {
+              if (occupied.has(`${x+dx},${y+dy},${z+dz}`)) {
+                voxels.push({
+                  x: x, y: y, z: z,
+                  material: 'steel',
+                  scale: [1, 1, 1]
+                });
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return voxels;
   }
 }
 
