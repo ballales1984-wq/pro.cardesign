@@ -158,11 +158,11 @@ export class ScalingTool {
       const intersection = new THREE.Vector3();
       this.raycaster.ray.intersectPlane(plane, intersection);
 
-      if (intersection) {
-        const delta = intersection[this.dragAxis] - this.dragStartPoint[this.dragAxis];
-        const deltaUnits = Math.round(delta); // 1 unit = 1mm
-        const snappedDelta = deltaUnits;
-        const newScale = Math.max(1, this.startScale[this.dragAxis] + snappedDelta);
+       if (intersection) {
+         const delta = intersection[this.dragAxis] - this.dragStartPoint[this.dragAxis];
+         const deltaUnits = Math.round(delta / this.sensitivity); // Convert pixels to units (100px = 1 unit)
+         const snappedDelta = deltaUnits;
+         const newScale = Math.max(1, this.startScale[this.dragAxis] + snappedDelta);
 
         // Update voxel scale
         const voxel = this.voxelEngine.getVoxelAt(
