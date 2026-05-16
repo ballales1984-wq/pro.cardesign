@@ -184,13 +184,13 @@ export class BrickSystem {
         return newSize;
     }
 
-     stopResize() {
-         if (this.selectedBrick && this.isDragging) {
-             this.syncBrickToVoxelEngine(this.selectedBrick);
-         }
-         this.isDragging = false;
-         this.resizeAxis = null;
-     }
+    stopResize() {
+        if (this.selectedBrick && this.isDragging) {
+            this.syncBrickToVoxelEngine(this.selectedBrick);
+        }
+        this.isDragging = false;
+        this.resizeAxis = null;
+    }
 
      /**
       * Sync brick size back to voxel engine scale data

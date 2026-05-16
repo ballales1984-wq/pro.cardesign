@@ -247,9 +247,9 @@ export class UI {
      populateRulesList();
    }
 
-   _editRule(ruleName) {
-     const rule = self.proceduralEngine.rules.get(ruleName);
-     if (!rule) return;
+    _editRule(ruleName) {
+      if (!this.proceduralEngine.rules.has(ruleName)) return;
+      const rule = this.proceduralEngine.rules.get(ruleName);
 
      const editorHeader = document.getElementById('rule-editor-header');
      const editorBody = document.getElementById('rule-editor-body');
@@ -286,36 +286,40 @@ export class UI {
        </div>
      `;
 
-     const saveBtn = document.getElementById('save-rule-btn');
-     const cancelBtn = document.getElementById('cancel-rule-btn');
-     const codeTextarea = document.getElementById('rule-code');
+      const saveBtn = document.getElementById('save-rule-btn');
+      const cancelBtn = document.getElementById('cancel-rule-btn');
+      const codeTextarea = document.getElementById('rule-code');
 
-     // Set current rule code (simplified)
-     codeTextarea.value = rule.execute.toString();
+      // Set current rule code (simplified)
+      codeTextarea.value = rule.execute.toString();
 
-     saveBtn.addEventListener('click', function() {
-       try {
-         const newCode = codeTextarea.value;
-         // Extract function body from string like "function (params, context) { ... }"
-         const funcBody = newCode.includes('{') 
-           ? newCode.substring(newCode.indexOf('{') + 1, newCode.lastIndexOf('}'))
-           : newCode;
-         
-         // Create new function
-         const newFunction = new Function('params', 'context', `return {${funcBody}}`);
-         
-         // Update rule
-         self.proceduralEngine.rules.set(ruleName, { execute: newFunction });
-         self._notify(`Regola "${ruleName}" salvata`, 'success');
-         self._setupProceduralPanel(); // Refresh the panel
-       } catch (err) {
-         self._notify(`Errore nel salvare la regola: ${err.message}`, 'error');
-       }
-     });
+      const engine = this.proceduralEngine;
+      const notifyFn  = this._notify.bind(this);
+      const refreshFn = this._setupProceduralPanel.bind(this);
 
-     cancelBtn.addEventListener('click', function() {
-       self._setupProceduralPanel(); // Reset to default view
-     });
+      saveBtn.addEventListener('click', function() {
+        try {
+          const newCode = codeTextarea.value;
+          // Extract function body from string like "function (params, context) { ... }"
+          const funcBody = newCode.includes('{')
+            ? newCode.substring(newCode.indexOf('{') + 1, newCode.lastIndexOf('}'))
+            : newCode;
+
+          // Create new function
+          const newFunction = new Function('params', 'context', `return {${funcBody}}`);
+
+          // Update rule
+          engine.rules.set(ruleName, { execute: newFunction });
+          notifyFn(`Regola "${ruleName}" salvata`, 'success');
+          refreshFn(); // Refresh the panel
+        } catch (err) {
+          notifyFn(`Errore nel salvare la regola: ${err.message}`, 'error');
+        }
+      });
+
+      cancelBtn.addEventListener('click', function() {
+        refreshFn(); // Reset to default view
+      });
    }
 
   // Materials palette

@@ -10,7 +10,7 @@ export class Chunk {
     this.chunkY = chunkY;
     this.chunkZ = chunkZ;
     this.chunkSize = chunkSize;
-    /** @type {Map<string, import('./voxel-engine.js').VoxelData>} */
+    /** @type {Map<string, Object>} */
     this.voxels = new Map(); // local key -> voxelData
   }
 
