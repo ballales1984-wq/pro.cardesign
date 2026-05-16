@@ -3,6 +3,15 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 from enum import Enum
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+try:
+    from physics_wrapper import calculate_mass as c_calculate_mass
+    from physics_wrapper import calculate_com as c_calculate_com
+    HAS_C_API = True
+except ImportError:
+    HAS_C_API = False
 
 @dataclass
 class Voxel:
@@ -160,6 +169,14 @@ class BrickEngine:
 
     def calculate_mass(self) -> float:
         return sum(brick.mass_kg for brick in self.bricks)
+    
+    def calculate_mass_fast(self) -> float:
+        if not HAS_C_API:
+            return self.calculate_mass()
+        bricks_data = [{'x': b.x, 'y': b.y, 'z': b.z, 'width': b.width, 
+                        'height': b.height, 'depth': b.depth, 'density': b.density} 
+                       for b in self.bricks]
+        return c_calculate_mass(bricks_data)
 
     def calculate_com(self) -> tuple:
         if not self.bricks:
@@ -183,6 +200,14 @@ class BrickEngine:
         if total_mass == 0:
             return (0.0, 0.0, 0.0)
         return (weighted_x / total_mass, weighted_y / total_mass, weighted_z / total_mass)
+
+    def calculate_com_fast(self) -> tuple:
+        if not HAS_C_API:
+            return self.calculate_com()
+        bricks_data = [{'x': b.x, 'y': b.y, 'z': b.z, 'width': b.width,
+                        'height': b.height, 'depth': b.depth, 'density': b.density}
+                       for b in self.bricks]
+        return c_calculate_com(bricks_data)
 
     def scale_brick(self, brick_index: int, scale_x: float = 1.0, scale_y: float = 1.0, scale_z: float = 1.0) -> bool:
         """Scale a brick along specified axes.
