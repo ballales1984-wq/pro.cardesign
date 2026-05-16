@@ -7,27 +7,29 @@ import { ComponentLibrary } from './core/component-library.js';
 import { ScalingTool } from './core/scaling-tool.js';
 
 export class UI {
-  constructor(opts) {
-    this.voxelEngine = opts.voxelEngine;
-    this.materialDB = opts.materialDB;
-    this.moduleSystem = opts.moduleSystem;
-    this.physics = opts.physics;
-    this.meshExporter = opts.meshExporter;
-    this.controls = opts.controls;
-    this.camera = opts.camera;
-    this.renderer = opts.renderer;
-    this.scene = opts.scene;
+   constructor(opts) {
+     this.voxelEngine = opts.voxelEngine;
+     this.materialDB = opts.materialDB;
+     this.moduleSystem = opts.moduleSystem;
+     this.physics = opts.physics;
+     this.meshExporter = opts.meshExporter;
+     this.proceduralEngine = opts.proceduralEngine;
+     this.controls = opts.controls;
+     this.camera = opts.camera;
+     this.renderer = opts.renderer;
+     this.scene = opts.scene;
 
-    this._setupToolbar();
-    this._setupPanels();
-    this._setupModals();
-    this._setupKeyboard();
-    this._populateMaterials();
-    this._populateModules();
-    this._subscribeEvents();
-    this._setupLibrary();
-    this._addDemoVoxels();
-  }
+     this._setupToolbar();
+     this._setupPanels();
+     this._setupModals();
+     this._setupProceduralPanel();
+     this._setupKeyboard();
+     this._populateMaterials();
+     this._populateModules();
+     this._subscribeEvents();
+     this._setupLibrary();
+     this._addDemoVoxels();
+   }
 
   // Notification helper
   _notify(message, type) {
@@ -162,11 +164,159 @@ export class UI {
     }
   }
 
-  _setupModals() {
-    document.addEventListener('click', function(e) {
-      if (e.target.classList.contains('modal-overlay')) e.target.remove();
-    });
-  }
+   _setupModals() {
+     document.addEventListener('click', function(e) {
+       if (e.target.classList.contains('modal-overlay')) e.target.remove();
+     });
+   }
+
+   // Procedural Rules Panel
+   _setupProceduralPanel() {
+     const self = this;
+     const container = document.getElementById('procedural-panel');
+     const rulesList = document.getElementById('procedural-rules-list');
+     const ruleEditor = document.getElementById('rule-editor');
+     const ruleEditorHeader = document.getElementById('rule-editor-header');
+     const ruleEditorBody = document.getElementById('rule-editor-body');
+     const newRuleNameInput = document.getElementById('new-rule-name');
+     const addRuleBtn = document.getElementById('btn-add-rule');
+
+     // Populate rules list
+     function populateRulesList() {
+       rulesList.innerHTML = '';
+       const rules = Array.from(self.proceduralEngine.rules.keys());
+       if (rules.length === 0) {
+         rulesList.innerHTML = '<p class="hint">Nessuna regola definita</p>';
+         return;
+       }
+       rules.forEach(ruleName => {
+         const ruleDiv = document.createElement('div');
+         ruleDiv.className = 'procedural-rule-item';
+         ruleDiv.innerHTML = `
+           <span class="rule-name">${ruleName}</span>
+           <button class="rule-edit-btn" data-rule="${ruleName}">Modifica</button>
+           <button class="rule-delete-btn" data-rule="${ruleName}">Elimina</button>
+         `;
+         rulesList.appendChild(ruleDiv);
+       });
+
+       // Add event listeners to edit/delete buttons
+       document.querySelectorAll('.rule-edit-btn').forEach(btn => {
+         btn.addEventListener('click', function() {
+           const ruleName = this.getAttribute('data-rule');
+           self._editRule(ruleName);
+         });
+       });
+
+       document.querySelectorAll('.rule-delete-btn').forEach(btn => {
+         btn.addEventListener('click', function() {
+           const ruleName = this.getAttribute('data-rule');
+           if (confirm(`Eliminare la regola "${ruleName}"?`)) {
+             self.proceduralEngine.rules.delete(ruleName);
+             populateRulesList();
+             self._notify(`Regola "${ruleName}" eliminata`, 'success');
+           }
+         });
+       });
+     }
+
+     // Add new rule
+     addRuleBtn.addEventListener('click', function() {
+       const ruleName = newRuleNameInput.value.trim();
+       if (!ruleName) {
+         self._notify('Inserisci un nome per la regola', 'warn');
+         return;
+       }
+       if (self.proceduralEngine.rules.has(ruleName)) {
+         self._notify('Una regola con questo nome esiste già', 'warn');
+         return;
+       }
+       // Create a simple rule template
+       self.proceduralEngine.rules.set(ruleName, {
+         execute: (params, context) => {
+           // Default: create a single voxel at origin
+           return [{x: 0, y: 0, z: 0, material: 'steel'}];
+         }
+       });
+       newRuleNameInput.value = '';
+       populateRulesList();
+       self._notify(`Regola "${ruleName}" creata`, 'success');
+     });
+
+     // Initial population
+     populateRulesList();
+   }
+
+   _editRule(ruleName) {
+     const rule = self.proceduralEngine.rules.get(ruleName);
+     if (!rule) return;
+
+     const editorHeader = document.getElementById('rule-editor-header');
+     const editorBody = document.getElementById('rule-editor-body');
+     
+     editorHeader.textContent = `Modifica regola: ${ruleName}`;
+     
+     // Create a simple editor for the rule function
+     // In a real implementation, this would be a proper code editor
+     editorBody.innerHTML = `
+       <div style="margin-bottom: 12px;">
+         <label for="rule-code">Funzione execute (params, context) => { ... }</label><br>
+         <textarea id="rule-code" rows="10" style="width: 100%; font-family: monospace;">
+           // Example: create a cube
+           // const [dx, dy, dz] = Array.isArray(params.dimensions) ? params.dimensions : [params.dimensions, params.dimensions, params.dimensions];
+           // const voxels = [];
+           // for (let x = 0; x < dx; x++) {
+           //   for (let y = 0; y < dy; y++) {
+           //     for (let z = 0; z < dz; z++) {
+           //       voxels.push({
+           //         x: params.position.x + x,
+           //         y: params.position.y + y,
+           //         z: params.position.z + z,
+           //         material: params.material || 'steel'
+           //       });
+           //     }
+           //   }
+           // }
+           // return voxels;
+         </textarea>
+       </div>
+       <div style="text-align: right;">
+         <button id="save-rule-btn" class="btn-primary">Salva Regola</button>
+         <button id="cancel-rule-btn" class="btn-secondary">Annulla</button>
+       </div>
+     `;
+
+     const saveBtn = document.getElementById('save-rule-btn');
+     const cancelBtn = document.getElementById('cancel-rule-btn');
+     const codeTextarea = document.getElementById('rule-code');
+
+     // Set current rule code (simplified)
+     codeTextarea.value = rule.execute.toString();
+
+     saveBtn.addEventListener('click', function() {
+       try {
+         const newCode = codeTextarea.value;
+         // Extract function body from string like "function (params, context) { ... }"
+         const funcBody = newCode.includes('{') 
+           ? newCode.substring(newCode.indexOf('{') + 1, newCode.lastIndexOf('}'))
+           : newCode;
+         
+         // Create new function
+         const newFunction = new Function('params', 'context', `return {${funcBody}}`);
+         
+         // Update rule
+         self.proceduralEngine.rules.set(ruleName, { execute: newFunction });
+         self._notify(`Regola "${ruleName}" salvata`, 'success');
+         self._setupProceduralPanel(); // Refresh the panel
+       } catch (err) {
+         self._notify(`Errore nel salvare la regola: ${err.message}`, 'error');
+       }
+     });
+
+     cancelBtn.addEventListener('click', function() {
+       self._setupProceduralPanel(); // Reset to default view
+     });
+   }
 
   // Materials palette
   _populateMaterials() {

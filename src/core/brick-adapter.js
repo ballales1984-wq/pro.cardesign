@@ -223,7 +223,8 @@ export class BrickAdapter {
     return { 
       version: '0.4.0-bricks', 
       bricks,
-      brickCount: bricks.length
+      brickCount: bricks.length,
+      SCALE: this.SCALE
     };
   }
 

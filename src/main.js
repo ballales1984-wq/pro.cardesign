@@ -81,6 +81,7 @@ var physics = new PhysicsCalc(materialDB, moduleSystem);
 var meshExporter = new MeshExporter();
 var voxelEngine = new VoxelEngine(scene, materialDB, moduleSystem, camera, renderer, controls);
 var brickSystem = new BrickSystem(voxelEngine);
+var proceduralEngine = new ProceduralEngine(voxelEngine);
 
 // UI
 var ui = new UI({
@@ -89,6 +90,7 @@ var ui = new UI({
   moduleSystem: moduleSystem,
   physics: physics,
   meshExporter: meshExporter,
+  proceduralEngine: proceduralEngine,
   controls: controls,
   camera: camera,
   renderer: renderer,

@@ -29,6 +29,33 @@ export class Brick {
     get volume_mm3() {
         return this.size.x * this.size.y * this.size.z;
     }
+
+    get max_corner() {
+        return {
+            x: this.position.x + this.size.x,
+            y: this.position.y + this.size.y,
+            z: this.position.z + this.size.z
+        };
+    }
+
+    contains_point(point) {
+        return (
+            point.x >= this.position.x && point.x <= this.max_corner.x &&
+            point.y >= this.position.y && point.y <= this.max_corner.y &&
+            point.z >= this.position.z && point.z <= this.max_corner.z
+        );
+    }
+
+    overlaps(other) {
+        return ! (
+            this.max_corner.x <= other.position.x ||
+            this.max_corner.y <= other.position.y ||
+            this.max_corner.z <= other.position.z ||
+            other.max_corner.x <= this.position.x ||
+            other.max_corner.y <= this.position.y ||
+            other.max_corner.z <= this.position.z
+        );
+    }
 }
 
 export class BrickSystem {
@@ -38,7 +65,7 @@ export class BrickSystem {
         this.nextId = 1;
         this.SCALE = 1.0; // 1 Three.js unit = 1mm
         this.selectedBrick = null;
-        
+
         // Interaction state
         this.resizeAxis = null;
         this.startSize = 0;
@@ -51,7 +78,7 @@ export class BrickSystem {
 
         // Instanced rendering for performance
         this.instancedMeshes = new Map();
-        
+
         this._setupInteraction();
         this._convertExistingVoxels();
     }
@@ -76,7 +103,7 @@ export class BrickSystem {
         if (brick.wireframe) {
             this.brickGroup.remove(brick.wireframe);
         }
-        
+
         const geometry = new THREE.BoxGeometry(
             brick.size.x * this.SCALE,
             brick.size.y * this.SCALE,
@@ -98,14 +125,14 @@ export class BrickSystem {
             brick.center.z * this.SCALE
         );
         mesh.userData.brick = brick;
-        
+
         this.brickGroup.add(mesh);
         brick.mesh = mesh;
-        
+
         // Add wireframe for selection
         if (brick.isSelected) {
             const edges = new THREE.EdgesGeometry(geometry);
-            const lineMat = new THREE.LineBasicMaterial({ 
+            const lineMat = new THREE.LineBasicMaterial({
                 color: 0xe94560
             });
             const wireframe = new THREE.LineSegments(edges, lineMat);
@@ -134,7 +161,7 @@ export class BrickSystem {
         this.selectedBrick = brick;
         brick.isSelected = true;
         this.updateBrickVisual(brick);
-        
+
         window.dispatchEvent(new CustomEvent('brick-selected', { detail: brick }));
     }
 
@@ -148,19 +175,53 @@ export class BrickSystem {
 
     updateResize(mouseX, scaleFactor = 10.0) {
         if (!this.resizeAxis || !this.selectedBrick || !this.isDragging) return null;
-        
+
         const delta = (mouseX - this.startMouse) * scaleFactor;
         const newSize = Math.max(1, this.startSize + delta);
         this.selectedBrick.size[this.resizeAxis] = newSize;
         this.updateBrickVisual(this.selectedBrick);
-        
+
         return newSize;
     }
 
-    stopResize() {
-        this.isDragging = false;
-        this.resizeAxis = null;
-    }
+     stopResize() {
+         if (this.selectedBrick && this.isDragging) {
+             this.syncBrickToVoxelEngine(this.selectedBrick);
+         }
+         this.isDragging = false;
+         this.resizeAxis = null;
+     }
+
+     /**
+      * Sync brick size back to voxel engine scale data
+      * @param {Brick} brick - The brick to sync
+      */
+     syncBrickToVoxelEngine(brick) {
+         // Find corresponding voxel at brick's position
+         const voxelPos = {
+             x: Math.round(brick.position.x),
+             y: Math.round(brick.position.y),
+             z: Math.round(brick.position.z)
+         };
+         const voxel = this.voxelEngine.getVoxelAt(voxelPos.x, voxelPos.y, voxelPos.z);
+         if (voxel) {
+             // Update voxel scale
+             voxel.scale = [brick.size.x, brick.size.y, brick.size.z];
+             const materialName = voxel.material;
+             const mesh = this.voxelEngine.instancedMeshes.get(materialName);
+             if (mesh) {
+                 const key = this.voxelEngine._gridKey(voxelPos);
+                 const instMap = this.voxelEngine.keyToInstance.get(materialName);
+                 const instanceId = instMap?.get(key);
+                 if (instanceId !== undefined) {
+                     this.voxelEngine._setInstanceMatrix(
+                         mesh, instanceId, this.voxelEngine._worldPos(voxelPos),
+                         new THREE.Vector3(brick.size.x, brick.size.y, brick.size.z)
+                     );
+                 }
+             }
+         }
+     }
 
     get dimensionsText() {
         if (this.selectedBrick) {
@@ -172,7 +233,7 @@ export class BrickSystem {
 
     _setupInteraction() {
         const canvas = this.voxelEngine.renderer.domElement;
-        
+
         canvas.addEventListener('pointerdown', (e) => {
             if (e.button !== 0 || !e.shiftKey) return;
             const brick = this._getBrickAtScreen(e.clientX, e.clientY);
@@ -182,7 +243,7 @@ export class BrickSystem {
                 this.startResize(brick, axis, e.clientX);
             }
         });
-        
+
         canvas.addEventListener('pointermove', (e) => {
             if (!this.isDragging) return;
             const newSize = this.updateResize(e.clientX);
@@ -201,10 +262,10 @@ export class BrickSystem {
         const rect = this.voxelEngine.renderer.domElement.getBoundingClientRect();
         this.voxelEngine.pointer.x = ((x - rect.left) / rect.width) * 2 - 1;
         this.voxelEngine.pointer.y = -((y - rect.top) / rect.height) * 2 + 1;
-        
+
         this.voxelEngine.raycaster.setFromCamera(this.voxelEngine.pointer, this.voxelEngine.camera);
         const intersects = this.voxelEngine.raycaster.intersectObjects(this.brickGroup.children);
-        
+
         if (intersects.length > 0) {
             return intersects[0].object.userData.brick;
         }
