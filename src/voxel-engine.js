@@ -822,7 +822,72 @@ const edges = new THREE.EdgesGeometry(geo);
 
     update(deltaTime) {
            if (this.ghost && this.ghost.visible) {
-             this.ghost.material.opacity = 0.2 + Math.sin(performance.now() * 0.005) * 0.1;
+              this.ghost.material.opacity = 0.2 + Math.sin(performance.now() * 0.005) * 0.1;
+            }
            }
+
+    // ── Voxel mutation helpers (called by BrickAdapter) ────────────────────────
+    /**
+     * Cambia materiale a un voxel esistente alle coordinate date.
+     * @returns {boolean} true se voxel esisteva e materiale aggiornato
+     */
+    setVoxelMaterial(x, y, z, material) {
+      const v = this.getVoxelAt(x, y, z);
+      if (!v) return false;
+      v.material = material;
+      this._onVoxelChanged();
+      return true;
+    }
+
+    /**
+     * Cambia modulo di appartenenza a un voxel esistente.
+     * @returns {boolean} true se voxel esisteva e modulo aggiornato
+     */
+    setVoxelModule(x, y, z, module) {
+      const v = this.getVoxelAt(x, y, z);
+      if (!v) return false;
+      v.module = module;
+      this._onVoxelChanged();
+      return true;
+    }
+
+    // ── Optimize: deduplicate and compact voxel storage ───────────────────────
+    /**
+     * Esegue pulizia dello stato:
+     * - rimuove moduli orfani (voci senza voxel o _deleted)
+     * - ripristina activeModule se il modulo attivo è stato rimosso
+     * - pulisce keyToInstance da riferimenti stale
+     */
+    optimize() {
+      // Rimuovi moduli orfani o marcati _deleted
+      const deadModules = Object.keys(this.modules).filter(
+        name => !this.modules[name] || this.modules[name]._deleted
+      );
+      for (const name of deadModules) {
+        const mod = this.modules[name];
+        if (mod && mod.voxels) {
+          for (const v of mod.voxels) {
+            v.module = null; // riassegna a nessun modulo
           }
-     }
+        }
+        delete this.modules[name];
+      }
+
+      // Se activeModule non esiste più, scegli il primo disponibile
+      if (this.activeModule && !(this.activeModule in this.modules)) {
+        const remaining = Object.keys(this.modules);
+        this.activeModule = remaining.length > 0 ? remaining[0] : null;
+      }
+
+      // Pulisci keyToInstance da voxel non più presenti
+      for (const [mat, instMap] of this.keyToInstance) {
+        for (const key of Array.from(instMap.keys())) {
+          if (!this.voxels.has(key)) {
+            instMap.delete(key);
+          }
+        }
+      }
+
+      this._onVoxelChanged();
+    }
+  }
