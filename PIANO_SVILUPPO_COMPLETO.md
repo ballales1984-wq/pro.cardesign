@@ -567,15 +567,15 @@ FASE 8 ⏳ — Da iniziare
 
 ### Prossima settimana
 
-- [ ] Fase 4: `ProceduralEngine.js` — regole CUBO/LINEA/SIMMETRIA
-- [ ] Fase 5 estesa: metadati materiale (rugosità, attrito, porosità, coefficiente espansione)
-- [ ] Fisica: stress analysis per voxel
+- [x] Fase 4: `ProceduralEngine.js` — regole CUBO/LINEA/SIMMETRY ✅
+- [x] Fase 5 estesa: metadati materiale ✅ (rugosità, attrito, porosità, coefficiente espansione)
+- [x] Fisica: stress analysis per voxel ✅
 
 ### Future
 
-- [ ] Fase 6: FEM solver (Poisson equation / Simplified Finite Differences)
-- [ ] Fase 7: MiDaS in browser via ONNX.js → depth → voxel
-- [ ] Fase 8: keyframe extraction da video upload
+- [ ] Fase 6: FEM solver avanzato
+- [ ] Fase 7: MiDaS in browser via ONNX.js
+- [ ] Fase 8: keyframe extraction da video
 
 ---
 
