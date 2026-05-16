@@ -19,22 +19,38 @@ export class ComponentLibrary {
   }
   
   _loadDefaults() {
-    // Road Wheel 700c
-    this.components.push({
-      id: 1,
-      name: 'Ruota Strada 700c',
-      type: 'wheel',
-      category: 'wheels',
-      icon: '',
-      color: '#333',
-      description: 'Ruota strada 700c con pneumatico 30mm',
-      parameters: {
-        outer_radius: { value: 350, min: 300, max: 400, unit: 'mm' },
-        inner_radius: { value: 311, min: 280, max: 340, unit: 'mm' },
-        width: { value: 30, min: 15, max: 50, unit: 'mm' },
-        rim_width: { value: 21, min: 15, max: 30, unit: 'mm' }
-      }
-    });
+     // Road Wheel 700c
+     this.components.push({
+       id: 1,
+       name: 'Ruota Strada 700c',
+       type: 'wheel',
+       category: 'wheels',
+       icon: '',
+       color: '#333',
+       description: 'Ruota strada 700c con pneumatico 30mm',
+       parameters: {
+         outer_radius: { value: 350, min: 300, max: 400, unit: 'mm' },
+         inner_radius: { value: 311, min: 280, max: 340, unit: 'mm' },
+         width: { value: 30, min: 15, max: 50, unit: 'mm' },
+         rim_width: { value: 21, min: 15, max: 30, unit: 'mm' }
+       }
+     });
+     
+     // 2x4 Brick
+     this.components.push({
+       id: 100,
+       name: 'Mattoncino 2x4',
+       type: 'brick',
+       category: 'misc',
+       icon: '',
+       color: '#ff0000',
+       description: 'Mattoncino LEGO stile 2x4',
+       parameters: {
+         width: { value: 8, min: 4, max: 16, unit: 'mm' },
+         height: { value: 9.6, min: 4, max: 20, unit: 'mm' },
+         depth: { value: 16, min: 4, max: 32, unit: 'mm' }
+       }
+     });
     
     // MTB Wheel 29"
     this.components.push({

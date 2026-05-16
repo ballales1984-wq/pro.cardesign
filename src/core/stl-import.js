@@ -75,12 +75,109 @@ export class STLImporter {
     }
   }
 
-  async importOBJ(file) {
-    // For OBJ we use an external loader
-    // For now simple implementation only for STL
-    const text = await file.text();
-    return this.parseASCII_STL(text); // temporary fallback
-  }
+   async importOBJ(file) {
+     const text = await file.text();
+     return this.parseASCII_OBJ(text);
+   }
+
+   parseASCII_OBJ(text) {
+     // Simple OBJ parser - handles vertices and faces
+     const vertices = [];
+     const normals = [];
+     const uvs = [];
+
+     const lines = text.split('\n');
+     const positions = [];
+     const normalsOut = [];
+
+     for (const line of lines) {
+       const clean = line.trim();
+       if (clean.startsWith('v ')) {
+         // Vertex
+         const parts = clean.split(' ');
+         vertices.push(new THREE.Vector3(
+           parseFloat(parts[1]),
+           parseFloat(parts[2]),
+           parseFloat(parts[3])
+         ));
+       } else if (clean.startsWith('vt ')) {
+         // UV coordinate
+         const parts = clean.split(' ');
+         uvs.push(new THREE.Vector2(
+           parseFloat(parts[1]),
+           parseFloat(parts[2])
+         ));
+       } else if (clean.startsWith('vn ')) {
+         // Normal
+         const parts = clean.split(' ');
+         normals.push(new THREE.Vector3(
+           parseFloat(parts[1]),
+           parseFloat(parts[2]),
+           parseFloat(parts[3])
+         ));
+       } else if (clean.startsWith('f ')) {
+         // Face
+         const parts = clean.split(' ').slice(1);
+         // Process triangular faces ( triangulate if needed )
+         if (parts.length >= 3) {
+           // For simplicity, we'll take the first three vertices of each face
+           // A more robust implementation would triangulate polygonal faces
+           for (let i = 0; i < Math.min(3, parts.length); i++) {
+             const facePart = parts[i].split('/');
+             const vertexIndex = parseInt(facePart[0]) - 1; // OBJ indices are 1-based
+             const uvIndex = facePart[1] ? parseInt(facePart[1]) - 1 : undefined;
+             const normalIndex = facePart[2] ? parseInt(facePart[2]) - 1 : undefined;
+
+             if (vertexIndex >= 0 && vertexIndex < vertices.length) {
+               positions.push(vertices[vertexIndex]);
+               
+               // Add normal if available, otherwise we'll compute later
+               if (normalIndex !== undefined && normalIndex >= 0 && normalIndex < normals.length) {
+                 normalsOut.push(normals[normalIndex]);
+               }
+             }
+           }
+         }
+       }
+     }
+
+     // If we don't have normals from the OBJ file, compute them
+     if (normalsOut.length === 0 && positions.length >= 3) {
+       // Compute normals from triangle faces
+       for (let i = 0; i < positions.length; i += 3) {
+         if (i + 2 < positions.length) {
+           const v0 = positions[i];
+           const v1 = positions[i + 1];
+           const v2 = positions[i + 2];
+           
+           const normal = new THREE.Vector3()
+             .subVectors(v1, v0)
+             .cross(v2.sub(v0))
+             .normalize();
+             
+           normalsOut.push(normal, normal, normal);
+         }
+       }
+     }
+
+     // If we still don't have normals, use a default
+     if (normalsOut.length === 0) {
+       for (let i = 0; i < positions.length; i++) {
+         normalsOut.push(new THREE.Vector3(0, 1, 0)); // Default up normal
+       }
+     }
+
+     const geometry = new THREE.BufferGeometry();
+     geometry.setAttribute('position', new THREE.Float32BufferAttribute(
+       positions.flatMap(v => [v.x, v.y, v.z]), 3
+     ));
+     geometry.setAttribute('normal', new THREE.Float32BufferAttribute(
+       normalsOut.flatMap(n => [n.x, n.y, n.z]), 3
+     ));
+     geometry.computeBoundingSphere();
+
+     return geometry;
+   }
 
   fitToScene(geometry, targetSize = 500) {
     // Resize geometry to fit targetSize (mm)
