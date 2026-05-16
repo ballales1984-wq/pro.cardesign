@@ -22,7 +22,7 @@ class ComponentDefinition:
     default_voxels: List[Dict] = field(default_factory=list)
     
     # Icon and preview
-    icon: str = "🔧"
+    icon: str = ""
     color: str = "#888888"
     description: str = ""
 
@@ -62,7 +62,7 @@ class ComponentLibrary:
             name="Road Wheel 700c",
             type="wheel",
             category="wheels",
-            icon="⚫",
+            icon="",
             color="#333",
             description="700c road wheel with 30mm tire",
             parameters={
@@ -80,7 +80,7 @@ class ComponentLibrary:
             name="Mountain Bike Wheel 29\"",
             type="wheel",
             category="wheels",
-            icon="⚫",
+            icon="",
             color="#555",
             description="29\" mountain bike tire with 2.35\" tire",
             parameters={
@@ -98,7 +98,7 @@ class ComponentLibrary:
             name="BMX Wheel 20\"",
             type="wheel",
             category="wheels",
-            icon="⚫",
+            icon="",
             color="#444",
             description="BMX 20\" wheel",
             parameters={
@@ -116,7 +116,7 @@ class ComponentLibrary:
             name="Top Tube",
             type="tube",
             category="frame",
-            icon="📏",
+            icon="",
             color="#aaa",
             description="Horizontal bike frame tube",
             parameters={
@@ -132,7 +132,7 @@ class ComponentLibrary:
             name="Down Tube",
             type="tube",
             category="frame",
-            icon="📏",
+            icon="",
             color="#bbb",
             description="Slanted bike frame tube",
             parameters={
@@ -148,7 +148,7 @@ class ComponentLibrary:
             name="Seat Tube",
             type="tube",
             category="frame",
-            icon="📏",
+            icon="",
             color="#ccc",
             description="Seatpost tube",
             parameters={
@@ -196,7 +196,7 @@ class ComponentLibrary:
             name="Handlebar",
             type="handlebar",
             category="interior",
-            icon="🎯",
+            icon="",
             color="#888",
             description="Bike handlebar",
             parameters={
@@ -212,7 +212,7 @@ class ComponentLibrary:
             name="Stem",
             type="stem",
             category="interior",
-            icon="🔗",
+            icon="",
             color="#777",
             description="Handlebar stem",
             parameters={
@@ -224,11 +224,11 @@ class ComponentLibrary:
         
         # Fork
         self.definitions[22] = ComponentDefinition(
-            id=22,
-            name="Fork",
-            type="fork",
-            category="frame",
-            icon="🔱",
+             id=22,
+             name="Fork",
+             type="fork",
+             category="frame",
+             icon="",
             color="#666",
             description="Front bike fork",
             parameters={

@@ -19,7 +19,7 @@ module.exports = {
       this.createRoot('Veicolo');
     }
     createRoot(name) {
-      this.modules.set(1, { id:1, name, parentId:null, childIds:[], voxelKeys:[], properties:{}, metadata:{ color:'#888', icon:'📦' } });
+      this.modules.set(1, { id:1, name, parentId:null, childIds:[], voxelKeys:[], properties:{}, metadata:{ color:'#888', icon:'' } });
       this.rootId = 1;
       return 1;
     }
@@ -30,7 +30,7 @@ module.exports = {
     unassignVoxel(k, m) { return true; }
     removeModule(m) { return this.modules.delete(m); }
     getChildren() { return []; }
-    getTree() { return { id:1, name:'Veicolo', voxelCount:0, icon:'📦', color:'#888', visible:true, locked:false, properties:{}, children:[] }; }
+    getTree() { return { id:1, name:'Veicolo', voxelCount:0, icon:'', color:'#888', visible:true, locked:false, properties:{}, children:[] }; }
     getVoxelsForModule() { return []; }
     count() { return this.modules.size; }
     toJSON() { return { rootId:1, modules: [] }; }

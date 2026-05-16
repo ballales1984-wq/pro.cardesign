@@ -8,11 +8,11 @@ export class ComponentLibrary {
   constructor() {
     this.components = [];
     this.categories = {
-      wheels: { label: 'Ruote', icon: '⚫' },
-      frame: { label: 'Telaio', icon: '🔧' },
-      interior: { label: 'Interno', icon: '🪑' },
-      body: { label: 'Carrozzeria', icon: '🚗' },
-      misc: { label: 'Altro', icon: '📦' }
+      wheels: { label: 'Ruote', icon: '' },
+      frame: { label: 'Telaio', icon: '' },
+      interior: { label: 'Interno', icon: '' },
+      body: { label: 'Carrozzeria', icon: '' },
+      misc: { label: 'Altro', icon: '' }
     };
     
     this._loadDefaults();
@@ -25,7 +25,7 @@ export class ComponentLibrary {
       name: 'Ruota Strada 700c',
       type: 'wheel',
       category: 'wheels',
-      icon: '⚫',
+      icon: '',
       color: '#333',
       description: 'Ruota strada 700c con pneumatico 30mm',
       parameters: {
@@ -42,7 +42,7 @@ export class ComponentLibrary {
       name: 'Ruota MTB 29"',
       type: 'wheel',
       category: 'wheels',
-      icon: '⚫',
+      icon: '',
       color: '#555',
       description: 'Ruota MTB 29" con pneumatico 2.35"',
       parameters: {
@@ -59,7 +59,7 @@ export class ComponentLibrary {
       name: 'Top Tube',
       type: 'tube',
       category: 'frame',
-      icon: '📏',
+      icon: '',
       color: '#aaa',
       description: 'Tubo orizzontale telaio',
       parameters: {
@@ -75,7 +75,7 @@ export class ComponentLibrary {
       name: 'Down Tube',
       type: 'tube',
       category: 'frame',
-      icon: '📏',
+      icon: '',
       color: '#bbb',
       description: 'Tubo inclinato telaio',
       parameters: {
@@ -91,7 +91,7 @@ export class ComponentLibrary {
       name: 'Seat Tube',
       type: 'tube',
       category: 'frame',
-      icon: '📏',
+      icon: '',
       color: '#ccc',
       description: 'Tubo reggisella',
       parameters: {

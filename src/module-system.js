@@ -33,7 +33,7 @@ export class Module {
     };
     this.metadata = {
       color: '#888888',
-      icon: '📦',
+      icon: '',
       locked: false,
       visible: true,
     };

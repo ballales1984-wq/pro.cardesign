@@ -247,7 +247,7 @@ export class UI {
     var row = document.createElement('div');
     row.className = 'module-node' + (node.id === this.voxelEngine.activeModule ? ' selected' : '');
     row.style.paddingLeft = (8 + depth * 16) + 'px';
-    row.innerHTML = '<span class="module-icon">' + (node.icon || '📦') + '</span> ' + node.name +
+    row.innerHTML = '<span class="module-icon">' + (node.icon || '') + '</span> ' + node.name +
       ' <small style="color: var(--text-dim); margin-left: auto;">(' + node.voxelCount + ')</small>';
 
     row.addEventListener('click', function() {
@@ -281,7 +281,7 @@ export class UI {
     var sc = voxel.scale ? voxel.scale : [1,1,1];
     var sx = Math.round(sc[0]*100)/100, sy = Math.round(sc[1]*100)/100, sz = Math.round(sc[2]*100)/100;
     var vVol = Math.round(sx * sy * sz * 100)/100;
-    var dimsHtml = '<hr style="border-color: var(--border); margin: 8px 0;"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">📏 Dimensioni (mm)</div>' +
+    var dimsHtml = '<hr style="border-color: var(--border); margin: 8px 0;"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">Dimensioni (mm)</div>' +
       '<div class="prop-row"><span class="prop-label">Posizione</span><span class="prop-value">' + voxel.x + ', ' + voxel.y + ', ' + voxel.z + '</span></div>' +
       '<div class="prop-row"><span class="prop-label">Scala voxel</span><span class="prop-value">' + sx.toFixed(1) + ' x ' + sy.toFixed(1) + ' x ' + sz.toFixed(1) + '</span></div>' +
       '<div class="prop-row"><span class="prop-label">Volume voxel</span><span class="prop-value">' + vVol.toFixed(1) + ' mm³</span></div>' +
@@ -297,7 +297,7 @@ export class UI {
         '<div class="prop-row"><span class="prop-label">Sigma max</span><span class="prop-value">' + (mat.tensileStrength / 1e6).toFixed(0) + ' MPa</span></div>' +
         '<div class="prop-row"><span class="prop-label">Lambda termica</span><span class="prop-value">' + mat.thermalConductivity + ' W/(m·K)</span></div>' +
         '<div class="prop-row"><span class="prop-label">Costo</span><span class="prop-value">EUR ' + mat.costPerKg + '/kg</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Riciclabile</span><span class="prop-value">' + (mat.recyclable ? '✅' : '❌') + '</span></div>';
+        '<div class="prop-row"><span class="prop-label">Riciclabile</span><span class="prop-value">' + (mat.recyclable ? 'Si' : 'No') + '</span></div>';
     }
 
     container.innerHTML = dimsHtml + matInfo;
@@ -478,13 +478,13 @@ export class UI {
     panel.style.maxWidth = '400px';
     panel.innerHTML = `
       <div style="padding: 16px;">
-        <h3 style="margin:0 0 12px;">📥 Risultati Importazione</h3>
+        <h3 style="margin:0 0 12px;">Risultati Importazione</h3>
         <div class="prop-row"><span class="prop-label">Vertici</span><span class="prop-value">${analysis.vertexCount}</span></div>
         <div class="prop-row"><span class="prop-label">Centroide</span><span class="prop-value">(${analysis.centroid.x}, ${analysis.centroid.y}, ${analysis.centroid.z}) mm</span></div>
         <div class="prop-row"><span class="prop-label">Raggio medio</span><span class="prop-value">${analysis.meanRadiusMm} mm</span></div>
         <div class="prop-row"><span class="prop-label">Ovalità</span><span class="prop-value">${analysis.ovalityMm} mm</span></div>
         <div class="prop-row"><span class="prop-label">Deviazione max</span><span class="prop-value">${analysis.maxDeviationMm} mm</span></div>
-        <div class="prop-row"><span class="prop-label">Circolare</span><span class="prop-value">${analysis.isCircular ? '✅ Si' : '⚠️ No'}</span></div>
+        <div class="prop-row"><span class="prop-label">Circolare</span><span class="prop-value">${analysis.isCircular ? 'Si' : 'No'}</span></div>
         <hr style="border-color:rgba(255,255,255,0.1); margin:8px 0;">
         <div class="prop-row"><span class="prop-label">Scala</span><span class="prop-value">${(importInfo.scaleFactor * 100).toFixed(1)}%</span></div>
         <div class="prop-row"><span class="prop-label">Dim. Originali</span><span class="prop-value">${importInfo.originalSize.x.toFixed(1)} × ${importInfo.originalSize.y.toFixed(1)} × ${importInfo.originalSize.z.toFixed(1)}</span></div>
@@ -544,7 +544,7 @@ export class UI {
     }
 
     var telaioId = this.moduleSystem.createModule('Telaio', this.moduleSystem.rootId);
-    this.moduleSystem.get(telaioId).metadata.icon = '🔧';
+    this.moduleSystem.get(telaioId).metadata.icon = '';
     this.moduleSystem.get(telaioId).metadata.color = '#e94560';
     var telaioProps = this.moduleSystem.get(telaioId).properties;
     telaioProps.tolerance = 0.05;
@@ -560,7 +560,7 @@ export class UI {
     }
 
     var carId = this.moduleSystem.createModule('Carrozzeria', this.moduleSystem.rootId);
-    this.moduleSystem.get(carId).metadata.icon = '🚗';
+    this.moduleSystem.get(carId).metadata.icon = '';
     this.moduleSystem.get(carId).metadata.color = '#00d2ff';
 
     this._refreshModules();
@@ -636,7 +636,7 @@ export class UI {
       ${paramsHtml}
       <hr style="border-color:var(--border); margin:8px 0;">
       <div style="display:flex; gap:4px;">
-        <button id="btn-add-component" class="btn-primary" style="flex:1; padding:6px; font-size:11px; border:none; border-radius:4px; color:#fff; background:var(--accent); cursor:pointer;">➕ Aggiungi</button>
+        <button id="btn-add-component" class="btn-primary" style="flex:1; padding:6px; font-size:11px; border:none; border-radius:4px; color:#fff; background:var(--accent); cursor:pointer;">Aggiungi</button>
         <button id="btn-reset-component" class="btn-secondary" style="flex:1; padding:6px; font-size:11px; border:none; border-radius:4px; color:var(--text); background:var(--hover); cursor:pointer;">Reset</button>
       </div>
     `;

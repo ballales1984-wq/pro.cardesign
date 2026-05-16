@@ -266,7 +266,7 @@ export class ScalingTool {
     const sign = delta >= 0 ? '+' : '';
     
     this.liveLabel.innerHTML = `
-      <div style="font-weight: bold; margin-bottom: 8px;">📏 Live Scaling</div>
+      <div style="font-weight: bold; margin-bottom: 8px;">Live Scaling</div>
       <div>Asse: ${this.dragAxis.toUpperCase()}</div>
       <div>Attuale: ${scale[this.dragAxis].toFixed(1)} mm</div>
       <div style="margin-top: 4px;">Delta: <span style="color: ${delta >= 0 ? '#4caf50' : '#f44336'}">${sign}${delta.toFixed(1)} mm</span></div>
