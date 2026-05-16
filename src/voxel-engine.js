@@ -561,7 +561,7 @@ const edges = new THREE.EdgesGeometry(geo);
           if (voxelData.module === moduleId) {
             result.push(voxelData);
           }
-        }
+}
       }
       return result;
     }
@@ -569,12 +569,12 @@ const edges = new THREE.EdgesGeometry(geo);
     *voxelsIterator() {
       for (const chunk of this.chunks.values()) {
         for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
-          yield { x, y, z, material: voxelData.material, density: voxelData.density };
+          yield { x, y, z, material: voxelData.material, density: voxelData.density, scale: voxelData.scale };
         }
       }
     }
-   
-   // ── Internal remove (without history push) ───────────────────
+
+    // ── Internal remove (without history push) ───────────────────
 
    _removeVoxelSilently(x, y, z) {
      const chunkKey = this._getChunkKey({ x, y, z });

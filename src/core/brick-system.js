@@ -36,7 +36,7 @@ export class BrickSystem {
         this.voxelEngine = voxelEngine;
         this.bricks = new Map();
         this.nextId = 1;
-        this.SCALE = 0.01; // 1mm = 0.01 Three.js units
+        this.SCALE = 1.0; // 1 Three.js unit = 1mm
         this.selectedBrick = null;
         
         // Interaction state

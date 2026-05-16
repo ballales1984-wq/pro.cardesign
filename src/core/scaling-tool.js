@@ -154,18 +154,16 @@ export class ScalingTool {
         this.dragAxis === 'z' ? 1 : 0
       );
       plane.setFromNormalAndCoplanarPoint(normal, this.dragStartPoint);
-      
+
       const intersection = new THREE.Vector3();
       this.raycaster.ray.intersectPlane(plane, intersection);
-      
+
       if (intersection) {
         const delta = intersection[this.dragAxis] - this.dragStartPoint[this.dragAxis];
-        const deltaUnits = delta / 0.01; // Convert to voxel units (1 unit = 1mm)
-        
-        // Snapping: snap to 1mm
-        const snappedDelta = Math.round(deltaUnits);
+        const deltaUnits = Math.round(delta); // 1 unit = 1mm
+        const snappedDelta = deltaUnits;
         const newScale = Math.max(1, this.startScale[this.dragAxis] + snappedDelta);
-        
+
         // Update voxel scale
         const voxel = this.voxelEngine.getVoxelAt(
           this.selectedVoxel.x, this.selectedVoxel.y, this.selectedVoxel.z
