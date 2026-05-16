@@ -4,16 +4,16 @@
 
 ## Current Status
 
-**v0.3.0** — Brick System + Components + STL Import completed. Build: `npm run build` → **16 modules, 77.2 KB**.
+**v0.4.0** — Enhanced Component Library + Proper OBJ Import + Refined Scaling Tool. Build: `npm run build` → **17 modules, 79.9 KB**.
 
 ## Features
 
 - [x] **Brick System** — Bricks with real dimensions in mm (e.g. 200×20×20mm bars)
-- [x] **Scaling Tool** — Click & drag on faces to resize with live dimensions
+- [x] **Scaling Tool** — Click & drag on faces to resize with live dimensions (pixel-sensitive)
 - [x] **Material Database** — 8 materials with density, Young's modulus, cost (kg/m³)
-- [x] **Component Library** — 11 predefined parametric components (wheels, tubes, saddle, handlebar)
+- [x] **Component Library** — 6 predefined parametric components (wheels, tubes, brick, saddle, handlebar)
 - [x] **Project Management** — Save/load JSON, export STL/OBJ
-- [x] **STL Import + Quality Check** — Import scanned parts, analyze ovality/deformations
+- [x] **STL/OBJ Import + Quality Check** — Import scanned parts, analyze ovality/deformations with proper normal handling
 - [ ] Aerodynamics (in development)
 
 ## Project Structure
