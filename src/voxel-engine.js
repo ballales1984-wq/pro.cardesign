@@ -122,9 +122,11 @@ export class VoxelEngine {
          material.name = materialName;
          mesh = new THREE.InstancedMesh(this.sharedGeometry, material, this.maxInstances);
          mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+         mesh.count = 0;
          mesh.castShadow = true;
          mesh.receiveShadow = true;
-         mesh.frustumCulled = true;
+         mesh.frustumCulled = false; // Disable to avoid bounding volume recalculations
+         mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 9999999); // Giant sphere to bypass recalculation on raycast
          this.voxelGroup.add(mesh);
    
          this.instancedMeshes.set(materialName, mesh);
@@ -275,6 +277,10 @@ const edges = new THREE.EdgesGeometry(geo);
             
             // Apply new scale
             voxel.scale = [scaleX, scaleY, scaleZ];
+            
+            if (this.highlight && this.highlight.visible) {
+                this.highlight.scale.set(scaleX, scaleY, scaleZ);
+            }
             
             // Update the InstancedMesh matrix
             const materialName = voxel.material;
@@ -594,7 +600,7 @@ const edges = new THREE.EdgesGeometry(geo);
        const instanceId = instMap.get(worldKey);
        if (instanceId !== undefined) {
          const hiddenMatrix = new THREE.Matrix4();
-         hiddenMatrix.makeScale(0, 0, 0);
+         hiddenMatrix.makeTranslation(0, -999999, 0); // Move far away with scale 1 to prevent NaN normals
          mesh.setMatrixAt(instanceId, hiddenMatrix);
          mesh.instanceMatrix.needsUpdate = true;
 
@@ -803,13 +809,8 @@ const edges = new THREE.EdgesGeometry(geo);
    }
 
    _onVoxelChanged() {
-     try {
-       const el = document.getElementById('voxel-count');
-       if (el) el.textContent = 'Voxel: ' + this.getVoxelCount();
-       window.dispatchEvent(new CustomEvent('voxels-updated', { detail: { count: this.getVoxelCount() } }));
-            } catch (e) {
-        // silently ignore
-      }
+      // Optimized: defer heavy count operations to prevent O(N^2) lag
+      window.dispatchEvent(new CustomEvent('voxels-updated'));
     }
 
     // ── Notification helper (implementation lives in ui.js) ──────────────

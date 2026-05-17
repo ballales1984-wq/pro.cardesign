@@ -13,6 +13,7 @@ import { UI } from './ui.js';
 import { BrickSystem } from './core/brick-system.js';
 import { ComponentLibrary } from './core/component-library.js';
 import { STLImporter, QualityAnalyzer } from './core/stl-import.js';
+import { ProceduralEngine } from './core/procedural-engine.js';
 
 // Three.js Setup
 var canvas = document.getElementById('gl-canvas');
@@ -33,8 +34,11 @@ var controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI / 2.1;
-controls.mouseButtons.LEFT = undefined;
-controls.touches.ONE = undefined;
+controls.mouseButtons = {
+  LEFT: undefined, // Left click is reserved for interacting with voxels
+  MIDDLE: THREE.MOUSE.PAN, // Middle click + drag to Pan
+  RIGHT: THREE.MOUSE.ROTATE // Right click + drag to Rotate
+};
 
 // Lights
 var ambientLight = new THREE.AmbientLight(0x404060, 0.6);
@@ -51,28 +55,15 @@ scene.add(hemiLight);
 
 // Grid
 var gridHelper = new THREE.GridHelper(40, 40, 0x1a3a5c, 0x0f2240);
-gridHelper.position.y = -0.01;
+gridHelper.position.set(0.5, -0.01, 0.5);
 scene.add(gridHelper);
 
 // Axes
 var axesHelper = new THREE.AxesHelper(3);
 scene.add(axesHelper);
 
-// Dimension Display
-const dimensionDiv = document.createElement('div');
-dimensionDiv.id = 'dimensions-display';
-dimensionDiv.style.position = 'absolute';
-dimensionDiv.style.top = '20px';
-dimensionDiv.style.left = '20px';
-dimensionDiv.style.background = 'rgba(0,0,0,0.7)';
-dimensionDiv.style.color = 'cyan';
-dimensionDiv.style.padding = '8px 12px';
-dimensionDiv.style.borderRadius = '4px';
-dimensionDiv.style.fontFamily = 'monospace';
-dimensionDiv.style.fontSize = '14px';
-dimensionDiv.style.zIndex = '1000';
-dimensionDiv.style.display = 'none';
-document.body.appendChild(dimensionDiv);
+// Brick Dimension Display (selected brick)
+const dimensionDiv = document.getElementById('brick-dimensions');
 
 // Core Systems
 var materialDB = new MaterialSystem();

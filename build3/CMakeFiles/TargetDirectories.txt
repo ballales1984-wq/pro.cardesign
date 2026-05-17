@@ -1,0 +1,4 @@
+D:/pro.cardesign/build3/CMakeFiles/voxelengine.dir
+D:/pro.cardesign/build3/CMakeFiles/ALL_BUILD.dir
+D:/pro.cardesign/build3/CMakeFiles/ZERO_CHECK.dir
+D:/pro.cardesign/build3/third_party/pybind11/CMakeFiles/ALL_BUILD.dir

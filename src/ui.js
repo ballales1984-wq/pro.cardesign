@@ -272,51 +272,31 @@ export class UI {
      populateRulesList();
    }
 
-    _editRule(ruleName) {
-      if (!this.proceduralEngine.rules.has(ruleName)) return;
-      const rule = this.proceduralEngine.rules.get(ruleName);
+   _editRule(ruleName) {
+     if (!this.proceduralEngine.rules.has(ruleName)) return;
+     const rule = this.proceduralEngine.rules.get(ruleName);
 
-     const editorHeader = document.getElementById('rule-editor-header');
-     const editorBody = document.getElementById('rule-editor-body');
-     
-     editorHeader.textContent = `Modifica regola: ${ruleName}`;
-     
-     // Create a simple editor for the rule function
-     // In a real implementation, this would be a proper code editor
-     editorBody.innerHTML = `
-       <div style="margin-bottom: 12px;">
-         <label for="rule-code">Funzione execute (params, context) => { ... }</label><br>
-         <textarea id="rule-code" rows="10" style="width: 100%; font-family: monospace;">
-           // Example: create a cube
-           // const [dx, dy, dz] = Array.isArray(params.dimensions) ? params.dimensions : [params.dimensions, params.dimensions, params.dimensions];
-           // const voxels = [];
-           // for (let x = 0; x < dx; x++) {
-           //   for (let y = 0; y < dy; y++) {
-           //     for (let z = 0; z < dz; z++) {
-           //       voxels.push({
-           //         x: params.position.x + x,
-           //         y: params.position.y + y,
-           //         z: params.position.z + z,
-           //         material: params.material || 'steel'
-           //       });
-           //     }
-           //   }
-           // }
-           // return voxels;
-         </textarea>
-       </div>
-       <div style="text-align: right;">
-         <button id="save-rule-btn" class="btn-primary">Salva Regola</button>
-         <button id="cancel-rule-btn" class="btn-secondary">Annulla</button>
-       </div>
-     `;
+    const editorHeader = document.getElementById('rule-editor-header');
+    const editorBody = document.getElementById('rule-editor-body');
 
-      const saveBtn = document.getElementById('save-rule-btn');
-      const cancelBtn = document.getElementById('cancel-rule-btn');
-      const codeTextarea = document.getElementById('rule-code');
+    editorHeader.textContent = `Modifica regola: ${ruleName}`;
+    editorBody.innerHTML = `
+      <div class="rule-editor-section">
+        <label for="rule-code">Funzione execute (params, context)</label>
+        <textarea id="rule-code" rows="10" class="rule-editor-textarea" spellcheck="false"></textarea>
+      </div>
+      <div class="rule-editor-actions">
+        <button id="save-rule-btn" class="btn-primary">Salva Regola</button>
+        <button id="cancel-rule-btn" class="btn-secondary">Annulla</button>
+      </div>
+    `;
 
-      // Set current rule code (simplified)
-      codeTextarea.value = rule.execute.toString();
+    const saveBtn = document.getElementById('save-rule-btn');
+    const cancelBtn = document.getElementById('cancel-rule-btn');
+    const codeTextarea = document.getElementById('rule-code');
+
+    // Set current rule code (simplified)
+    codeTextarea.value = rule.execute.toString();
 
       const engine = this.proceduralEngine;
       const notifyFn  = this._notify.bind(this);
@@ -352,60 +332,72 @@ export class UI {
       });
    }
 
-  // Materials palette
-  _populateMaterials() {
-    var container = document.getElementById('materials-list');
-    var materials = this.materialDB.getAll();
+   // Materials palette
+   _populateMaterials() {
+     var container = document.getElementById('materials-list');
+     var materials = this.materialDB.getAll();
 
-    var sel = document.createElement('select');
-    sel.className = 'prop-input';
-    sel.style.marginBottom = '8px';
-    sel.style.width = '100%';
-    for (var i = 0; i < materials.length; i++) {
-      var mat = materials[i];
-      var opt = document.createElement('option');
-      opt.value = mat.name;
-      opt.textContent = mat.label + ' (' + mat.density + ')';
-      sel.appendChild(opt);
-    }
-    sel.value = this.voxelEngine.activeMaterial;
+     var sel = document.createElement('select');
+     sel.className = 'prop-input';
+     sel.style.marginBottom = '8px';
+     sel.style.width = '100%';
+     for (var i = 0; i < materials.length; i++) {
+       var mat = materials[i];
+       var opt = document.createElement('option');
+       opt.value = mat.name;
+       opt.textContent = mat.label + ' (' + mat.density + ')';
+       sel.appendChild(opt);
+     }
+     sel.value = this.voxelEngine.activeMaterial;
 
-    var self = this;
-    sel.addEventListener('change', function() {
-      self.voxelEngine.activeMaterial = sel.value;
-      self._syncMaterialSwatch();
-    });
+     var self = this;
+     sel.addEventListener('change', function() {
+       self.voxelEngine.activeMaterial = sel.value;
+       self._syncMaterialSwatch();
+     });
 
-    var matGroup = document.createElement('div');
-    matGroup.className = 'material-swatch-group';
+     var matGroup = document.createElement('div');
+     matGroup.className = 'material-swatch-group';
 
-    for (var j = 0; j < materials.length; j++) {
-      var m = materials[j];
-      var swatch = document.createElement('div');
-      swatch.className = 'material-swatch' + (m.name === this.voxelEngine.activeMaterial ? ' active' : '');
-      swatch.dataset.mat = m.name;
-      var colorHex = m.color.toString(16);
-      while (colorHex.length < 6) colorHex = '0' + colorHex;
-      swatch.innerHTML = '<div class="swatch-color" style="background: #' + colorHex + '"></div>' +
-        '<span>' + m.label + '</span>' +
-        '<span style="color: var(--text-dim); font-size: 10px; margin-left: auto;">' + m.density + ' kg/m3</span>';
-      swatch.title = m.label + '\nDensita: ' + m.density + ' kg/m3\nResistenza: ' + (m.tensileStrength / 1e6).toFixed(0) + ' MPa\nCosto: EUR ' + m.costPerKg + '/kg';
+     for (var j = 0; j < materials.length; j++) {
+       var m = materials[j];
+       var swatch = document.createElement('div');
+       swatch.className = 'material-swatch' + (m.name === this.voxelEngine.activeMaterial ? ' active' : '');
+       swatch.dataset.mat = m.name;
+       var colorHex = m.color.toString(16);
+       while (colorHex.length < 6) colorHex = '0' + colorHex;
+       swatch.appendChild(this._createSwatchColor('#' + colorHex));
+       var nameSpan = document.createElement('span');
+       nameSpan.textContent = m.label;
+       swatch.appendChild(nameSpan);
+       var densitySpan = document.createElement('span');
+       densitySpan.style.cssText = 'color: var(--text-dim); font-size: 10px; margin-left: auto;';
+       densitySpan.textContent = m.density + ' kg/m3';
+       swatch.appendChild(densitySpan);
+       swatch.title = m.label + '\nDensita: ' + m.density + ' kg/m3\nResistenza: ' + (m.tensileStrength / 1e6).toFixed(0) + ' MPa\nCosto: EUR ' + m.costPerKg + '/kg';
 
-      swatch.addEventListener('click', (function(matName) {
-        return function() {
-          self.voxelEngine.activeMaterial = matName;
-          sel.value = matName;
-          self._syncMaterialSwatch();
-        };
-      })(m.name));
+       swatch.addEventListener('click', (function(matName) {
+         return function() {
+           self.voxelEngine.activeMaterial = matName;
+           sel.value = matName;
+           self._syncMaterialSwatch();
+         };
+       })(m.name));
 
-      matGroup.appendChild(swatch);
-    }
+       matGroup.appendChild(swatch);
+     }
 
-    container.innerHTML = '';
-    container.appendChild(sel);
-    container.appendChild(matGroup);
-  }
+     container.innerHTML = '';
+     container.appendChild(sel);
+     container.appendChild(matGroup);
+   }
+
+   _createSwatchColor(colorValue) {
+     var div = document.createElement('div');
+     div.className = 'swatch-color';
+     div.style.background = colorValue;
+     return div;
+   }
 
   _syncMaterialSwatch() {
     var swatches = document.querySelectorAll('.material-swatch');
@@ -840,6 +832,7 @@ export class UI {
 
   // Demo voxels
   _addDemoVoxels() {
+    return; // Disabilitato per evitare confusione (il "grande cubo nero")
     var xe, ye, ze;
     for (xe = -2; xe <= 2; xe++) {
       for (ye = 0; ye < 5; ye++) {
@@ -891,68 +884,134 @@ export class UI {
     this._populateComponentList('all');
   }
 
-  _populateComponentList(category) {
-    const listEl = document.getElementById('component-list');
-    listEl.innerHTML = '';
+   _populateComponentList(category) {
+     const listEl = document.getElementById('component-list');
+     listEl.innerHTML = '';
 
-    const components = category === 'all'
-      ? this.componentLibrary.getAll()
-      : this.componentLibrary.getByCategory(category);
+     const components = category === 'all'
+       ? this.componentLibrary.getAll()
+       : this.componentLibrary.getByCategory(category);
 
-    components.forEach(comp => {
-      const item = document.createElement('div');
-      item.className = 'component-item';
-      item.style.cssText = 'padding:8px; margin:4px; background:var(--surface); border:1px solid var(--border); border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:8px;';
-      item.innerHTML = `
-        <span style="font-size:18px;">${comp.icon}</span>
-        <div style="flex:1;">
-          <div style="font-weight:600; font-size:12px;">${comp.name}</div>
-          <div style="font-size:10px; color:var(--text-dim);">${comp.description || ''}</div>
-        </div>
-      `;
+     components.forEach(comp => {
+       const item = document.createElement('div');
+       item.className = 'component-item';
 
-      item.addEventListener('click', () => this._showComponentEditor(comp));
-      listEl.appendChild(item);
-    });
-  }
+       const iconEl = document.createElement('span');
+       iconEl.className = 'component-item-icon';
+       iconEl.textContent = comp.icon;
 
-  _showComponentEditor(comp) {
-    this._currentEditingComponent = comp;
+       const infoEl = document.createElement('div');
+       infoEl.className = 'component-item-info';
+       infoEl.style.cssText = 'flex: 1; min-width: 0;';
 
-    const editor = document.getElementById('component-editor');
-    const panel = document.getElementById('panel-component-selected');
+       const nameEl = document.createElement('div');
+       nameEl.className = 'component-item-name';
+       nameEl.textContent = comp.name;
 
-    // Build parameter controls
-    const paramsHtml = Object.entries(comp.parameters).map(([key, spec]) => `
-      <div style="margin-bottom:6px;">
-        <label style="font-size:10px; color:var(--text-dim); display:block; margin-bottom:2px;">${key}</label>
-        <input type="range" min="${spec.min}" max="${spec.max}" step="0.1" value="${spec.value}"
-               id="param-${key}"
-               style="width:100%;"
-               oninput="this.nextElementSibling.textContent = this.value + '${spec.unit || ''}'">
-        <span style="font-size:11px; color:var(--accent);">${spec.value}${spec.unit || ''}</span>
-      </div>
-    `).join('');
+       const descEl = document.createElement('div');
+       descEl.className = 'component-item-desc';
+       descEl.textContent = comp.description || '';
 
-    editor.innerHTML = `
-      <div style="margin-bottom:8px;">
-        <div style="font-size:14px; font-weight:600;">${comp.icon} ${comp.name}</div>
-        <div style="font-size:10px; color:var(--text-dim); margin-bottom:6px;">${comp.description}</div>
-      </div>
-      ${paramsHtml}
-      <hr style="border-color:var(--border); margin:8px 0;">
-      <div style="display:flex; gap:4px;">
-        <button id="btn-add-component" class="btn-primary" style="flex:1; padding:6px; font-size:11px; border:none; border-radius:4px; color:#fff; background:var(--accent); cursor:pointer;">Aggiungi</button>
-        <button id="btn-reset-component" class="btn-secondary" style="flex:1; padding:6px; font-size:11px; border:none; border-radius:4px; color:var(--text); background:var(--hover); cursor:pointer;">Reset</button>
-      </div>
-    `;
+       infoEl.appendChild(nameEl);
+       infoEl.appendChild(descEl);
+       item.appendChild(iconEl);
+       item.appendChild(infoEl);
 
-    panel.style.display = 'block';
+       item.addEventListener('click', () => this._showComponentEditor(comp));
+       listEl.appendChild(item);
+     });
+   }
 
-    // Button handlers
-    document.getElementById('btn-add-component').onclick = () => this._addComponentToScene(comp);
-    document.getElementById('btn-reset-component').onclick = () => this._showComponentEditor(comp);
-  }
+   _showComponentEditor(comp) {
+     this._currentEditingComponent = comp;
+
+     const editor  = document.getElementById('component-editor');
+     const panel   = document.getElementById('panel-component-selected');
+
+     // Header
+     const headerEl = document.createElement('div');
+     headerEl.style.cssText = 'margin-bottom:8px;';
+     headerEl.innerHTML = '<div style="font-size:14px;font-weight:600;">' + comp.icon + ' ' + comp.name + '</div>' +
+       '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">' + comp.description + '</div>';
+     editor.appendChild(headerEl);
+
+     // Parameters
+     const paramsDiv = document.createElement('div');
+     paramsDiv.id = 'component-params';
+     for (const [key, spec] of Object.entries(comp.parameters)) {
+       const row = document.createElement('div');
+       row.style.marginBottom = '6px';
+
+       const label = document.createElement('label');
+       label.textContent = key;
+       label.style.cssText = 'font-size:10px;color:var(--text-dim);display:block;margin-bottom:2px;';
+
+       const sliderInput = document.createElement('input');
+       sliderInput.type = 'range';
+       sliderInput.min  = spec.min;
+       sliderInput.max  = spec.max;
+       sliderInput.step = '0.1';
+       sliderInput.value = spec.value;
+       sliderInput.id    = 'param-' + key;
+       sliderInput.className = 'component-param-slider';
+       sliderInput.oninput = function() {
+         this.nextElementSibling.textContent = this.value + (spec.unit || '');
+       };
+
+       const valueDiv = document.createElement('div');
+       valueDiv.className = 'component-param-label';
+       const labelSpan = document.createElement('span');
+       labelSpan.textContent = key + ':';
+       const valueSpan = document.createElement('span');
+       valueSpan.className = 'current-value';
+       valueSpan.textContent = spec.value + (spec.unit || '');
+       valueDiv.appendChild(labelSpan);
+       valueDiv.appendChild(valueSpan);
+
+       row.appendChild(label);
+       row.appendChild(sliderInput);
+       row.appendChild(valueDiv);
+       paramsDiv.appendChild(row);
+     }
+     editor.appendChild(paramsDiv);
+
+     // Divider
+     const hr = document.createElement('hr');
+     hr.style.cssText = 'border-color:var(--border);margin:8px 0;';
+     editor.appendChild(hr);
+
+     // Button row
+     const btnRow = document.createElement('div');
+     btnRow.style.cssText = 'display:flex;gap:4px;';
+
+     const addBtn = document.createElement('button');
+     addBtn.id    = 'btn-add-component';
+     addBtn.className = 'btn-primary';
+     addBtn.style.cssText = 'flex:1;padding:6px;font-size:11px;border:none;border-radius:4px;color:#fff;background:var(--accent);cursor:pointer;';
+     addBtn.textContent = 'Aggiungi';
+     btnRow.appendChild(addBtn);
+
+     const resetBtn = document.createElement('button');
+     resetBtn.id    = 'btn-reset-component';
+     resetBtn.className = 'btn-secondary';
+     resetBtn.style.cssText = 'flex:1;padding:6px;font-size:11px;border:none;border-radius:4px;color:var(--text);background:var(--hover);cursor:pointer;';
+     resetBtn.textContent = 'Reset';
+     btnRow.appendChild(resetBtn);
+
+     editor.appendChild(btnRow);
+
+     panel.style.display = 'block';
+
+     // Handlers
+     document.getElementById('btn-add-component').onclick = () => this._addComponentToScene(comp);
+     document.getElementById('btn-reset-component').onclick = () => this._resetComponentEditor(comp);
+   }
+
+   _resetComponentEditor(comp) {
+     const editor = document.getElementById('component-editor');
+     editor.innerHTML = '';
+     this._showComponentEditor(comp);
+   }
 
   _addComponentToScene(comp) {
     // Read current parameter values from sliders

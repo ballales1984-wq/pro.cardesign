@@ -1,0 +1,3 @@
+// Full correct _marchingCubes with compacted 256-case tri table
+   * _marchingCubes — full Marching Cubes implementation
+  _marchingCubes(voxels, voxelSize) {
