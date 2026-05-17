@@ -44,8 +44,15 @@ export class VoxelEngine {
         // Invisible ground plane for raycasting (first voxel)
         const groundGeo = new THREE.PlaneGeometry(200, 200);
         groundGeo.rotateX(-Math.PI / 2);
-        const groundMat = new THREE.MeshBasicMaterial({ visible: false });
+        const groundMat = new THREE.MeshBasicMaterial({ 
+          visible: false,
+          depthWrite: false,
+          color: 0xffffff,
+          // Make sure raycasting works even with invisible material
+          toneMapped: false 
+        });
         this.groundPlane = new THREE.Mesh(groundGeo, groundMat);
+        this.groundPlane.position.y = 0; // Ensure it's at y=0
         this.groundPlane.frustumCulled = false; // always test in raycasting
         this.scene.add(this.groundPlane);
 
@@ -147,7 +154,10 @@ export class VoxelEngine {
         _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
               const matrix = new THREE.Matrix4();
               matrix.makeScale(scale.x, scale.y, scale.z);
-              matrix.setPosition(new THREE.Vector3(position.x, position.y, position.z));
+              // Apply translation after scale - for a unit cube centered at origin,
+              // the center is at (0,0,0), so no offset needed for scale
+              const scaledPos = new THREE.Vector3(position.x, position.y, position.z);
+              matrix.setPosition(scaledPos);
               mesh.setMatrixAt(instanceId, matrix);
               mesh.instanceMatrix.needsUpdate = true;
           }
@@ -227,13 +237,17 @@ const edges = new THREE.EdgesGeometry(geo);
          this.scene.add(this.highlight);
        }
    
-         _setupEvents() {
-             const canvas = this.renderer.domElement;
-             canvas.addEventListener('pointermove', (e) => this._onPointerMove(e));
-             canvas.addEventListener('click', (e) => this._onPointerClick(e));
-             canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-             window.addEventListener('keydown', (e) => this._onKeyDown(e));
-         }
+_setupEvents() {
+              const canvas = this.renderer.domElement;
+              canvas.addEventListener('pointermove', (e) => this._onPointerMove(e));
+              canvas.addEventListener('click', (e) => {
+                this._onPointerClick(e);
+                // Prevent OrbitControls from handling this click
+                e.stopPropagation();
+              });
+              canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+              window.addEventListener('keydown', (e) => this._onKeyDown(e));
+          }
    
          _setupScalePanelListeners() {
              const self = this;
@@ -395,34 +409,42 @@ const edges = new THREE.EdgesGeometry(geo);
              this.ghost.position.copy(this._worldPos(ghostPos));
              this.ghost.visible = true;
            }
-         } else {
-           // Ground hit: show ghost when adding, otherwise nothing to show
-           if (this.activeTool === 'add') {
-             const ghostPos = { x: hit.x, y: 0.5, z: hit.z };
-             this.ghost.position.copy(this._worldPos(ghostPos));
-             this.ghost.visible = true;
-           }
-         }
+} else {
+            // Ground hit: show ghost when adding, otherwise nothing to show
+            if (this.activeTool === 'add') {
+              // Ghost should show where the voxel will actually be placed
+              // (hit.y=0, faceNormal.y=1, so pos.y = 0 + 1 = 1)
+              const ghostPos = { x: hit.x, y: 1, z: hit.z };
+              this.ghost.position.copy(this._worldPos(ghostPos));
+              this.ghost.visible = true;
+            }
+          }
        }
    
-       _onPointerClick(event) {
-         if (event.button !== 0) return;
-         const hit = this._raycast(event);
-         if (!hit) return;
-         
-         // In scaling mode, let the scaling tool handle click-selection
-         if (this.activeTool === 'scaling') {
-           return; // Scaling tool handles click directly
-         }
-   
-         if (this.activeTool === 'add') {
-           const pos = {
-             x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
-             y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
-             z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
-           };
-           this.addVoxel(pos, this.activeMaterial, this.activeModule);
-         } else if (this.activeTool === 'remove') {
+_onPointerClick(event) {
+           if (event.button !== 0) return;
+           const hit = this._raycast(event);
+           if (!hit) return;
+
+           // In scaling mode, let the scaling tool handle click-selection
+           if (this.activeTool === 'scaling') {
+             return; // Scaling tool handles click directly
+           }
+    
+          if (this.activeTool === 'add') {
+            const pos = {
+              x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
+              y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
+              z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
+            };
+            const result = this.addVoxel(pos, this.activeMaterial, this.activeModule);
+            if (result) {
+              this._notify(`Voxel aggiunto: (${pos.x}, ${pos.y}, ${pos.z})`, 'success');
+            } else {
+              this._notify('Impossibile aggiungere voxel', 'error');
+              console.error('[VoxelEngine] addVoxel returned false');
+            }
+          } else if (this.activeTool === 'remove') {
            this.removeVoxel(hit.x, hit.y, hit.z);
          } else if (this.activeTool === 'select') {
            this.selectVoxel(hit.x, hit.y, hit.z);
@@ -452,17 +474,14 @@ const edges = new THREE.EdgesGeometry(geo);
            this.redo();
          }
        }
-   
-       // ── Voxel operations ─────────────────────────────────────────
-   
+        // ── Voxel operations ─────────────────────────────────────────
+
         addVoxel(pos, materialName, moduleId) {
-          if (moduleId === undefined) moduleId = null;
-          const chunkKey = this._getChunkKey(pos);
-          const localKey = this._getLocalKey(pos);
-   
-          const chunk = this._getOrCreateChunk(chunkKey);
-          const existing = chunk.getVoxel(localKey.x, localKey.y, localKey.z);
-          
+if (moduleId === undefined) moduleId = null;
+           const chunkKey = this._getChunkKey(pos);
+           const chunk = this._getOrCreateChunk(chunkKey);
+           const existing = chunk.getVoxel(pos.x, pos.y, pos.z);
+
           if (existing) {
             if (existing.material !== materialName) {
               this._removeVoxelSilently(existing.x, existing.y, existing.z);
@@ -470,56 +489,52 @@ const edges = new THREE.EdgesGeometry(geo);
             }
             return false;
           }
-   
+
           return this._addVoxelInternal(pos, materialName, moduleId);
         }
-   
-          _addVoxelInternal(pos, materialName, moduleId) {
-              const material = this.materialDB.get(materialName);
-              if (!material) return false;
-   
-              const key = this._gridKey(pos);
-              const voxelData = {
-                x: pos.x, y: pos.y, z: pos.z,
-                material: materialName,
-                module: moduleId,
-                density: material.density,
-                temperature: 293,
-                damage: 0,
-                scale: [1, 1, 1] // Default scale: 1x1x1
-              };
-   
-              // Add voxel to chunk
-              const chunkKey = this._getChunkKey(pos);
-              const localKey = this._getLocalKey(pos);
-              const chunk = this._getOrCreateChunk(chunkKey);
-              chunk.addVoxel(localKey.x, localKey.y, localKey.z, voxelData);
-   
-              const mesh = this._getInstancedMesh(materialName);
-              if (!mesh) return false;
-   
-              const instanceId = this._getInstanceId(materialName);
-              this._setInstanceMatrix(mesh, instanceId, this._worldPos(pos), voxelData.scale);
-   
-              this.keyToInstance.get(materialName).set(key, instanceId);
-              this.instanceToKey.get(materialName)[instanceId] = key;
-   
-              // Update instance count to ensure voxel is rendered
-              if (instanceId + 1 > mesh.count) {
-                mesh.count = instanceId + 1;
-              }
-   
-            this._pushHistory({ type: 'add', x: pos.x, y: pos.y, z: pos.z, material: materialName, module: moduleId });
-            this._onVoxelChanged();
-            return voxelData;
+
+_addVoxelInternal(pos, materialName, moduleId) {
+           const material = this.materialDB.get(materialName);
+           if (!material) return false;
+
+           const key = this._gridKey(pos);
+           const voxelData = {
+             x: pos.x, y: pos.y, z: pos.z,
+             material: materialName,
+             module: moduleId,
+             density: material.density,
+             temperature: 293,
+             damage: 0,
+             scale: [1, 1, 1]
+           };
+
+const chunkKey = this._getChunkKey(pos);
+            const chunk = this._getOrCreateChunk(chunkKey);
+           chunk.addVoxel(pos.x, pos.y, pos.z, voxelData);
+
+          const mesh = this._getInstancedMesh(materialName);
+          if (!mesh) return false;
+
+          const instanceId = this._getInstanceId(materialName);
+          this._setInstanceMatrix(mesh, instanceId, this._worldPos(pos), voxelData.scale);
+
+          this.keyToInstance.get(materialName).set(key, instanceId);
+          this.instanceToKey.get(materialName)[instanceId] = key;
+
+          if (instanceId + 1 > mesh.count) {
+            mesh.count = instanceId + 1;
           }
-   
-        removeVoxel(x, y, z) {
-          const chunkKey = this._getChunkKey({ x, y, z });
-          const localKey = this._getLocalKey({ x, y, z });
-          const chunk = this.chunks.get(chunkKey);
-          if (!chunk) return;
-          const voxel = chunk.getVoxel(localKey.x, localKey.y, localKey.z);
+
+          this._pushHistory({ type: 'add', x: pos.x, y: pos.y, z: pos.z, material: materialName, module: moduleId });
+          this._onVoxelChanged();
+          return voxelData;
+        }
+
+removeVoxel(x, y, z) {
+           const chunkKey = this._getChunkKey({ x, y, z });
+           const chunk = this.chunks.get(chunkKey);
+           if (!chunk) return;
+           const voxel = chunk.getVoxel(x, y, z);
           if (!voxel) return;
    
           this._pushHistory({ type: 'remove', x, y, z, material: voxel.material, module: voxel.module });
@@ -552,13 +567,12 @@ const edges = new THREE.EdgesGeometry(geo);
      return voxel;
    }
    
-        getVoxelAt(x, y, z) {
-          const chunkKey = this._getChunkKey({ x, y, z });
-          const localKey = this._getLocalKey({ x, y, z });
-          const chunk = this.chunks.get(chunkKey);
-          if (!chunk) return null;
-          return chunk.getVoxel(localKey.x, localKey.y, localKey.z);
-        }
+getVoxelAt(x, y, z) {
+           const chunkKey = this._getChunkKey({ x, y, z });
+           const chunk = this.chunks.get(chunkKey);
+           if (!chunk) return null;
+           return chunk.getVoxel(x, y, z);
+         }
    
     getVoxelsInModule(moduleId) {
       const result = [];
@@ -580,36 +594,36 @@ const edges = new THREE.EdgesGeometry(geo);
       }
     }
 
-    // ── Internal remove (without history push) ───────────────────
+     // ── Internal remove (without history push) ───────────────────
 
-   _removeVoxelSilently(x, y, z) {
-     const chunkKey = this._getChunkKey({ x, y, z });
-     const localKey = this._getLocalKey({ x, y, z });
-     const chunk = this.chunks.get(chunkKey);
-     if (!chunk) return;
-     const voxel = chunk.getVoxel(localKey.x, localKey.y, localKey.z);
-     if (!voxel) return;
+    _removeVoxelSilently(x, y, z) {
+      const chunkKey = this._getChunkKey({ x, y, z });
+      const localKey = this._getLocalKey({ x, y, z });
+      const chunk = this.chunks.get(chunkKey);
+      if (!chunk) return;
+      const voxel = chunk.getVoxel(localKey.x, localKey.y, localKey.z);
+      if (!voxel) return;
 
-     const worldKey = this._gridKey({ x, y, z });
-     const matName = voxel.material;
-     const instMap = this.keyToInstance.get(matName);
-     const idxMap = this.instanceToKey.get(matName);
-     const mesh = this.instancedMeshes.get(matName);
+      const worldKey = this._gridKey({ x, y, z });
+      const matName = voxel.material;
+      const instMap = this.keyToInstance.get(matName);
+      const idxMap = this.instanceToKey.get(matName);
+      const mesh = this.instancedMeshes.get(matName);
 
-     if (instMap && idxMap && mesh) {
-       const instanceId = instMap.get(worldKey);
-       if (instanceId !== undefined) {
-         const hiddenMatrix = new THREE.Matrix4();
-         hiddenMatrix.makeTranslation(0, -999999, 0); // Move far away with scale 1 to prevent NaN normals
-         mesh.setMatrixAt(instanceId, hiddenMatrix);
-         mesh.instanceMatrix.needsUpdate = true;
+      if (instMap && idxMap && mesh) {
+        const instanceId = instMap.get(worldKey);
+        if (instanceId !== undefined) {
+          const hiddenMatrix = new THREE.Matrix4();
+          hiddenMatrix.makeTranslation(0, -999999, 0); // Move far away with scale 1 to prevent NaN normals
+          mesh.setMatrixAt(instanceId, hiddenMatrix);
+          mesh.instanceMatrix.needsUpdate = true;
 
-         instMap.delete(worldKey);
-         idxMap[instanceId] = null;
-         this.freeIndices.get(matName)?.push(instanceId);
-       }
-     }
-     chunk.removeVoxel(localKey.x, localKey.y, localKey.z);
+          instMap.delete(worldKey);
+          idxMap[instanceId] = null;
+          this.freeIndices.get(matName)?.push(instanceId);
+        }
+      }
+      chunk.removeVoxel(x, y, z);
      // Optional: if chunk becomes empty, we could remove it to save memory, but not required.
    }
    
@@ -815,17 +829,17 @@ const edges = new THREE.EdgesGeometry(geo);
 
     // ── Notification helper (implementation lives in ui.js) ──────────────
     // VoxelEngine calls this; ui.js may override via prototype during init.
-    _notify(message, level = 'info') {
-        if (typeof window !== 'undefined' && window.dispatchEvent) {
-            try { window.dispatchEvent(new window.CustomEvent('toast-notify', { detail: { message, level } })); } catch (_) { /* no toast infrastructure in tests */ }
-        }
-    }
+     _notify(message, level = 'info') {
+         if (typeof window !== 'undefined' && window.dispatchEvent) {
+             try { window.dispatchEvent(new window.CustomEvent('toast-notify', { detail: { message, level } })); } catch (_) { /* no toast infrastructure in tests */ }
+         }
+     }
 
     update(deltaTime) {
-           if (this.ghost && this.ghost.visible) {
-              this.ghost.material.opacity = 0.2 + Math.sin(performance.now() * 0.005) * 0.1;
-            }
-           }
+       if (this.ghost && this.ghost.visible) {
+         this.ghost.material.opacity = 0.3 + Math.sin(performance.now() * 0.006) * 0.15;
+       }
+     }
 
     // ── Voxel mutation helpers (called by BrickAdapter) ────────────────────────
     /**
@@ -844,7 +858,7 @@ const edges = new THREE.EdgesGeometry(geo);
      * Cambia modulo di appartenenza a un voxel esistente.
      * @returns {boolean} true se voxel esisteva e modulo aggiornato
      */
-    setVoxelModule(x, y, z, module) {
+setVoxelModule(x, y, z, module) {
       const v = this.getVoxelAt(x, y, z);
       if (!v) return false;
       v.module = module;
@@ -852,43 +866,21 @@ const edges = new THREE.EdgesGeometry(geo);
       return true;
     }
 
-    // ── Optimize: deduplicate and compact voxel storage ───────────────────────
+    // ── Optimize: clean up stale references ───────────────────────
     /**
-     * Esegue pulizia dello stato:
-     * - rimuove moduli orfani (voci senza voxel o _deleted)
-     * - ripristina activeModule se il modulo attivo è stato rimosso
-     * - pulisce keyToInstance da riferimenti stale
+     * Rimuove riferimenti stale da keyToInstance
      */
     optimize() {
-      // Rimuovi moduli orfani o marcati _deleted
-      const deadModules = Object.keys(this.modules).filter(
-        name => !this.modules[name] || this.modules[name]._deleted
-      );
-      for (const name of deadModules) {
-        const mod = this.modules[name];
-        if (mod && mod.voxels) {
-          for (const v of mod.voxels) {
-            v.module = null; // riassegna a nessun modulo
-          }
-        }
-        delete this.modules[name];
-      }
-
-      // Se activeModule non esiste più, scegli il primo disponibile
-      if (this.activeModule && !(this.activeModule in this.modules)) {
-        const remaining = Object.keys(this.modules);
-        this.activeModule = remaining.length > 0 ? remaining[0] : null;
-      }
-
-      // Pulisci keyToInstance da voxel non più presenti
+      // Clean keyToInstance from stale references
       for (const [mat, instMap] of this.keyToInstance) {
         for (const key of Array.from(instMap.keys())) {
-          if (!this.voxels.has(key)) {
+          const [x, y, z] = key.split(',').map(Number);
+          const voxel = this.getVoxelAt(x, y, z);
+          if (!voxel) {
             instMap.delete(key);
           }
         }
       }
-
       this._onVoxelChanged();
     }
-  }
+}

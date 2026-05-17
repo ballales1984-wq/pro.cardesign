@@ -16,66 +16,75 @@ import { STLImporter, QualityAnalyzer } from './core/stl-import.js';
 import { ProceduralEngine } from './core/procedural-engine.js';
 
 // Three.js Setup
-var canvas = document.getElementById('gl-canvas');
-var scene = new THREE.Scene();
+const canvas = document.getElementById('gl-canvas');
+const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0f1923);
 scene.fog = new THREE.FogExp2(0x0f1923, 0.035);
 
-var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(8, 10, 12);
+camera.lookAt(0, 0, 0);
 
-var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.setSize(window.innerWidth - 270, window.innerHeight - 48);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-var controls = new OrbitControls(camera, canvas);
+let controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI / 2.1;
 controls.mouseButtons = {
-  LEFT: undefined, // Left click is reserved for interacting with voxels
+  LEFT: false, // Left click is reserved for interacting with voxels
   MIDDLE: THREE.MOUSE.PAN, // Middle click + drag to Pan
   RIGHT: THREE.MOUSE.ROTATE // Right click + drag to Rotate
 };
+// Ensure OrbitControls doesn't interfere
+controls.enabled = true;
 
 // Lights
-var ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
 scene.add(ambientLight);
 
-var dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
 dirLight.position.set(10, 20, 15);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.set(2048, 2048);
 scene.add(dirLight);
 
-var hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x362a10, 0.3);
+const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x362a10, 0.3);
 scene.add(hemiLight);
 
-// Grid
-var gridHelper = new THREE.GridHelper(40, 40, 0x1a3a5c, 0x0f2240);
-gridHelper.position.set(0.5, -0.01, 0.5);
+// Grid — allineata alle coordinate intere dei voxel
+const gridHelper = new THREE.GridHelper(40, 40, 0x2a4a7c, 0x1a3050);
+gridHelper.position.set(0, 0, 0);
 scene.add(gridHelper);
 
-// Axes
-var axesHelper = new THREE.AxesHelper(3);
+// Marker origine (pallino rosso al centro della scena)
+const originGeo = new THREE.SphereGeometry(0.2, 12, 12);
+const originMat = new THREE.MeshBasicMaterial({ color: 0xe94560 });
+const originMarker = new THREE.Mesh(originGeo, originMat);
+scene.add(originMarker);
+
+// Assi principali X=Rosso, Y=Verde, Z=Blu, lunghezza 5 unità
+const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
 
 // Brick Dimension Display (selected brick)
 const dimensionDiv = document.getElementById('brick-dimensions');
 
 // Core Systems
-var materialDB = new MaterialSystem();
-var moduleSystem = new ModuleSystem(materialDB);
-var physics = new PhysicsCalc(materialDB, moduleSystem);
-var meshExporter = new MeshExporter();
-var voxelEngine = new VoxelEngine(scene, materialDB, moduleSystem, camera, renderer, controls);
-var brickSystem = new BrickSystem(voxelEngine);
-var proceduralEngine = new ProceduralEngine(voxelEngine);
+const materialDB = new MaterialSystem();
+const moduleSystem = new ModuleSystem(materialDB);
+const physics = new PhysicsCalc(materialDB, moduleSystem);
+const meshExporter = new MeshExporter();
+const voxelEngine = new VoxelEngine(scene, materialDB, moduleSystem, camera, renderer, controls);
+const brickSystem = new BrickSystem(voxelEngine);
+const proceduralEngine = new ProceduralEngine(voxelEngine);
 
 // UI
-var ui = new UI({
+const ui = new UI({
   voxelEngine: voxelEngine,
   materialDB: materialDB,
   moduleSystem: moduleSystem,
@@ -89,23 +98,22 @@ var ui = new UI({
 });
 
 // Resize
-window.addEventListener('resize', function() {
-  var w = window.innerWidth - 270;
-  var h = window.innerHeight - 48;
+window.addEventListener('resize', () => {
+  const w = window.innerWidth - 270;
+  const h = window.innerHeight - 48;
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
 });
 
 // Animation Loop
-var frameCount = 0;
-var fpsTimer = 0;
+let frameCount = 0;
+let fpsTimer = 0;
 
 function animate(time) {
     requestAnimationFrame(animate);
     controls.update();
 
-    // Update dimension display for selected brick
     if (brickSystem.selectedBrick) {
         dimensionDiv.textContent = brickSystem.dimensionsText;
         dimensionDiv.style.display = 'block';

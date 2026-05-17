@@ -50,6 +50,15 @@ export class MaterialSystem {
         recyclable: true,
         roughness: 0.2,
         metalness: 0.85,
+        fillCoefficient: 0.81,  // FCC lattice packing
+        porosity: 0.0,
+        fatigueLimit: 160e6,
+        thermalExpansion: 23e-6,
+        dampingRatio: 0.005,
+        magneticPermeability: 1.0,  // non-magnetic
+        staticFriction: 0.61,
+        kineticFriction: 0.47,
+        restitution: 0.65,
       },
       {
         name: 'titanium',
@@ -66,6 +75,15 @@ export class MaterialSystem {
         recyclable: false,
         roughness: 0.25,
         metalness: 0.8,
+        fillCoefficient: 0.74,
+        porosity: 0.0,
+        fatigueLimit: 500e6,
+        thermalExpansion: 8.6e-6,
+        dampingRatio: 0.008,
+        magneticPermeability: 1.0,  // non-magnetic
+        staticFriction: 0.64,
+        kineticFriction: 0.50,
+        restitution: 0.55,
       },
       {
         name: 'carbon_fiber',
