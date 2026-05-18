@@ -249,12 +249,16 @@ export class BrickSystem {
             if (!this.isDragging) return;
             const newSize = this.updateResize(e.clientX);
             if (newSize) {
-                const label = document.getElementById('dimensions-display');
+                const label = document.getElementById('brick-dimensions');
                 if (label) {
                     label.textContent = this.dimensionsText;
-                    label.style.display = 'inline';
+                    label.style.display = 'block';
                 }
             }
+        });
+
+        canvas.addEventListener('pointerup', () => {
+            this.stopResize();
         });
     }
 

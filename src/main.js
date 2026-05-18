@@ -73,9 +73,6 @@ scene.add(originMarker);
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
 
-// Brick Dimension Display (selected brick)
-const dimensionDiv = document.getElementById('brick-dimensions');
-
 // Core Systems
 const materialDB = new MaterialSystem();
 const moduleSystem = new ModuleSystem(materialDB);
@@ -108,30 +105,50 @@ window.addEventListener('resize', () => {
   renderer.setSize(w, h);
 });
 
-// Animation Loop
+// ── DOM references cached once (no layout thrashing per-frame) ──────────────
+const dimensionDiv  = document.getElementById('brick-dimensions');
+const fpsCounterEl  = document.getElementById('fps-counter');
+
+// HUD state — dirty flag pattern: update DOM only on change
+let lastSelectedBrickId = null;
+let lastHUDDims        = '';
 let frameCount = 0;
-let fpsTimer = 0;
+let fpsTimer   = 0;
 
+function updateHUD(time) {
+  const sel = brickSystem.selectedBrick;
+
+  // Brick dimension display
+  if (sel) {
+    const id = sel.id;
+    if (id !== lastSelectedBrickId || brickSystem.dimensionsText !== lastHUDDims) {
+      dimensionDiv.textContent  = brickSystem.dimensionsText;
+      dimensionDiv.style.display = 'block';
+      lastSelectedBrickId = id;
+      lastHUDDims         = brickSystem.dimensionsText;
+    }
+  } else if (lastSelectedBrickId !== null) {
+    dimensionDiv.style.display = 'none';
+    lastSelectedBrickId = null;
+    lastHUDDims         = '';
+  }
+
+  // FPS counter — throttled to once every 1000ms, no re-lookup
+  frameCount++;
+  if (time - fpsTimer >= 1000) {
+    fpsCounterEl.textContent = 'FPS: ' + frameCount;
+    frameCount = 0;
+    fpsTimer  = time;
+  }
+}
+
+// Animation Loop
 function animate(time) {
-    requestAnimationFrame(animate);
-    controls.update();
-
-    if (brickSystem.selectedBrick) {
-        dimensionDiv.textContent = brickSystem.dimensionsText;
-        dimensionDiv.style.display = 'block';
-    } else {
-        dimensionDiv.style.display = 'none';
-    }
-
-    frameCount++;
-    if (time - fpsTimer >= 1000) {
-        document.getElementById('fps-counter').textContent = 'FPS: ' + frameCount;
-        frameCount = 0;
-        fpsTimer = time;
-    }
-
-    voxelEngine.update(time * 0.001);
-    renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+  controls.update();
+  voxelEngine.update(time * 0.001);
+  renderer.render(scene, camera);
+  updateHUD(time);
 }
 requestAnimationFrame(animate);
 

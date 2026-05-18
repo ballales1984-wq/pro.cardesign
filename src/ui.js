@@ -7,29 +7,34 @@ import { ComponentLibrary } from './core/component-library.js';
 import { ScalingTool } from './core/scaling-tool.js';
 
 export class UI {
-   constructor(opts) {
-     this.voxelEngine = opts.voxelEngine;
-     this.materialDB = opts.materialDB;
-     this.moduleSystem = opts.moduleSystem;
-     this.physics = opts.physics;
-     this.meshExporter = opts.meshExporter;
-     this.proceduralEngine = opts.proceduralEngine;
-     this.controls = opts.controls;
-     this.camera = opts.camera;
-     this.renderer = opts.renderer;
-     this.scene = opts.scene;
+    constructor(opts) {
+      this.voxelEngine = opts.voxelEngine;
+      this.materialDB = opts.materialDB;
+      this.moduleSystem = opts.moduleSystem;
+      this.physics = opts.physics;
+      this.meshExporter = opts.meshExporter;
+      this.proceduralEngine = opts.proceduralEngine;
+      this.controls = opts.controls;
+      this.camera = opts.camera;
+      this.renderer = opts.renderer;
+      this.scene = opts.scene;
 
-     this._setupToolbar();
-     this._setupPanels();
-     this._setupModals();
-     this._setupProceduralPanel();
-     this._setupKeyboard();
-     this._populateMaterials();
-     this._populateModules();
-     this._subscribeEvents();
-     this._setupLibrary();
-     this._addDemoVoxels();
-   }
+      // Essential setup only - defer heavy work to avoid blocking main thread
+      this._setupToolbar();
+      this._setupModals();
+      this._setupKeyboard();
+      this._subscribeEvents();
+      
+      // Defer non-critical UI work
+      requestIdleCallback(() => {
+        this._setupPanels();
+        this._setupProceduralPanel();
+        this._populateMaterials();
+        this._populateModules();
+        this._setupLibrary();
+        this._addDemoVoxels();
+      }, { timeout: 500 });
+    }
 
   // Notification helper
   _notify(message, type) {
@@ -337,10 +342,12 @@ export class UI {
      var container = document.getElementById('materials-list');
      var materials = this.materialDB.getAll();
 
-     var sel = document.createElement('select');
-     sel.className = 'prop-input';
-     sel.style.marginBottom = '8px';
-     sel.style.width = '100%';
+      var sel = document.createElement('select');
+      sel.id = 'material-select';
+      sel.name = 'material';
+      sel.className = 'prop-input';
+      sel.style.marginBottom = '8px';
+      sel.style.width = '100%';
      for (var i = 0; i < materials.length; i++) {
        var mat = materials[i];
        var opt = document.createElement('option');
@@ -399,12 +406,12 @@ export class UI {
      return div;
    }
 
-  _syncMaterialSwatch() {
+    _syncMaterialSwatch() {
     var swatches = document.querySelectorAll('.material-swatch');
     for (var i = 0; i < swatches.length; i++) {
       swatches[i].classList.toggle('active', swatches[i].dataset.mat === this.voxelEngine.activeMaterial);
     }
-    var sel = document.querySelector('#materials-list select');
+    var sel = document.querySelector('#materials-list #material-select');
     if (sel) sel.value = this.voxelEngine.activeMaterial;
   }
 
@@ -719,18 +726,19 @@ export class UI {
   }
 
   // ── Import STL ────────────────────────────────────────────────
-  _openImportModal() {
-    var self = this;
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.stl,.obj';
-    input.addEventListener('change', function(e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      self._runImport(file);
-    });
-    input.click();
-  }
+    _openImportModal() {
+      var self = this;
+      var input = document.createElement('input');
+      input.id = 'import-file-input';
+      input.type = 'file';
+      input.accept = '.stl,.obj';
+      input.addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        self._runImport(file);
+      });
+      input.click();
+    }
 
   async _runImport(file) {
     this._notify('Importazione ' + file.name + '...', 'info');
@@ -928,12 +936,13 @@ export class UI {
      const editor  = document.getElementById('component-editor');
      const panel   = document.getElementById('panel-component-selected');
 
-     // Header
-     const headerEl = document.createElement('div');
-     headerEl.style.cssText = 'margin-bottom:8px;';
-     headerEl.innerHTML = '<div style="font-size:14px;font-weight:600;">' + comp.icon + ' ' + comp.name + '</div>' +
-       '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">' + comp.description + '</div>';
-     editor.appendChild(headerEl);
+      // Header
+      const headerEl = document.createElement('div');
+      headerEl.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;';
+      headerEl.innerHTML = '<div><div style="font-size:14px;font-weight:600;">' + comp.icon + ' ' + comp.name + '</div>' +
+        '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">' + comp.description + '</div></div>' +
+        '<button id="close-component-editor" class="btn-icon" aria-label="Chiudi editor componente" onclick="this.closest(\'.panel\').style.display=\'none\'">✕</button>';
+      editor.appendChild(headerEl);
 
      // Parameters
      const paramsDiv = document.createElement('div');
