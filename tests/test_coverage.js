@@ -172,6 +172,7 @@ this.setAttribute = (name, attr) => {
 })();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+const { pathToFileURL } = require('url');
 
 function loadESM(relPath) {
   const full = path.resolve(__dirname, '..', relPath);
