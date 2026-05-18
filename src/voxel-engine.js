@@ -416,44 +416,64 @@ _setupEvents() {
               this.ghost.position.copy(this._worldPos(ghostPos));
               this.ghost.visible = true;
             }
-          } else {
-            // Ground hit: show ghost when adding, otherwise nothing to show
-            if (this.activeTool === 'add') {
-              // Ghost should show where the voxel will actually be placed
-              // (hit.y=0, faceNormal.y=1, so pos.y = 0 + 1 = 1)
-              const ghostPos = { x: hit.x, y: 1, z: hit.z };
-              this.ghost.position.copy(this._worldPos(ghostPos));
-              this.ghost.visible = true;
+} else {
+             // Ground hit: show ghost when adding, otherwise nothing to show
+             if (this.activeTool === 'add') {
+               const ghostPos = { x: hit.x, y: 0, z: hit.z };
+               this.ghost.position.copy(this._worldPos(ghostPos));
+               this.ghost.visible = true;
+             }
+           }
+         }
+
+        _onPointerClick(event) {
+            if (event.button !== 0) return;
+            const hit = this._raycast(event);
+            if (!hit) return;
+
+            // In scaling mode, let the scaling tool handle click-selection
+            if (this.activeTool === 'scaling') {
+              return; // Scaling tool handles click directly
             }
+    
+            if (this.activeTool === 'add') {
+              let pos;
+              if (hit.isGround) {
+                pos = { x: hit.x, y: 0, z: hit.z };
+              } else {
+                pos = {
+                  x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
+                  y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
+                  z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
+                };
+              }
+             const result = this.addVoxel(pos, this.activeMaterial, this.activeModule);
+             if (result) {
+               this._notify(`Voxel added: (${pos.x}, ${pos.y}, ${pos.z})`, 'success');
+             }
+} else if (this.activeTool === 'remove') {
+            // When clicking ground, try y=0 first then fallback to y=1 for legacy voxels
+            if (hit.isGround) {
+              let removed = this.removeVoxel(hit.x, 0, hit.z);
+              if (!removed) {
+                removed = this.removeVoxel(hit.x, 1, hit.z);
+              }
+              if (removed) {
+                this._notify('Voxel removed', 'success');
+              } else {
+                this._notify('No voxel to remove at this position', 'warn');
+              }
+            } else {
+              if (this.removeVoxel(hit.x, hit.y, hit.z)) {
+                this._notify('Voxel removed', 'success');
+              } else {
+                this._notify('No voxel to remove at this position', 'warn');
+              }
+            }
+          } else if (this.activeTool === 'select') {
+            this.selectVoxel(hit.x, hit.y, hit.z);
           }
         }
-   
-_onPointerClick(event) {
-           if (event.button !== 0) return;
-           const hit = this._raycast(event);
-           if (!hit) return;
-
-           // In scaling mode, let the scaling tool handle click-selection
-           if (this.activeTool === 'scaling') {
-             return; // Scaling tool handles click directly
-           }
-    
-           if (this.activeTool === 'add') {
-             const pos = {
-               x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
-               y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
-               z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
-             };
-            const result = this.addVoxel(pos, this.activeMaterial, this.activeModule);
-            if (result) {
-              this._notify(`Voxel added: (${pos.x}, ${pos.y}, ${pos.z})`, 'success');
-            }
-          } else if (this.activeTool === 'remove') {
-           this.removeVoxel(hit.x, hit.y, hit.z);
-         } else if (this.activeTool === 'select') {
-           this.selectVoxel(hit.x, hit.y, hit.z);
-         }
-       }
    
        _onKeyDown(event) {
          const tag = event.target.tagName;
@@ -536,16 +556,17 @@ const chunkKey = this._getChunkKey(pos);
         }
 
 removeVoxel(x, y, z) {
-           const chunkKey = this._getChunkKey({ x, y, z });
-           const chunk = this.chunks.get(chunkKey);
-           if (!chunk) return;
-           const voxel = chunk.getVoxel(x, y, z);
-          if (!voxel) return;
-   
-          this._pushHistory({ type: 'remove', x, y, z, material: voxel.material, module: voxel.module });
-          this._removeVoxelSilently(x, y, z);
-          this._onVoxelChanged();
-        }
+            const chunkKey = this._getChunkKey({ x, y, z });
+            const chunk = this.chunks.get(chunkKey);
+            if (!chunk) return false;
+            const voxel = chunk.getVoxel(x, y, z);
+            if (!voxel) return false;
+
+            this._pushHistory({ type: 'remove', x, y, z, material: voxel.material, module: voxel.module });
+            this._removeVoxelSilently(x, y, z);
+            this._onVoxelChanged();
+            return true;
+         }
    
        fillLayer(y, materialName, moduleId, solid = false) {
          if (moduleId === undefined) moduleId = null;
