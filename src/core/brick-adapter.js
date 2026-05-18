@@ -8,7 +8,9 @@
  *   Maintain backward compatibility with existing VoxelEngine
  */
 
-import * as THREE from 'three';
+// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
+const THREE = await import('three');
+;
 import { Brick } from './brick-system.js';
 
 export class BrickAdapter {

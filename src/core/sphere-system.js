@@ -2,7 +2,9 @@
  * SphereSystem - Converts voxel data to spheres with fillCoefficient
  * Represents material with natural porosity via sphere packing
  */
-import * as THREE from 'three';
+// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
+const THREE = await import('three');
+;
 
 export class Sphere {
   constructor(x, y, z, radius, material, fillCoefficient = 0.707) {

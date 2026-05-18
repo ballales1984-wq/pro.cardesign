@@ -1,9 +1,17 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// three-mock-provider.cjs  —  Provider mock THREE (funziona con ESM import())
+// ══════════════════════════════════════════════════════════════════════════════
+require('./three-mock-provider.cjs');
+
+const assert = require('assert');
+const path   = require('path');
+const fs     = require('fs');
+
 // Test Suite JavaScript — pro.cardesign Frontend (ESM dynamic import)
 // Esegui con: node tests/test_coverage.js
 
-const assert = require('assert');
-const path = require('path');
-const fs = require('fs');
+// Test Suite JavaScript — pro.cardesign Frontend (ESM dynamic import)
+// Esegui con: node tests/test_coverage.js
 
 // ── Full DOM & browser-API Mock (no JSDOM needed) ───────────────────────────
 function mockEl() {
@@ -164,10 +172,11 @@ this.setAttribute = (name, attr) => {
 })();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
 function loadESM(relPath) {
   const full = path.resolve(__dirname, '..', relPath);
   if (!fs.existsSync(full)) throw new Error(`Not found: ${full}`);
-  return import('file://' + full);
+  return import(pathToFileURL(full).href);
 }
 
 async function runAll() {

@@ -4,7 +4,9 @@
  * Uses InstancedMesh for material — a single draw call per material
  * instead of one per voxel. Improvement: ~10-50x with large scenes.
  */
-import * as THREE from 'three';
+// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
+const THREE = await import('three');
+;
 import { Chunk } from './core/chunk-system.js';
 import { ScalingTool } from './core/scaling-tool.js';
 

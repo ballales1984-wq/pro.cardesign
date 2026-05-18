@@ -2,7 +2,9 @@
  * VoxelCAD - Entry Point (Renderer Process)
  * Three.js-based voxel editor with physics & module system
  */
-import * as THREE from 'three';
+// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
+const THREE = await import('three');
+;
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelEngine } from './voxel-engine.js';
 import { MaterialSystem } from './material-system.js';
