@@ -18,6 +18,8 @@ export class ScalingTool {
 
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
+    this._plane = new THREE.Plane(); // Reused plane to reduce allocations
+    this.dragNormal = null; // Stores the normal of the face being dragged
 
     // Drag state
     this.selectedFace = null;
@@ -31,6 +33,13 @@ export class ScalingTool {
     this.sensitivity = 100; // 100px = 1 unit
 
     this._createLiveLabel();
+  }
+
+  _getDragNormal() {
+    // Return a unit vector based on the drag axis
+    if (this.dragAxis === 'x') return new THREE.Vector3(1, 0, 0);
+    if (this.dragAxis === 'y') return new THREE.Vector3(0, 1, 0);
+    return new THREE.Vector3(0, 0, 1); // z-axis
   }
 
   _createLiveLabel() {
@@ -143,24 +152,25 @@ export class ScalingTool {
     if (this.isDragging && this.selectedVoxel && this.dragStartPoint) {
       this.raycaster.setFromCamera(mouse, this.camera);
 
-      const plane = new THREE.Plane();
-      const n = this.dragAxis === 'x' ? 1 : (this.dragAxis === 'y' ? 1 : 0);
-      const normal = new THREE.Vector3(
-        this.dragAxis === 'x' ? 1 : 0,
-        this.dragAxis === 'y' ? 1 : 0,
-        this.dragAxis === 'z' ? 1 : 0
-      );
-      plane.setFromNormalAndCoplanarPoint(normal, this.dragStartPoint);
+      // Reuse plane and normal objects to reduce garbage collection
+      this._plane.normal.copy(this._getDragNormal());
+      this._plane.setFromNormalAndCoplanarPoint(this._plane.normal, this.dragStartPoint);
 
       const intersection = new THREE.Vector3();
-      this.raycaster.ray.intersectPlane(plane, intersection);
+      this.raycaster.ray.intersectPlane(this._plane, intersection);
 
       if (intersection) {
         const p = intersection;
         const dp = this.dragStartPoint;
-        const delta = (this.dragAxis === 'x' ? p.x : this.dragAxis === 'y' ? p.y : p.z)
-                    - (this.dragAxis === 'x' ? dp.x : this.dragAxis === 'y' ? dp.y : dp.z);
-        const axisIndex = this.dragAxis === 'x' ? 0 : this.dragAxis === 'y' ? 1 : 2;
+        let delta;
+        if (this.dragAxis === 'x') {
+          delta = p.x - dp.x;
+        } else if (this.dragAxis === 'y') {
+          delta = p.y - dp.y;
+        } else {
+          delta = p.z - dp.z;
+        }
+        const axisIndex = this.dragAxis === 'x' ? 0 : (this.dragAxis === 'y' ? 1 : 2);
         const newScale = Math.max(1, Math.round((this.startScale[axisIndex] || 1) + delta));
 
         const voxel = this.voxelEngine.getVoxelAt(

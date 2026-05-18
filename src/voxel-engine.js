@@ -153,16 +153,16 @@ export class VoxelEngine {
          return map ? map.size : 0;
        }
    
-        _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
-              const matrix = new THREE.Matrix4();
-              matrix.makeScale(scale.x, scale.y, scale.z);
-              // Apply translation after scale - for a unit cube centered at origin,
-              // the center is at (0,0,0), so no offset needed for scale
-              const scaledPos = new THREE.Vector3(position.x, position.y, position.z);
-              matrix.setPosition(scaledPos);
-              mesh.setMatrixAt(instanceId, matrix);
-              mesh.instanceMatrix.needsUpdate = true;
-          }
+         _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
+               const matrix = new THREE.Matrix4();
+               matrix.makeScale(scale.x, scale.y, scale.z);
+               // Apply translation after scale
+               matrix.elements[12] = position.x;
+               matrix.elements[13] = position.y;
+               matrix.elements[14] = position.z;
+               mesh.setMatrixAt(instanceId, matrix);
+               mesh.instanceMatrix.needsUpdate = true;
+           }
 
         _applyVoxelScaleToVoxel(voxel, scaleX, scaleY, scaleZ) {
               // Update voxel data
@@ -642,14 +642,13 @@ getVoxelAt(x, y, z) {
             mesh.count = 0;
             mesh.instanceMatrix.needsUpdate = true;
           }
-   
-          const free = [];
+
           for (const [matName] of this.instancedMeshes) {
             this.keyToInstance.get(matName)?.clear();
             this.instanceToKey.set(matName, new Array(this.maxInstances).fill(null));
-            free.length = 0;
+            this.freeIndices.set(matName, []);
           }
-   
+
           this.chunks.clear();
           this.selectedVoxel = null;
           this.clearHistory();
@@ -839,11 +838,13 @@ getVoxelAt(x, y, z) {
          }
      }
 
-    update(deltaTime) {
-       if (this.ghost && this.ghost.visible) {
-         this.ghost.material.opacity = 0.3 + Math.sin(performance.now() * 0.006) * 0.15;
-       }
-     }
+     update(deltaTime) {
+        if (this.ghost && this.ghost.visible) {
+          // Cache performance.now() to avoid multiple calls
+          const time = performance.now() * 0.006;
+          this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
+        }
+      }
 
     // ── Voxel mutation helpers (called by BrickAdapter) ────────────────────────
     /**

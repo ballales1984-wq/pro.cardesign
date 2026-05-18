@@ -175,25 +175,26 @@ export class UI {
      });
    }
 
-   // Procedural Rules Panel
-   _setupProceduralPanel() {
-     const self = this;
-     const container = document.getElementById('procedural-panel');
-     const rulesList = document.getElementById('procedural-rules-list');
-     const ruleEditor = document.getElementById('rule-editor');
-     const ruleEditorHeader = document.getElementById('rule-editor-header');
-     const ruleEditorBody = document.getElementById('rule-editor-body');
-     const newRuleNameInput = document.getElementById('new-rule-name');
-     const addRuleBtn = document.getElementById('btn-add-rule');
+    // Procedural Rules Panel
+    _setupProceduralPanel() {
+      const self = this;
+      const container = document.getElementById('procedural-panel');
+      const rulesList = document.getElementById('procedural-rules-list');
+      const ruleEditor = document.getElementById('rule-editor');
+      const ruleEditorHeader = document.getElementById('rule-editor-header');
+      const ruleEditorBody = document.getElementById('rule-editor-body');
+      const newRuleNameInput = document.getElementById('new-rule-name');
+      const addRuleBtn = document.getElementById('btn-add-rule');
 
-     // Populate rules list
-     function populateRulesList() {
-       rulesList.innerHTML = '';
-       const rules = Array.from(self.proceduralEngine.rules.keys());
-       if (rules.length === 0) {
-         rulesList.innerHTML = '<p class="hint">Nessuna regola definita</p>';
-         return;
-       }
+      // ── Populate rules list (HTML only, no event binding) ──────
+      function populateRulesList() {
+        rulesList.innerHTML = '';
+        const rules = Array.from(self.proceduralEngine.rules.keys());
+        if (rules.length === 0) {
+          rulesList.innerHTML = '<p class="hint">Nessuna regola definita</p>';
+          return;
+        }
+
         rules.forEach(ruleName => {
           const ruleDiv = document.createElement('div');
           ruleDiv.className = 'procedural-rule-item';
@@ -205,7 +206,10 @@ export class UI {
           `;
           rulesList.appendChild(ruleDiv);
         });
+      }
 
+      // ── Bind rule-list buttons (called after every repopulate) ──
+      function bindRuleButtons() {
         // Apply button
         document.querySelectorAll('.rule-apply-btn').forEach(btn => {
           btn.addEventListener('click', function() {
@@ -230,7 +234,7 @@ export class UI {
           });
         });
 
-        // Add event listeners to edit/delete buttons
+        // Edit / delete buttons
         document.querySelectorAll('.rule-edit-btn').forEach(btn => {
           btn.addEventListener('click', function() {
             const ruleName = this.getAttribute('data-rule');
@@ -244,64 +248,68 @@ export class UI {
             if (confirm(`Eliminare la regola "${ruleName}"?`)) {
               self.proceduralEngine.rules.delete(ruleName);
               populateRulesList();
+              bindRuleButtons();
               self._notify(`Regola "${ruleName}" eliminata`, 'success');
             }
           });
         });
-     }
+      }
 
-     // Add new rule
-     addRuleBtn.addEventListener('click', function() {
-       const ruleName = newRuleNameInput.value.trim();
-       if (!ruleName) {
-         self._notify('Inserisci un nome per la regola', 'warn');
-         return;
-       }
-       if (self.proceduralEngine.rules.has(ruleName)) {
-         self._notify('Una regola con questo nome esiste già', 'warn');
-         return;
-       }
-       // Create a simple rule template
-       self.proceduralEngine.rules.set(ruleName, {
-         execute: (params, context) => {
-           // Default: create a single voxel at origin
-           return [{x: 0, y: 0, z: 0, material: 'steel'}];
-         }
-       });
-       newRuleNameInput.value = '';
-       populateRulesList();
-       self._notify(`Regola "${ruleName}" creata`, 'success');
-     });
+      // ── Add new rule ─────────────────────────────────────────
+      addRuleBtn.addEventListener('click', function() {
+        const ruleName = newRuleNameInput.value.trim();
+        if (!ruleName) {
+          self._notify('Inserisci un nome per la regola', 'warn');
+          return;
+        }
+        if (self.proceduralEngine.rules.has(ruleName)) {
+          self._notify('Una regola con questo nome esiste già', 'warn');
+          return;
+        }
+        // Create a simple rule template
+        self.proceduralEngine.rules.set(ruleName, {
+          execute: (params, context) => {
+            // Default: create a single voxel at origin
+            return [{x: 0, y: 0, z: 0, material: 'steel'}];
+          }
+        });
+        newRuleNameInput.value = '';
+        populateRulesList();
+        bindRuleButtons();
+        self._notify(`Regola "${ruleName}" creata`, 'success');
+      });
 
-     // Initial population
-     populateRulesList();
-   }
+      // ── Initial population ───────────────────────────────────
+      populateRulesList();
+      bindRuleButtons();
+    }
 
-   _editRule(ruleName) {
-     if (!this.proceduralEngine.rules.has(ruleName)) return;
-     const rule = this.proceduralEngine.rules.get(ruleName);
+    _editRule(ruleName) {
+      if (!this.proceduralEngine.rules.has(ruleName)) return;
+      const rule = this.proceduralEngine.rules.get(ruleName);
 
-    const editorHeader = document.getElementById('rule-editor-header');
-    const editorBody = document.getElementById('rule-editor-body');
+     const editorHeader = document.getElementById('rule-editor-header');
+     const editorBody = document.getElementById('rule-editor-body');
 
-    editorHeader.textContent = `Modifica regola: ${ruleName}`;
-    editorBody.innerHTML = `
-      <div class="rule-editor-section">
-        <label for="rule-code">Funzione execute (params, context)</label>
-        <textarea id="rule-code" rows="10" class="rule-editor-textarea" spellcheck="false"></textarea>
-      </div>
-      <div class="rule-editor-actions">
-        <button id="save-rule-btn" class="btn-primary">Salva Regola</button>
-        <button id="cancel-rule-btn" class="btn-secondary">Annulla</button>
-      </div>
-    `;
+     editorHeader.textContent = `Modifica regola: ${ruleName}`;
+     editorBody.innerHTML = `
+       <div class="rule-editor-section">
+         <label for="rule-code">Funzione execute (params, context)</label>
+         <textarea id="rule-code" rows="10" class="rule-editor-textarea" spellcheck="false"></textarea>
+       </div>
+       <div class="rule-editor-actions">
+         <button id="save-rule-btn" class="btn-primary">Salva Regola</button>
+         <button id="cancel-rule-btn" class="btn-secondary">Annulla</button>
+       </div>
+     `;
 
-    const saveBtn = document.getElementById('save-rule-btn');
-    const cancelBtn = document.getElementById('cancel-rule-btn');
-    const codeTextarea = document.getElementById('rule-code');
+     // Query AFTER innerHTML assignment so elements exist
+     const saveBtn = document.getElementById('save-rule-btn');
+     const cancelBtn = document.getElementById('cancel-rule-btn');
+     const codeTextarea = document.getElementById('rule-code');
 
-    // Set current rule code (simplified)
-    codeTextarea.value = rule.execute.toString();
+     // Set current rule code (simplified)
+     codeTextarea.value = rule.execute.toString();
 
       const engine = this.proceduralEngine;
       const notifyFn  = this._notify.bind(this);
@@ -1022,25 +1030,27 @@ export class UI {
      this._showComponentEditor(comp);
    }
 
-  _addComponentToScene(comp) {
-    // Read current parameter values from sliders
-    const params = {};
-    for (const key of Object.keys(comp.parameters)) {
-      const input = document.getElementById(`param-${key}`);
-      if (input) params[key] = parseFloat(input.value);
-    }
+    _addComponentToScene(comp) {
+      // Read current parameter values from sliders
+      const params = {};
+      for (const key of Object.keys(comp.parameters)) {
+        const input = document.getElementById(`param-${key}`);
+        if (input) params[key] = parseFloat(input.value);
+      }
 
-    // Generate voxels based on component type
-    let voxels = [];
+      // Generate voxels based on component type
+      let voxels = [];
 
-    if (comp.type === 'wheel') {
-      voxels = this._createWheelVoxels(params);
-    } else if (comp.type === 'tube') {
-      voxels = this._createTubeVoxels(params);
-    } else {
-      this._notify('Tipo componente non ancora supportato', 'warn');
-      return;
-    }
+      if (comp.type === 'wheel') {
+        voxels = this._createWheelVoxels(params);
+      } else if (comp.type === 'tube') {
+        voxels = this._createTubeVoxels(params);
+      } else if (comp.type === 'brick') {
+        voxels = this._createBrickVoxels(params);
+      } else {
+        this._notify('Tipo componente non ancora supportato', 'warn');
+        return;
+      }
 
     // Add voxels to scene
     for (const v of voxels) {
@@ -1098,6 +1108,23 @@ export class UI {
           if (dist <= radius && dist >= radius - thickness) {
             voxels.push({ x, y, z });
           }
+        }
+      }
+    }
+
+    return voxels;
+  }
+
+  _createBrickVoxels(params) {
+    const width    = Math.round(params.width);
+    const height   = Math.round(params.height);
+    const depth    = Math.round(params.depth);
+    const voxels = [];
+
+    for (let x = 0; x < width; x++) {
+      for (let y = 0; y < height; y++) {
+        for (let z = 0; z < depth; z++) {
+          voxels.push({ x, y, z });
         }
       }
     }
