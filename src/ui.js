@@ -194,9 +194,9 @@ export class UI {
           ruleDiv.className = 'procedural-rule-item';
           ruleDiv.innerHTML = `
             <span class="rule-name">${ruleName}</span>
-            <button class="rule-apply-btn" data-rule="${ruleName}" title="Applica regola nella scena" style="background:var(--accent);color:#fff;border:none;border-radius:3px;padding:2px 7px;font-size:10px;cursor:pointer;">▶ Applica</button>
-            <button class="rule-edit-btn" data-rule="${ruleName}">Modifica</button>
-            <button class="rule-delete-btn" data-rule="${ruleName}">Elimina</button>
+            <button id="rule-apply-${ruleName}" class="rule-apply-btn" data-rule="${ruleName}" title="Applica regola nella scena" style="background:var(--accent);color:#fff;border:none;border-radius:3px;padding:2px 7px;font-size:10px;cursor:pointer;">▶ Applica</button>
+            <button id="rule-edit-${ruleName}" class="rule-edit-btn" data-rule="${ruleName}">Modifica</button>
+            <button id="rule-delete-${ruleName}" class="rule-delete-btn" data-rule="${ruleName}">Elimina</button>
           `;
           rulesList.appendChild(ruleDiv);
         });
@@ -467,8 +467,8 @@ export class UI {
       '<div class="prop-row"><span class="prop-label">Massa voxel</span><span class="prop-value">' + this.physics.voxelMass(voxel).toFixed(4) + ' kg</span></div>' +
       '<div class="prop-row"><span class="prop-label">Peso</span><span class="prop-value">' + this.physics.voxelWeight(voxel).toFixed(4) + ' N</span></div>' +
       '<div class="prop-row"><span class="prop-label">Modulo</span><span class="prop-value">' + (voxel.module || 'Nessuno') + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Temperatura</span><span class="prop-value">' + voxel.temperature + ' K</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Danno</span><span class="prop-value">' + (voxel.damage * 100).toFixed(1) + '%</span></div>';
+      '<div class="prop-row"><span class="prop-label">Temperatura</span><span class="prop-value">' + ((voxel.temperature != null) ? voxel.temperature + ' K' : '300 K') + '</span></div>' +
+      '<div class="prop-row"><span class="prop-label">Danno</span><span class="prop-value">' + ((voxel.damage != null) ? (voxel.damage * 100).toFixed(1) + '%' : '0.0%') + '</span></div>';
     if (mat) {
       matInfo = '<div class="prop-row"><span class="prop-label">E (Young)</span><span class="prop-value">' + (mat.youngsModulus / 1e9).toFixed(1) + ' GPa</span></div>' +
         '<div class="prop-row"><span class="prop-label">Sigma max</span><span class="prop-value">' + (mat.tensileStrength / 1e6).toFixed(0) + ' MPa</span></div>' +
@@ -767,7 +767,7 @@ export class UI {
         <div class="prop-row"><span class="prop-label">Scala</span><span class="prop-value">${(importInfo.scaleFactor * 100).toFixed(1)}%</span></div>
         <div class="prop-row"><span class="prop-label">Dim. Originali</span><span class="prop-value">${importInfo.originalSize.x.toFixed(1)} × ${importInfo.originalSize.y.toFixed(1)} × ${importInfo.originalSize.z.toFixed(1)}</span></div>
         <div style="margin-top:12px; display:flex; gap:8px;">
-          <button onclick="this.closest('.app-notification').remove()" style="flex:1;padding:6px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">Chiudi</button>
+          <button id="import-close-btn" onclick="this.closest(&quot;.app-notification&quot;).remove()" style="flex:1;padding:6px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">Chiudi</button>
         </div>
       </div>
     `;

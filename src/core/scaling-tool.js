@@ -10,46 +10,38 @@ export class ScalingTool {
     this.scene = scene;
     this.camera = camera;
     this.renderer = renderer;
-    
+
     this.isActive = false;
     this.isDragging = false;
-    
+
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
-    
+
     // Drag state
     this.selectedFace = null;
     this.selectedVoxel = null;
     this.dragStartPoint = null;
     this.dragAxis = 'x';
     this.startScale = null;
-    
+
     // Live label
     this.liveLabel = null;
     this.sensitivity = 100; // 100px = 1 unit
-    
+
     this._createLiveLabel();
   }
 
   _createLiveLabel() {
     const el = document.createElement('div');
     el.id = 'scaling-live-label';
-    el.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0,0,0,0.9);
-      color: #00d2ff;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-family: monospace;
-      font-size: 12px;
-      border: 1px solid #00d2ff;
-      display: none;
-      z-index: 10000;
-      pointer-events: none;
-      min-width: 180px;
-    `;
+    el.style.cssText =
+      'position:fixed;top:20px;right:20px;' +
+      'background:rgba(0,0,0,0.9);color:#00d2ff;' +
+      'padding:12px 16px;border-radius:8px;' +
+      'font-family:monospace;font-size:12px;' +
+      'border:1px solid #00d2ff;display:none;' +
+      'z-index:10000;pointer-events:none;' +
+      'min-width:180px;';
     document.body.appendChild(el);
     this.liveLabel = el;
   }
@@ -74,7 +66,7 @@ export class ScalingTool {
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
-    
+
     this._boundCanvas = this.renderer.domElement;
     this._boundCanvas.addEventListener('pointerdown', this._onMouseDown);
     window.addEventListener('pointermove', this._onMouseMove);
@@ -99,39 +91,42 @@ export class ScalingTool {
 
   _onMouseDown(event) {
     if (!this.isActive || event.button !== 0) return;
-    
+
     const mouse = this._getMousePos(event);
     this.raycaster.setFromCamera(mouse, this.camera);
-    
+
     const intersections = this.raycaster.intersectObjects(
       Array.from(this.voxelEngine.instancedMeshes.values()), true
     );
-    
+
     if (intersections.length > 0 && intersections[0].instanceId !== undefined) {
       const hit = intersections[0];
       const materialName = hit.object.material.name;
-      const key = this.voxelEngine.instanceToKey.get(materialName)?.[hit.instanceId];
-      
+      const instanceId = hit.instanceId;
+      const keyObj = this.voxelEngine.instanceToKey.get(materialName);
+      const key = keyObj ? keyObj[instanceId] : null;
+
       if (key) {
-        const [x, y, z] = key.split(',').map(Number);
+        const parts = key.split(',');
+        const x = parseInt(parts[0], 10);
+        const y = parseInt(parts[1], 10);
+        const z = parseInt(parts[2], 10);
         this.isDragging = true;
         this.selectedVoxel = { x, y, z };
         this.dragStartPoint = hit.point.clone();
         const normal = hit.face.normal;
-        
-        // Determine drag axis from face normal
+
         if (Math.abs(normal.x) > 0.5) this.dragAxis = 'x';
         else if (Math.abs(normal.y) > 0.5) this.dragAxis = 'y';
         else this.dragAxis = 'z';
-        
-        // Record start scale
+
         const voxel = this.voxelEngine.getVoxelAt(x, y, z);
-        this.startScale = voxel.scale ? { 
-          x: voxel.scale[0] || 1, 
-          y: voxel.scale[1] || 1, 
-          z: voxel.scale[2] || 1 
-        } : { x: 1, y: 1, z: 1 };
-        
+        if (voxel && voxel.scale) {
+          this.startScale = { x: voxel.scale[0] || 1, y: voxel.scale[1] || 1, z: voxel.scale[2] || 1 };
+        } else {
+          this.startScale = { x: 1, y: 1, z: 1 };
+        }
+
         this._createFaceHighlight(hit.point, normal);
         this.liveLabel.style.display = 'block';
       }
@@ -140,14 +135,14 @@ export class ScalingTool {
 
   _onMouseMove(event) {
     if (!this.isActive) return;
-    
+
     const mouse = this._getMousePos(event);
-    
+
     if (this.isDragging && this.selectedVoxel && this.dragStartPoint) {
       this.raycaster.setFromCamera(mouse, this.camera);
-      
-      // Create plane parallel to drag face
+
       const plane = new THREE.Plane();
+      const n = this.dragAxis === 'x' ? 1 : (this.dragAxis === 'y' ? 1 : 0);
       const normal = new THREE.Vector3(
         this.dragAxis === 'x' ? 1 : 0,
         this.dragAxis === 'y' ? 1 : 0,
@@ -158,24 +153,22 @@ export class ScalingTool {
       const intersection = new THREE.Vector3();
       this.raycaster.ray.intersectPlane(plane, intersection);
 
-       if (intersection) {
-         const delta = intersection[this.dragAxis] - this.dragStartPoint[this.dragAxis];
-         const deltaUnits = Math.round(delta / this.sensitivity); // Convert pixels to units (100px = 1 unit)
-         const snappedDelta = deltaUnits;
-         const newScale = Math.max(1, this.startScale[this.dragAxis] + snappedDelta);
+      if (intersection) {
+        const p = intersection;
+        const dp = this.dragStartPoint;
+        const delta = (this.dragAxis === 'x' ? p.x : this.dragAxis === 'y' ? p.y : p.z)
+                    - (this.dragAxis === 'x' ? dp.x : this.dragAxis === 'y' ? dp.y : dp.z);
+        const axisIndex = this.dragAxis === 'x' ? 0 : this.dragAxis === 'y' ? 1 : 2;
+        const newScale = Math.max(1, Math.round((this.startScale[axisIndex] || 1) + delta));
 
-        // Update voxel scale
         const voxel = this.voxelEngine.getVoxelAt(
           this.selectedVoxel.x, this.selectedVoxel.y, this.selectedVoxel.z
         );
         if (voxel) {
           if (!voxel.scale) voxel.scale = [1, 1, 1];
-          voxel.scale[this.dragAxis] = newScale;
-          
-          // Update display
+          voxel.scale[axisIndex] = newScale;
+
           this._updateScaleLabel(voxel.scale);
-          
-          // Update mesh in real-time
           this._applyVoxelScale(voxel);
         }
       }
@@ -185,43 +178,42 @@ export class ScalingTool {
   _onMouseUp(event) {
     if (this.isDragging) {
       this.isDragging = false;
-      
+
       if (this.selectedVoxel && this.startScale) {
         const voxel = this.voxelEngine.getVoxelAt(
           this.selectedVoxel.x, this.selectedVoxel.y, this.selectedVoxel.z
         );
-        
-        // Push history entry for undo/redo
+
         this.voxelEngine._pushHistory({
           type: 'scale',
           x: this.selectedVoxel.x,
           y: this.selectedVoxel.y,
           z: this.selectedVoxel.z,
           oldScale: this.startScale,
-          newScale: voxel.scale ? [...voxel.scale] : [1, 1, 1]
+          newScale: voxel && voxel.scale ? [voxel.scale[0], voxel.scale[1], voxel.scale[2]] : [1, 1, 1]
         });
-        
+
         this.voxelEngine._onVoxelChanged();
       }
-      
+
       this._removeHighlights();
       this.liveLabel.style.display = 'none';
     }
   }
 
   _applyVoxelScale(voxel) {
-    const key = `${voxel.x},${voxel.y},${voxel.z}`;
+    const key = voxel.x + ',' + voxel.y + ',' + voxel.z;
     const materialName = voxel.material;
     const mesh = this.voxelEngine.instancedMeshes.get(materialName);
-    
+
     if (mesh) {
       const instMap = this.voxelEngine.keyToInstance.get(materialName);
-      const instanceId = instMap?.get(key);
+      const instanceId = instMap ? instMap.get(key) : undefined;
       if (instanceId !== undefined) {
         const scale = voxel.scale || [1, 1, 1];
         this.voxelEngine._setInstanceMatrix(
-          mesh, 
-          instanceId, 
+          mesh,
+          instanceId,
           this.voxelEngine._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z }),
           new THREE.Vector3(scale[0], scale[1], scale[2])
         );
@@ -231,7 +223,7 @@ export class ScalingTool {
 
   _createFaceHighlight(point, normal) {
     this._removeHighlights();
-    
+
     const geo = new THREE.PlaneGeometry(0.3, 0.3);
     const mat = new THREE.MeshBasicMaterial({
       color: 0x00d2ff,
@@ -240,12 +232,12 @@ export class ScalingTool {
       side: THREE.DoubleSide,
       depthTest: false
     });
-    
+
     const highlight = new THREE.Mesh(geo, mat);
     highlight.position.copy(point);
     highlight.position.add(normal.clone().multiplyScalar(0.02));
     highlight.lookAt(point.clone().add(normal));
-    
+
     this.selectedFace = highlight;
     this.scene.add(highlight);
   }
@@ -261,16 +253,17 @@ export class ScalingTool {
 
   _updateScaleLabel(scale) {
     if (!this.liveLabel) return;
-    
-    const delta = (scale[this.dragAxis] - this.startScale[this.dragAxis]);
+
+    const axisIndex = this.dragAxis === 'x' ? 0 : (this.dragAxis === 'y' ? 1 : 2);
+    const delta = (scale[axisIndex] || 1) - (this.startScale[axisIndex] || 1);
     const sign = delta >= 0 ? '+' : '';
-    
-    this.liveLabel.innerHTML = `
-      <div style="font-weight: bold; margin-bottom: 8px;">Live Scaling</div>
-      <div>Asse: ${this.dragAxis.toUpperCase()}</div>
-      <div>Attuale: ${scale[this.dragAxis].toFixed(1)} mm</div>
-      <div style="margin-top: 4px;">Delta: <span style="color: ${delta >= 0 ? '#4caf50' : '#f44336'}">${sign}${delta.toFixed(1)} mm</span></div>
-    `;
+    const color = delta >= 0 ? '#4caf50' : '#f44336';
+
+    this.liveLabel.innerHTML =
+      '<div style="font-weight:bold;margin-bottom:8px;">Live Scaling</div>' +
+      '<div>Asse: ' + this.dragAxis.toUpperCase() + '</div>' +
+      '<div>Attuale: ' + (scale[axisIndex] || 1).toFixed(1) + ' mm</div>' +
+      '<div style="margin-top:4px;">Delta: <span style="color:' + color + '">' + sign + delta.toFixed(1) + ' mm</span></div>';
   }
 
   destroy() {

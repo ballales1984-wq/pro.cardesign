@@ -388,28 +388,33 @@ _setupEvents() {
          return null;
        }
    
-       _onPointerMove(event) {
-         const hit = this._raycast(event);
-         this.highlight.visible = false;
-         this.ghost.visible = false;
-   
-         if (!hit) return;
-   
-         if (!hit.isGround) {
-           // Voxel hit: always update highlight position
-           this.highlight.position.copy(this._worldPos({ x: hit.x, y: hit.y, z: hit.z }));
-           this.highlight.visible = true;
-   
-           if (this.activeTool === 'add') {
-             const ghostPos = {
-               x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
-               y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
-               z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
-             };
-             this.ghost.position.copy(this._worldPos(ghostPos));
-             this.ghost.visible = true;
-           }
-} else {
+        _onPointerMove(event) {
+          const hit = this._raycast(event);
+
+          if (!hit) {
+            this.highlight.visible = false;
+            this.ghost.visible = false;
+            return;
+          }
+
+          this.highlight.visible = false;
+          this.ghost.visible = false;
+
+          if (!hit.isGround) {
+            // Voxel hit: always update highlight position
+            this.highlight.position.copy(this._worldPos({ x: hit.x, y: hit.y, z: hit.z }));
+            this.highlight.visible = true;
+    
+            if (this.activeTool === 'add') {
+              const ghostPos = {
+                x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
+                y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
+                z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
+              };
+              this.ghost.position.copy(this._worldPos(ghostPos));
+              this.ghost.visible = true;
+            }
+          } else {
             // Ground hit: show ghost when adding, otherwise nothing to show
             if (this.activeTool === 'add') {
               // Ghost should show where the voxel will actually be placed
@@ -419,7 +424,7 @@ _setupEvents() {
               this.ghost.visible = true;
             }
           }
-       }
+        }
    
 _onPointerClick(event) {
            if (event.button !== 0) return;
@@ -431,18 +436,15 @@ _onPointerClick(event) {
              return; // Scaling tool handles click directly
            }
     
-          if (this.activeTool === 'add') {
-            const pos = {
-              x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
-              y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
-              z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
-            };
+           if (this.activeTool === 'add') {
+             const pos = {
+               x: hit.x + Math.round((hit.faceNormal || {x:0,y:0,z:1}).x),
+               y: hit.y + Math.round((hit.faceNormal || {x:0,y:0,z:1}).y),
+               z: hit.z + Math.round((hit.faceNormal || {x:0,y:0,z:1}).z),
+             };
             const result = this.addVoxel(pos, this.activeMaterial, this.activeModule);
             if (result) {
-              this._notify(`Voxel aggiunto: (${pos.x}, ${pos.y}, ${pos.z})`, 'success');
-            } else {
-              this._notify('Impossibile aggiungere voxel', 'error');
-              console.error('[VoxelEngine] addVoxel returned false');
+              this._notify(`Voxel added: (${pos.x}, ${pos.y}, ${pos.z})`, 'success');
             }
           } else if (this.activeTool === 'remove') {
            this.removeVoxel(hit.x, hit.y, hit.z);
@@ -477,21 +479,22 @@ _onPointerClick(event) {
         // ── Voxel operations ─────────────────────────────────────────
 
         addVoxel(pos, materialName, moduleId) {
-if (moduleId === undefined) moduleId = null;
-           const chunkKey = this._getChunkKey(pos);
-           const chunk = this._getOrCreateChunk(chunkKey);
-           const existing = chunk.getVoxel(pos.x, pos.y, pos.z);
+          if (moduleId === undefined) moduleId = null;
+            const chunkKey = this._getChunkKey(pos);
+            const chunk = this._getOrCreateChunk(chunkKey);
+            const existing = chunk.getVoxel(pos.x, pos.y, pos.z);
 
-          if (existing) {
-            if (existing.material !== materialName) {
-              this._removeVoxelSilently(existing.x, existing.y, existing.z);
-              return this._addVoxelInternal(pos, materialName, moduleId);
+            if (existing) {
+              // Voxel already present: update material only if changed, otherwise no-op
+              if (existing.material !== materialName) {
+                this._removeVoxelSilently(existing.x, existing.y, existing.z);
+                return this._addVoxelInternal(pos, materialName, moduleId);
+              }
+              return false;
             }
-            return false;
-          }
 
-          return this._addVoxelInternal(pos, materialName, moduleId);
-        }
+            return this._addVoxelInternal(pos, materialName, moduleId);
+          }
 
 _addVoxelInternal(pos, materialName, moduleId) {
            const material = this.materialDB.get(materialName);
@@ -596,13 +599,12 @@ getVoxelAt(x, y, z) {
 
      // ── Internal remove (without history push) ───────────────────
 
-    _removeVoxelSilently(x, y, z) {
-      const chunkKey = this._getChunkKey({ x, y, z });
-      const localKey = this._getLocalKey({ x, y, z });
-      const chunk = this.chunks.get(chunkKey);
-      if (!chunk) return;
-      const voxel = chunk.getVoxel(localKey.x, localKey.y, localKey.z);
-      if (!voxel) return;
+     _removeVoxelSilently(x, y, z) {
+       const chunkKey = this._getChunkKey({ x, y, z });
+       const chunk = this.chunks.get(chunkKey);
+       if (!chunk) return;
+       const voxel = chunk.getVoxel(x, y, z);
+       if (!voxel) return;
 
       const worldKey = this._gridKey({ x, y, z });
       const matName = voxel.material;
@@ -619,7 +621,7 @@ getVoxelAt(x, y, z) {
           mesh.instanceMatrix.needsUpdate = true;
 
           instMap.delete(worldKey);
-          idxMap[instanceId] = null;
+          idxMap.delete(worldKey);
           this.freeIndices.get(matName)?.push(instanceId);
         }
       }

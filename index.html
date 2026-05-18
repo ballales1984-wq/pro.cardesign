@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VoxelCAD — Pro.Cardesign</title>
   <link rel="stylesheet" href="./styles/main.css" />
+
+  <!-- three.js: imported by CDN so dist/ works standalone without node_modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js"
+      }
+    }
+  </script>
+
 </head>
 <body>
   <div id="app">
@@ -180,7 +190,7 @@
           🧩 Moduli
           <span class="arrow" aria-hidden="true">▼</span>
         </div>
-        <div class="panel-body" id="modules-tree" aria-label="Albero moduli"/>
+        <div class="panel-body" id="modules-tree" aria-label="Albero moduli"></div>
         <div
           class="panel-body"
           id="modules-actions"
