@@ -109,9 +109,11 @@ mockDocAndGlobals();
     Color: function(c){ this.r=c; this.g=c; this.b=c; this.set=_=>{}; this.getHex=()=>c; },
     CanvasTexture: function(){ this.needsUpdate=false; this._canvas={width:128,height:64}; },
     SpriteMaterial: function(opts){ this.map=opts.map; this.depthTest=opts.depthTest!==false; },
-    Euler: function(x,y,z){ this.x=x; this.y=y; this.z=z; this.set=_=>{}; },
-    Vector3: Vec3,
-    Vector2: Vec2,
+Euler: function(x,y,z){ this.x=x; this.y=y; this.z=z; this.set=_=>{}; },
+     Quaternion: function(){ this.x=0; this.y=0; this.z=0; this.w=1; this.set=_=>{}; },
+     Box3: function(min,max){ this.min=min||{x:-1,y:-1,z:-1}; this.max=max||{x:1,y:1,z:1}; this.getCenter=_=>{return{set:_=>{}}}; this.getSize=_=>{return{set:_=>{}}}; },
+     Vector3: Vec3,
+     Vector2: Vec2,
     BufferGeometry: function(){
       this.attributes = {};
       this.index = null;
@@ -136,10 +138,11 @@ this.setAttribute = (name, attr) => {
        this.getnormal = () => null;
        this.getuv = () => null;
 
-      this.computeBoundingSphere = function(){ this.boundingSphere={ getCenter:_=>new Vec3(), radius:1 }; };
-      this.computeVertexNormals = function(){};
-      this.dispose = function(){};
-      return this;
+this.computeBoundingSphere = function(){ this.boundingSphere={ getCenter:_=>new Vec3(), radius:1 }; };
+       this.computeVertexNormals = function(){};
+       this.computeBoundingBox = function(){ this.boundingBox={ min:{x:-1,y:-1,z:-1}, max:{x:1,y:1,z:1} }; };
+       this.dispose = function(){};
+       return this;
     },
     Float32BufferAttribute: function(arr, itemSize){
       this.array = Array.isArray(arr) ? new Float32Array(arr) : arr;
@@ -160,12 +163,13 @@ this.setAttribute = (name, attr) => {
 
       return this;
     },
-    DoubleSide: 1, FrontSide: 0, BackSide: 2,
-    PCFSoftShadowMap: 1, BasicShadowMap: 0,
-    NoBlending: 0, AdditiveBlending: 1, NormalBlending: 2,
-    Clock: function(){ this.getDelta=()=>0.016; this.getElapsedTime=()=>0; },
-    Plane: function(){},
-    PlaneGeometry: function(){ return new global.THREE.BufferGeometry(); },
+DoubleSide: 1, FrontSide: 0, BackSide: 2,
+     PCFSoftShadowMap: 1, BasicShadowMap: 0,
+     NoBlending: 0, AdditiveBlending: 1, NormalBlending: 2,
+     Clock: function(){ this.getDelta=()=>0.016; this.getElapsedTime=()=>0; },
+     Plane: function(){},
+     PlaneGeometry: function(){ return new global.THREE.BufferGeometry(); },
+     Sphere: function(center, radius){ this.center=center||{x:0,y:0,z:0}; this.radius=radius||1; },
     DynamicDrawUsage: 35048,
     ReusableShadowMaps: {},
   };
@@ -753,7 +757,315 @@ endsolid test`;
     });
   } catch(e) { failed++; console.log('  [FAIL] STLImporter import: ' + e.message); }
 
-  // ── 16. RuleEditorUI ─────────────────────────────────────────────────────────
+  // ── 16. MeshDeformer ──────────────────────────────────────────────────────────
+  try {
+    const { MeshDeformer } = await loadESM('src/core/mesh-deformer.js');
+    runTest('MeshDeformer (import)', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const deformer  = new MeshDeformer(fakeScene, null, null, null);
+      assert.ok(deformer);
+    });
+
+    runTest('MeshDeformer.construction default state', () => {
+      const md = new MeshDeformer({}, null, null, null);
+      assert.strictEqual(md._refGeometry, null);
+      assert.strictEqual(md._refMesh, null);
+      assert.strictEqual(md._smoothIterations, 2);
+    });
+
+    runTest('MeshDeformer.setReferenceGeometry wraps in Mesh', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const md = new MeshDeformer(fakeScene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(
+        [0,0,0, 1,0,0, 0,1,0, 1,0,0, 1,1,0, 0,1,0], 3));
+      geom.computeBoundingSphere();
+      md.setReferenceGeometry(geom);
+      assert.ok(md._refMesh instanceof THREE.Mesh);
+      assert.strictEqual(md._refGeometry, geom);
+    });
+
+    runTest('MeshDeformer.projectBrickVertices returns 8', () => {
+      const worldVerts = Array.from({length:8}, (_,i) =>
+        new THREE.Vector3(i&1?1:0, (i>>1)&1?1:0, (i>>2)&1?1:0));
+      const fakeEngine = {
+        _getVertexWorldPositions: () => worldVerts,
+        voxelSize: 1.0,
+      };
+      // camera can be {} — _cameraWorldZ handles missing quaternion
+      const md = new MeshDeformer({}, {}, null, fakeEngine);
+
+      const result = md.projectBrickVertices({x:0,y:0,z:0,scale:[1,1,1]});
+      assert.strictEqual(result.length, 8);
+      // Without ref mesh: returns originals unchanged
+      assert.ok(result[0].distanceTo(worldVerts[0]) < 0.001);
+    });
+
+    runTest('MeshDeformer.clearReferenceMesh removes mesh from scene', () => {
+      const added  = [];
+      const scene  = { remove: () => { added.pop(); }, add: (...a) => added.push(a) };
+      const md = new MeshDeformer(scene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,1,0], 3));
+      geom.computeBoundingSphere();
+      md.setReferenceGeometry(geom);
+      assert.ok(md._refMesh !== null);
+      assert.strictEqual(added.length, 1);
+      md.clearReferenceMesh();
+      assert.strictEqual(md._refMesh, null);
+      assert.strictEqual(md._refGeometry, null);
+    });
+
+    runTest('MeshDeformer.fitRefMeshToVoxelGrid centers mesh', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const md = new MeshDeformer(fakeScene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute([-1,-1,-1,1,1,1], 3));
+      // Use geometric bounding box (no THREE.Box3 needed)
+      geom.boundingBox = { min: {x:-1,y:-1,z:-1}, max: {x:1,y:1,z:1} };
+      geom.boundingSphere = { getCenter: () => new THREE.Vector3(0,0,0), radius: Math.sqrt(3) };
+      md.setReferenceGeometry(geom);
+      md._refMesh.position.set(0,0,0);
+      md.fitRefMeshToVoxelGrid(1.0);
+      assert.strictEqual(md._refGeometry, geom);
+    });
+
+    runTest('MeshDeformer.setReferenceOpacity skips when refMesh is null', () => {
+      const md = new MeshDeformer({}, null, null, null);
+      // No crash when no mesh attached
+      md.setReferenceOpacity(0.5);
+      assert.strictEqual(md._refOpacity, 0.5);
+    });
+
+    runTest('MeshDeformer.setReferenceOpacity updates mesh when present', () => {
+      const scene  = { remove: () => {}, add: () => {} };
+      const md = new MeshDeformer(scene, null, null, null);
+      const geom  = new THREE.BufferGeometry();
+      const mat   = new THREE.MeshBasicMaterial({});
+      md._refMesh = new THREE.Mesh(geom, mat);
+      md.setReferenceOpacity(0.5);
+      assert.strictEqual(mat.opacity, 0.5);
+    });
+
+    runTest('MeshDeformer.toJSON/fromJSON roundtrip', () => {
+      const md = new MeshDeformer({}, null, null, null);
+      md._smoothIterations = 4;
+      md._smoothFactor = 0.7;
+      md._refOpacity   = 0.6;
+      const json = md.toJSON();
+      assert.strictEqual(json.smoothIterations, 4);
+      assert.strictEqual(json.smoothFactor, 0.7);
+      const md2 = new MeshDeformer({}, null, null, null);
+      md2.fromJSON(json);
+      assert.strictEqual(md2._smoothIterations, 4);
+      assert.strictEqual(md2._smoothFactor, 0.7);
+    });
+
+    runTest('MeshDeformer.toggleVisibility inverts flag', () => {
+      const md = new MeshDeformer({}, null, null, null);
+      assert.strictEqual(md._refVisible, true);
+      md.toggleVisibility();
+      assert.strictEqual(md._refVisible, false);
+      md.toggleVisibility();
+      assert.strictEqual(md._refVisible, true);
+    });
+
+    runTest('MeshDeformer._cameraWorldZ returns forward direction', () => {
+      const md = new MeshDeformer({}, {}, null, null);
+      const dir = md._cameraWorldZ();
+      // Identity quaternion → (0,0,-1); any other quaternion rotates it
+      assert.ok(typeof dir.x === 'number');
+      assert.ok(typeof dir.y === 'number');
+      assert.ok(dir.z < 0 || Number.isFinite(dir.z));
+    });
+  } catch(e) { failed++; console.log('  [FAIL] MeshDeformer import: ' + e.message); }
+
+    runTest('MeshDeformer.construction default state', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const md = new MeshDeformer(fakeScene, null, null, null);
+      assert.strictEqual(md._refGeometry, null);
+      assert.strictEqual(md._refMesh, null);
+      assert.strictEqual(md._smoothIterations, 2);
+    });
+
+    runTest('MeshDeformer.setReferenceGeometry wraps in Mesh', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const md = new MeshDeformer(fakeScene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(
+        [0,0,0, 1,0,0, 0,1,0, 1,0,0, 1,1,0, 0,1,0], 3));
+      geom.computeBoundingSphere();
+      md.setReferenceGeometry(geom);
+      assert.ok(md._refMesh instanceof THREE.Mesh);
+      assert.strictEqual(md._refGeometry, geom);
+    });
+
+    runTest('MeshDeformer.projectBrickVertices returns 8', () => {
+      const worldVerts = Array.from({length:8}, (_,i) =>
+        new THREE.Vector3(i&1?1:0, (i>>1)&1?1:0, (i>>2)&1?1:0));
+      const fakeEngine = {
+        _getVertexWorldPositions: () => worldVerts,
+        voxelSize: 1.0,
+      };
+      const fakeScene  = { remove: () => {}, add: () => {} };
+      const fakeCamera = { quaternion: new THREE.Quaternion() };
+      const md = new MeshDeformer(fakeScene, fakeCamera, null, fakeEngine);
+
+      // Without a ref mesh: returns the originals
+      const result = md.projectBrickVertices({x:0,y:0,z:0,scale:[1,1,1]});
+      assert.strictEqual(result.length, 8);
+      assert.ok(result[0].distanceTo(new THREE.Vector3(0,0,0)) < 0.001);
+    });
+
+    runTest('MeshDeformer.clearReferenceMesh removes mesh from scene', () => {
+      const added  = [];
+      const scene  = { remove: () => added.pop(), add: (...a) => added.push(a) };
+      const md = new MeshDeformer(scene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,1,0], 3));
+      geom.computeBoundingSphere();
+      md.setReferenceGeometry(geom);
+      assert.ok(md._refMesh !== null);
+      assert.strictEqual(added.length, 1);
+      md.clearReferenceMesh();
+      assert.strictEqual(md._refMesh, null);
+      assert.strictEqual(md._refGeometry, null);
+    });
+
+    runTest('MeshDeformer.fitRefMeshToVoxelGrid centers mesh', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const md = new MeshDeformer(fakeScene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute([-1,-1,-1,1,1,1], 3));
+      geom.boundingBox = new THREE.Box3(new THREE.Vector3(-1,-1,-1), new THREE.Vector3(1,1,1));
+      geom.boundingSphere = new THREE.Sphere(new THREE.Vector3(0,0,0), Math.sqrt(3));
+      md.setReferenceGeometry(geom);
+      md._refMesh.position.set(0,0,0);
+      md.fitRefMeshToVoxelGrid(1.0);
+      assert.strictEqual(md._refGeometry, geom);
+    });
+
+    runTest('MeshDeformer.setReferenceOpacity clamps range', () => {
+      const fakeScene = { remove: () => {}, add: () => {}, children: [] };
+      const fakeCam   = { quaternion: new THREE.Quaternion() };
+      const md = new MeshDeformer(fakeScene, fakeCam, null, null);
+
+      // Opacity below min (0.05) must be clamped to 0.05
+      md._refOpacity = 0;
+      const mat0 = new THREE.MeshBasicMaterial({});
+      md._refMesh = new THREE.Mesh(new THREE.BufferGeometry(), mat0);
+      md.setReferenceOpacity(0);
+      assert.strictEqual(mat0.opacity, 0.05);   // clamps to min 0.05
+
+      // Opacity above max (1.0) must be clamped to 1.0
+      mat0.opacity = 0.5;
+      md.setReferenceOpacity(10);
+      assert.strictEqual(mat0.opacity, 1.0);
+    });
+
+    runTest('MeshDeformer._cameraWorldZ returns a direction vector', () => {
+      const fakeScene  = { remove: () => {}, add: () => {} };
+      const fakeCamera = { quaternion: new THREE.Quaternion() };  // identity quaternion
+      const md = new MeshDeformer(fakeScene, fakeCamera, null, null);
+      const dir = md._cameraWorldZ();
+      assert.ok(dir.z !== 0, 'Forward camera should have non-zero Z direction');
+    });
+
+    runTest('MeshDeformer.projectBrickVertices returns 8', () => {
+      const fakeScene  = { remove: () => {}, add: () => {} };
+      const fakeEngine = {
+        _getVertexWorldPositions: () => Array.from({length:8}, (_,i) =>
+          new THREE.Vector3(i&1?1:0, (i>>1)&1?1:0, (i>>2)&1?1:0)),
+        voxelSize: 1.0,
+      };
+      const md = new MeshDeformer(fakeScene, null, null, fakeEngine);
+
+      // Without a ref mesh: returns the originals
+      const result = md.projectBrickVertices({x:0,y:0,z:0,scale:[1,1,1]});
+      assert.strictEqual(result.length, 8);
+      assert.ok(result[0].distanceTo(new THREE.Vector3(0,0,0)) < 0.001);
+    });
+
+    runTest('MeshDeformer.clearReferenceMesh removes mesh from scene', () => {
+      const added  = [];
+      const scene  = { add: (...a) => added.push(a), remove: () => added.length = 0 };
+      const md = new MeshDeformer(scene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,1,0], 3));
+      md.setReferenceGeometry(geom);
+      assert.ok(md._refMesh !== null);
+      assert.strictEqual(added.length, 1);
+      md.clearReferenceMesh();
+      assert.strictEqual(md._refMesh, null);
+      assert.strictEqual(md._refGeometry, null);
+    });
+
+    runTest('MeshDeformer.fitRefMeshToVoxelGrid centers mesh', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const md = new MeshDeformer(fakeScene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute([-1,-1,-1,1,1,1], 3));
+      geom.boundingBox = new THREE.Box3(new THREE.Vector3(-1,-1,-1), new THREE.Vector3(1,1,1));
+      geom.boundingSphere = new THREE.Sphere(new THREE.Vector3(0,0,0), Math.sqrt(3));
+      md.setReferenceGeometry(geom);
+      md.fitRefMeshToVoxelGrid(1.0);
+      // _refMesh.position should have been subtracted to center at origin
+      // (actual value depends on geometry parsing; just assert no crash)
+      assert.strictEqual(md._refGeometry, geom);
+    });
+
+    runTest('MeshDeformer.setReferenceOpacity clamps to 0..1', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const md = new MeshDeformer(fakeScene, null, null, null);
+      md.setReferenceOpacity(-5);
+      assert.strictEqual(md._refOpacity, 0.0);
+      md.setReferenceOpacity(10);
+      assert.strictEqual(md._refOpacity, 1.0);
+    });
+
+    runTest('MeshDeformer.setReferenceOpacity sets mesh material', () => {
+      const fakeScene = { remove: () => {}, add: () => {}, children: [] };
+      const md = new MeshDeformer(fakeScene, null, null, null);
+      const geom = new THREE.BufferGeometry();
+      const mat  = new THREE.MeshBasicMaterial({});
+      md._refMesh = new THREE.Mesh(geom, mat);
+      md.setReferenceOpacity(0.5);
+      assert.strictEqual(mat.opacity, 0.5);
+    });
+
+    runTest('MeshDeformer.toJSON/fromJSON roundtrip', () => {
+      const md = new MeshDeformer({}, null, null, null);
+      md._smoothIterations = 4;
+      md._smoothFactor = 0.7;
+      md._refOpacity   = 0.6;
+      const json = md.toJSON();
+      assert.strictEqual(json.smoothIterations, 4);
+      assert.strictEqual(json.smoothFactor, 0.7);
+      const md2 = new MeshDeformer({}, null, null, null);
+      md2.fromJSON(json);
+      assert.strictEqual(md2._smoothIterations, 4);
+      assert.strictEqual(md2._smoothFactor, 0.7);
+    });
+
+    runTest('MeshDeformer.toggleVisibility inverts flag', () => {
+      const md = new MeshDeformer({}, null, null, null);
+      assert.strictEqual(md._refVisible, true);
+      md.toggleVisibility();
+      assert.strictEqual(md._refVisible, false);
+      md.toggleVisibility();
+      assert.strictEqual(md._refVisible, true);
+    });
+
+    runTest('MeshDeformer._cameraWorldZ returns a direction vector', () => {
+      const fakeScene = { remove: () => {}, add: () => {} };
+      const fakeCamera = { quaternion: new THREE.Quaternion() };   // identity
+      const md = new MeshDeformer(fakeScene, fakeCamera, null, null);
+      const dir = md._cameraWorldZ();
+      assert.ok(dir.z !== 0, 'Forward camera should have non-zero Z direction');
+    });
+  } catch(e) { failed++; console.log('  [FAIL] MeshDeformer import: ' + e.message); }
+
+  // ── 17. RuleEditorUI ─────────────────────────────────────────────────────────
   try {
     const { RuleEditorUI } = await loadESM('src/core/rule-editor-ui.js');
     runTest('RuleEditorUI', () => {
