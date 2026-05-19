@@ -113,7 +113,23 @@ export class VoxelEngine {
             const scaleZ = parseFloat(document.getElementById('scale-z').value) || 1.0;
             self.scaleSelectedVoxel(scaleX, scaleY, scaleZ);
         });
-        // Update scale inputs when voxel is selected
+        // Apply vertex edit (confirm button)
+        document.getElementById('btn-vertex-apply').addEventListener('click', function() {
+            if (!self.vertexEditTool || !self.vertexEditTool.selectedVoxel) {
+                self._notify('Seleziona un brick per la modifica vertici', 'warn');
+                return;
+            }
+            var v = self.vertexEditTool.selectedVoxel;
+            var d = self.getVoxelAt(v.x, v.y, v.z);
+            if (d && d.scale) {
+                document.getElementById('vertex-size-label').textContent =
+                    'W: ' + d.scale[0].toFixed(1) + ' | H: ' +
+                    d.scale[1].toFixed(1) + ' | D: ' +
+                    d.scale[2].toFixed(1);
+            }
+            self._notify('Modifica vertici confermata', 'success');
+        });
+        // Update scale inputs when voxel is selected (also sync vertex-edit panel)
         window.addEventListener('voxel-selected', function(e) {
             const voxel = e.detail;
             if (voxel) {
@@ -121,8 +137,21 @@ export class VoxelEngine {
                 document.getElementById('scale-y').value = voxel.scale ? voxel.scale[1] : 1;
                 document.getElementById('scale-z').value = voxel.scale ? voxel.scale[2] : 1;
                 document.getElementById('scale-panel').style.display = 'block';
+                // Sync vertex-edit panel label when in vertexEdit mode
+                if (self.activeTool === 'vertexEdit' && self.vertexEditTool && self.vertexEditTool.selectedVoxel) {
+                    var sv = self.vertexEditTool.selectedVoxel;
+                    var sd = self.getVoxelAt(sv.x, sv.y, sv.z);
+                    if (sd && sd.scale) {
+                        var lbl = document.getElementById('vertex-size-label');
+                        if (lbl) lbl.textContent =
+                            'W: ' + sd.scale[0].toFixed(1) + ' | H: ' +
+                            sd.scale[1].toFixed(1) + ' | D: ' +
+                            sd.scale[2].toFixed(1);
+                    }
+                }
             } else {
                 document.getElementById('scale-panel').style.display = 'none';
+                document.getElementById('vertex-edit-panel').style.display = 'none';
             }
         });
     }

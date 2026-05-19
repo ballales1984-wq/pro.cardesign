@@ -62,6 +62,7 @@ export class UI {
         document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
         document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
         document.getElementById('tool-sculpt').addEventListener('click', function() { self.voxelEngine.setTool('sculpt'); });
+        document.getElementById('tool-vertex-edit').addEventListener('click', function() { self.voxelEngine.setTool('vertexEdit'); });
 
         document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
         document.getElementById('btn-import').addEventListener('click', function() { self._openImportModal(); });
@@ -90,10 +91,13 @@ export class UI {
                 : 'Strumento: ' + (toolNames[self.voxelEngine.activeTool] || self.voxelEngine.activeTool);
         });
 
-        var toolNames = { add: 'Aggiungi (A)', remove: 'Rimuovi (R)', select: 'Seleziona (V)', fill: 'Riempimento (F)', scaling: 'Scala (S)', sculpt: 'Scultura (D)' };
+        var toolNames = { add: 'Aggiungi (A)', remove: 'Rimuovi (R)', select: 'Seleziona (V)', fill: 'Riempimento (F)', scaling: 'Scala (S)', sculpt: 'Scultura (D)', vertexEdit: 'Modifica Vertici (E)' };
         window.addEventListener('tool-changed', function(e) {
             var hint = toolNames[e.detail] || e.detail;
             document.getElementById('tool-hint').textContent = 'Strumento: ' + hint;
+            // Show/hide vertex-edit panel
+            var vePanel = document.getElementById('vertex-edit-panel');
+            if (vePanel) { vePanel.hidden = (e.detail !== 'vertexEdit'); }
         });
     }
 
