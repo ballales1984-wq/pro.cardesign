@@ -215,9 +215,9 @@ export class UI {
           btn.addEventListener('click', function() {
             const ruleName = this.getAttribute('data-rule');
             // Read offset from inputs (with fallback to 0)
-            const ox = parseInt(document.getElementById('rule-offset-x')?.value) || 0;
-            const oy = parseInt(document.getElementById('rule-offset-y')?.value) || 0;
-            const oz = parseInt(document.getElementById('rule-offset-z')?.value) || 0;
+            const ox = parseInt(document.getElementById('rule-offset-x')?.value, 10) || 0;
+            const oy = parseInt(document.getElementById('rule-offset-y')?.value, 10) || 0;
+            const oz = parseInt(document.getElementById('rule-offset-z')?.value, 10) || 0;
             try {
               const voxels = self.proceduralEngine.build(ruleName, {
                 position: { x: ox, y: oy, z: oz },

@@ -1,7 +1,7 @@
 /**
  * VoxelEngine - Manages the 3D grid, rendering and voxel interaction
  *
- * Uses InstancedMesh for material — a single draw call per material
+ * Uses InstancedMesh for material ÔÇö a single draw call per material
  * instead of one per voxel. Improvement: ~10-50x with large scenes.
  */
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
@@ -77,57 +77,18 @@ export class VoxelEngine {
          
          // Initialize ScalingTool
          this.scalingTool = new ScalingTool(this, this.scene, this.camera, this.renderer);
-    }
-
-    _setupEvents() {
-        const canvas = this.renderer.domElement;
-        canvas.addEventListener('pointermove', (e) => this._onPointerMove(e));
-        canvas.addEventListener('click', (e) => {
-            this._onPointerClick(e);
-            // Prevent OrbitControls from handling this click
-            e.stopPropagation();
-        });
-        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-        window.addEventListener('keydown', (e) => this._onKeyDown(e));
-    }
-
-    _setupScalePanelListeners() {
-        const self = this;
-        // Apply scale button
-        document.getElementById('apply-scale').addEventListener('click', function() {
-            if (!self.selectedVoxel) {
-                self._notify('Select a voxel before applying scale', 'warn');
-                return;
-            }
-            const scaleX = parseFloat(document.getElementById('scale-x').value) || 1.0;
-            const scaleY = parseFloat(document.getElementById('scale-y').value) || 1.0;
-            const scaleZ = parseFloat(document.getElementById('scale-z').value) || 1.0;
-            self.scaleSelectedVoxel(scaleX, scaleY, scaleZ);
-        });
-        // Update scale inputs when voxel is selected
-        window.addEventListener('voxel-selected', function(e) {
-            const voxel = e.detail;
-            if (voxel) {
-                document.getElementById('scale-x').value = voxel.scale ? voxel.scale[0] : 1;
-                document.getElementById('scale-y').value = voxel.scale ? voxel.scale[1] : 1;
-                document.getElementById('scale-z').value = voxel.scale ? voxel.scale[2] : 1;
-                document.getElementById('scale-panel').style.display = 'block';
-            } else {
-                document.getElementById('scale-panel').style.display = 'none';
-            }
-        });
-    }
-
-    // ── Chunk management ────────────────────────────────────────
-    _getChunkKey(pos) {
-        const chunkSize = this.chunkSize;
-        const chunkX = Math.floor(pos.x / chunkSize);
-        const chunkY = Math.floor(pos.y / chunkSize);
-        const chunkZ = Math.floor(pos.z / chunkSize);
-        return `${chunkX},${chunkY},${chunkZ}`;
-    }
-
-    _getLocalKey(pos) {
+       }
+   
+       // ÔöÇÔöÇ Chunk management ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+       _getChunkKey(pos) {
+         const chunkSize = this.chunkSize;
+         const chunkX = Math.floor(pos.x / chunkSize);
+         const chunkY = Math.floor(pos.y / chunkSize);
+         const chunkZ = Math.floor(pos.z / chunkSize);
+         return `${chunkX},${chunkY},${chunkZ}`;
+       }
+   
+       _getLocalKey(pos) {
          const chunkSize = this.chunkSize;
          // Using modulo that works for negative numbers
          const lx = ((pos.x % chunkSize) + chunkSize) % chunkSize;
@@ -146,7 +107,7 @@ export class VoxelEngine {
          return chunk;
        }
    
-     // ── InstancedMesh management ──────────────────────────────────
+     // ÔöÇÔöÇ InstancedMesh management ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
    
        _getInstancedMesh(materialName) {
          let mesh = this.instancedMeshes.get(materialName);
@@ -220,7 +181,7 @@ export class VoxelEngine {
        }
       }
    
-       // ── Rendering ────────────────────────────────────────────────
+       // ÔöÇÔöÇ Rendering ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
    
        _createAxisLabels() {
          const makeLabel = (text, color, pos) => {
@@ -384,7 +345,7 @@ _setupEvents() {
          );
        }
    
-       // ── Raycast with InstancedMesh and ground plane support ───────────────────────
+       // ÔöÇÔöÇ Raycast with InstancedMesh and ground plane support ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
    
        _raycast(event) {
          const canvas = this.renderer.domElement;
@@ -537,7 +498,7 @@ _setupEvents() {
            this.redo();
          }
        }
-        // ── Voxel operations ─────────────────────────────────────────
+        // ÔöÇÔöÇ Voxel operations ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
         addVoxel(pos, materialName, moduleId) {
           if (moduleId === undefined) moduleId = null;
@@ -557,7 +518,7 @@ _setupEvents() {
             return this._addVoxelInternal(pos, materialName, moduleId);
           }
 
-        _addVoxelInternal(pos, materialName, moduleId) {
+_addVoxelInternal(pos, materialName, moduleId) {
            const material = this.materialDB.get(materialName);
            if (!material) return false;
 
@@ -594,7 +555,7 @@ const chunkKey = this._getChunkKey(pos);
           return voxelData;
         }
 
-        removeVoxel(x, y, z) {
+removeVoxel(x, y, z) {
             const chunkKey = this._getChunkKey({ x, y, z });
             const chunk = this.chunks.get(chunkKey);
             if (!chunk) return false;
@@ -607,49 +568,49 @@ const chunkKey = this._getChunkKey(pos);
             return true;
          }
    
-        fillLayer(y, materialName, moduleId, solid = false) {
-            if (moduleId === undefined) moduleId = null;
-            let added = 0;
-            const radius = 5;
-            for (let x = -radius; x <= radius; x++) {
-              for (let z = -radius; z <= radius; z++) {
-                if (solid || x === -radius || x === radius || z === -radius || z === radius) {
-                  if (this.addVoxel({ x, y, z }, materialName, moduleId)) added++;
-                }
-              }
-            }
-            return added;
-          }
+       fillLayer(y, materialName, moduleId, solid = false) {
+         if (moduleId === undefined) moduleId = null;
+         let added = 0;
+         const radius = 5;
+         for (let x = -radius; x <= radius; x++) {
+           for (let z = -radius; z <= radius; z++) {
+             if (solid || x === -radius || x === radius || z === -radius || z === radius) {
+               if (this.addVoxel({ x, y, z }, materialName, moduleId)) added++;
+             }
+           }
+         }
+         return added;
+       }
    
-        selectVoxel(x, y, z) {
-            this.selectedVoxel = { x, y, z };
-            const voxel = this.getVoxelAt(x, y, z);
-            if (voxel) {
-                this.highlight.position.copy(this._worldPos(voxel));
-                this.highlight.visible = true;
-            }
-            window.dispatchEvent(new CustomEvent('voxel-selected', { detail: voxel || null }));
-            return voxel;
-        }
-    
-        getVoxelAt(x, y, z) {
-            const chunkKey = this._getChunkKey({ x, y, z });
+   selectVoxel(x, y, z) {
+     this.selectedVoxel = { x, y, z };
+     const voxel = this.getVoxelAt(x, y, z);
+     if (voxel) {
+       this.highlight.position.copy(this._worldPos(voxel));
+       this.highlight.visible = true;
+     }
+     window.dispatchEvent(new CustomEvent('voxel-selected', { detail: voxel || null }));
+     return voxel;
+   }
+   
+getVoxelAt(x, y, z) {
+           const chunkKey = this._getChunkKey({ x, y, z });
            const chunk = this.chunks.get(chunkKey);
            if (!chunk) return null;
            return chunk.getVoxel(x, y, z);
          }
    
-        getVoxelsInModule(moduleId) {
-            const result = [];
-            for (const chunk of this.chunks.values()) {
-                for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
-                    if (voxelData.module === moduleId) {
-                        result.push(voxelData);
-                    }
-                }
-            }
-            return result;
-        }
+    getVoxelsInModule(moduleId) {
+      const result = [];
+      for (const chunk of this.chunks.values()) {
+        for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
+          if (voxelData.module === moduleId) {
+            result.push(voxelData);
+          }
+}
+      }
+      return result;
+    }
 
     *voxelsIterator() {
       for (const chunk of this.chunks.values()) {
@@ -659,39 +620,39 @@ const chunkKey = this._getChunkKey(pos);
       }
     }
 
-       // ── Internal remove (without history push) ───────────────────
+     // ÔöÇÔöÇ Internal remove (without history push) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
-        _removeVoxelSilently(x, y, z) {
-            const chunkKey = this._getChunkKey({ x, y, z });
-            const chunk = this.chunks.get(chunkKey);
-            if (!chunk) return;
-            const voxel = chunk.getVoxel(x, y, z);
-            if (!voxel) return;
+     _removeVoxelSilently(x, y, z) {
+       const chunkKey = this._getChunkKey({ x, y, z });
+       const chunk = this.chunks.get(chunkKey);
+       if (!chunk) return;
+       const voxel = chunk.getVoxel(x, y, z);
+       if (!voxel) return;
 
-            const worldKey = this._gridKey({ x, y, z });
-            const matName = voxel.material;
-            const instMap = this.keyToInstance.get(matName);
-            const idxMap = this.instanceToKey.get(matName);
-            const mesh = this.instancedMeshes.get(matName);
+      const worldKey = this._gridKey({ x, y, z });
+      const matName = voxel.material;
+      const instMap = this.keyToInstance.get(matName);
+      const idxMap = this.instanceToKey.get(matName);
+      const mesh = this.instancedMeshes.get(matName);
 
-            if (instMap && idxMap && mesh) {
-              const instanceId = instMap.get(worldKey);
-              if (instanceId !== undefined) {
-                const hiddenMatrix = new THREE.Matrix4();
-                hiddenMatrix.makeTranslation(0, -999999, 0); // Move far away with scale 1 to prevent NaN normals
-                mesh.setMatrixAt(instanceId, hiddenMatrix);
-                mesh.instanceMatrix.needsUpdate = true;
+      if (instMap && idxMap && mesh) {
+        const instanceId = instMap.get(worldKey);
+        if (instanceId !== undefined) {
+          const hiddenMatrix = new THREE.Matrix4();
+          hiddenMatrix.makeTranslation(0, -999999, 0); // Move far away with scale 1 to prevent NaN normals
+          mesh.setMatrixAt(instanceId, hiddenMatrix);
+          mesh.instanceMatrix.needsUpdate = true;
 
           instMap.delete(worldKey);
           idxMap.delete(worldKey);
           this.freeIndices.get(matName)?.push(instanceId);
-              }
-            }
-            chunk.removeVoxel(x, y, z);
-           // Optional: if chunk becomes empty, we could remove it to save memory, but not required.
         }
+      }
+      chunk.removeVoxel(x, y, z);
+     // Optional: if chunk becomes empty, we could remove it to save memory, but not required.
+   }
    
-       // ── Undo / Redo ──────────────────────────────────────────────
+       // ÔöÇÔöÇ Undo / Redo ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
    
         clearAll() {
           for (const [matName, mesh] of this.instancedMeshes) {
@@ -787,7 +748,7 @@ const chunkKey = this._getChunkKey(pos);
          this._redoStack = [];
        }
    
-       // ── Persistence ──────────────────────────────────────────────
+       // ÔöÇÔöÇ Persistence ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
    
     toJSON() {
       const voxels = [];
@@ -890,7 +851,7 @@ const chunkKey = this._getChunkKey(pos);
       window.dispatchEvent(new CustomEvent('voxels-updated'));
     }
 
-    // ── Notification helper (implementation lives in ui.js) ──────────────
+    // ÔöÇÔöÇ Notification helper (implementation lives in ui.js) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     // VoxelEngine calls this; ui.js may override via prototype during init.
      _notify(message, level = 'info') {
          if (typeof window !== 'undefined' && window.dispatchEvent) {
@@ -906,7 +867,7 @@ const chunkKey = this._getChunkKey(pos);
         }
       }
 
-    // ── Voxel mutation helpers (called by BrickAdapter) ────────────────────────
+    // ÔöÇÔöÇ Voxel mutation helpers (called by BrickAdapter) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     /**
      * Cambia materiale a un voxel esistente alle coordinate date.
      * @returns {boolean} true se voxel esisteva e materiale aggiornato
@@ -919,33 +880,33 @@ const chunkKey = this._getChunkKey(pos);
       return true;
     }
 
-        /**
-        * Cambia modulo di appartenenza a un voxel esistente.
-        * @returns {boolean} true se voxel esisteva e modulo aggiornato
-        */
-        setVoxelModule(x, y, z, module) {
-            const v = this.getVoxelAt(x, y, z);
-            if (!v) return false;
-            v.module = module;
-            this._onVoxelChanged();
-            return true;
-        }
+    /**
+     * Cambia modulo di appartenenza a un voxel esistente.
+     * @returns {boolean} true se voxel esisteva e modulo aggiornato
+     */
+setVoxelModule(x, y, z, module) {
+      const v = this.getVoxelAt(x, y, z);
+      if (!v) return false;
+      v.module = module;
+      this._onVoxelChanged();
+      return true;
+    }
 
-    // ── Optimize: clean up stale references ───────────────────────
+    // ÔöÇÔöÇ Optimize: clean up stale references ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     /**
      * Rimuove riferimenti stale da keyToInstance
      */
-        optimize() {
-            // Clean keyToInstance from stale references
-            for (const [mat, instMap] of this.keyToInstance) {
-              for (const key of Array.from(instMap.keys())) {
-                const [x, y, z] = key.split(',').map(Number);
-                const voxel = this.getVoxelAt(x, y, z);
-                if (!voxel) {
-                  instMap.delete(key);
-                }
-              }
-            }
-            this._onVoxelChanged();
+    optimize() {
+      // Clean keyToInstance from stale references
+      for (const [mat, instMap] of this.keyToInstance) {
+        for (const key of Array.from(instMap.keys())) {
+          const [x, y, z] = key.split(',').map(Number);
+          const voxel = this.getVoxelAt(x, y, z);
+          if (!voxel) {
+            instMap.delete(key);
           }
+        }
       }
+      this._onVoxelChanged();
+    }
+}
