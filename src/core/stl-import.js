@@ -3,8 +3,7 @@
  */
 
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+import * as THREE from 'three';
 
 export class STLImporter {
   constructor(scene, camera, renderer) {

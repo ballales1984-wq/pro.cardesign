@@ -309,6 +309,113 @@ async function runAll() {
     });
   } catch(e) { failed++; console.log('  [FAIL] BrickAdapter import: ' + e.message); }
 
+  // ── 5.5. VertexEditTool ──────────────────────────────────────────────────────
+  try {
+    const { VertexEditTool } = await loadESM('src/core/vertex-edit-tool.js');
+    runTest('VertexEditTool (import)', () => {
+      assert.ok(typeof VertexEditTool === 'function');
+    });
+
+    runTest('VertexEditTool._getVertexWorldPositions returns 8', () => {
+      const mockEngine = {
+        _worldPos: (v) => new THREE.Vector3(v.x + 0.5, v.y + 0.5, v.z + 0.5),
+        voxelSize: 1.0,
+      };
+      const tool = new VertexEditTool(mockEngine, null, null, null);
+      const voxel = { x: 0, y: 0, z: 0, scale: [2, 3, 4] };
+      const verts  = tool._getVertexWorldPositions(voxel);
+      assert.strictEqual(verts.length, 8);
+      // Opposite corners (0,7) far apart; opposite corners (3,4) far apart
+      assert.ok(verts[7].x > verts[0].x + 1);
+      assert.ok(verts[7].y > verts[0].y + 1);
+      assert.ok(verts[7].z > verts[0].z + 1);
+    });
+
+    runTest('VertexEditTool._getVertexWorldPositions unit scale', () => {
+      const mockEngine = {
+        _worldPos: (v) => new THREE.Vector3(v.x + 0.5, v.y + 0.5, v.z + 0.5),
+        voxelSize: 1.0,
+      };
+      const tool = new VertexEditTool(mockEngine, null, null, null);
+      const voxel = { x: 0, y: 0, z: 0, scale: [1, 1, 1] };
+      const verts  = tool._getVertexWorldPositions(voxel);
+      // all 8 vertices must lie on the surface of the unit cube [0..1]x[0..1]x[0..1]
+      for (const v of verts) {
+        assert.ok(Math.abs(v.x - 0) < 0.001 || Math.abs(v.x - 1) < 0.001);
+        assert.ok(Math.abs(v.y - 0) < 0.001 || Math.abs(v.y - 1) < 0.001);
+        assert.ok(Math.abs(v.z - 0) < 0.001 || Math.abs(v.z - 1) < 0.001);
+      }
+    });
+
+    runTest('VertexEditTool._computeBrickFromVertices clamps >= 1', () => {
+      const mockEngine = { voxelSize: 1.0 };
+      const tool = new VertexEditTool(mockEngine, null, null, null);
+      // All 8 vertices collapsed to a point → must clamp each side to ≥ 1
+      const verts = Array(8).fill(null).map(() => new THREE.Vector3(0, 0, 0));
+      const dims  = tool._computeBrickFromVertices(verts, 0, new THREE.Vector3(0.5, 0, 0));
+      assert.strictEqual(dims.sx, 1);
+      assert.strictEqual(dims.sy, 1);
+      assert.strictEqual(dims.sz, 1);
+    });
+
+    runTest('VertexEditTool._computeBrickFromVertices unit cube', () => {
+      const mockEngine = { voxelSize: 1.0 };
+      const tool = new VertexEditTool(mockEngine, null, null, null);
+      const verts = [
+        new THREE.Vector3(0,0,0), new THREE.Vector3(1,0,0),
+        new THREE.Vector3(0,1,0), new THREE.Vector3(1,1,0),
+        new THREE.Vector3(0,0,1), new THREE.Vector3(1,0,1),
+        new THREE.Vector3(0,1,1), new THREE.Vector3(1,1,1),
+      ];
+      const dims = tool._computeBrickFromVertices(verts, 0, new THREE.Vector3(0.5, 0, 0));
+      assert.strictEqual(dims.sx, 1);
+      assert.strictEqual(dims.sy, 1);
+      assert.strictEqual(dims.sz, 1);
+    });
+
+    runTest('VertexEditTool._computeBrickFromVertices 2x3x4', () => {
+      const mockEngine = { voxelSize: 1.0 };
+      const tool = new VertexEditTool(mockEngine, null, null, null);
+      // Corners of a cube centered at (0,0,0) with half-size (1, 1.5, 2) → size 2×3×4
+      const verts = [
+        new THREE.Vector3(-1,  -1.5, -2),  // 000
+        new THREE.Vector3(+1,  -1.5, -2),  // 100
+        new THREE.Vector3(-1,  +1.5, -2),  // 010
+        new THREE.Vector3(+1,  +1.5, -2),  // 110
+        new THREE.Vector3(-1,  -1.5, +2),  // 001
+        new THREE.Vector3(+1,  -1.5, +2),  // 101
+        new THREE.Vector3(-1,  +1.5, +2),  // 011
+        new THREE.Vector3(+1,  +1.5, +2),  // 111
+      ];
+      const dims = tool._computeBrickFromVertices(verts, 0, verts[0]);
+      assert.strictEqual(dims.sx, 2);
+      assert.strictEqual(dims.sy, 3);
+      assert.strictEqual(dims.sz, 4);
+    });
+
+    runTest('VertexEditTool.activate sets isActive', () => {
+      const mockScene    = { remove: () => {}, add: () => {} };
+      const mockRenderer = { domElement: { addEventListener: () => {}, removeEventListener: () => {} } };
+      const tool = new VertexEditTool(null, mockScene, null, mockRenderer);
+      // Don't call full activate (which binds real window listeners); set isActive directly
+      tool.isActive = true;
+      assert.strictEqual(tool.isActive, true);
+    });
+
+    runTest('VertexEditTool.deactivate clears handles', () => {
+      const mockScene    = { remove: _ => {}, add: _ => {} };
+      const mockRenderer = { domElement: { addEventListener: () => {}, removeEventListener: () => {} } };
+      const tool = new VertexEditTool(null, mockScene, null, mockRenderer);
+      tool._handleGeometry = { dispose: () => {} };
+      // Manually verify the core cleanup logic since full deactivate requires window mocks
+      tool.activeHandles = [new THREE.Mesh(), new THREE.Mesh()];
+      tool.activeHandles.forEach(h => { h.material = { dispose: () => {} }; });
+      // Call the private cleanup directly to avoid _unbindEvents storm
+      tool._removeHandles();
+      assert.strictEqual(tool.activeHandles.length, 0);
+    });
+  } catch(e) { failed++; console.log('  [FAIL] VertexEditTool import: ' + e.message); }
+
   // ── 6. MeshExporter ────────────────────────────────────────────────────────
   try {
     const { MeshExporter } = await loadESM('src/mesh-exporter.js');

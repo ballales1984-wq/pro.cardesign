@@ -4,7 +4,7 @@
 
 ## Current Status
 
-**v0.5.0** — Enhanced STL Import with Voxel Conversion + Improved Camera Controls. Build: `npm run build` → **17 modules, 82.1 KB**.
+**v0.7.0** — Sculpt Tool + Vertex Edit Tool + Sculpt Tool UI Integration. Build: `npm run build` → **22 modules, 594.6 KB**.
 
 ## Features
 

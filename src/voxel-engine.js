@@ -5,10 +5,11 @@
  * instead of one per voxel. Improvement: ~10-50x with large scenes.
  */
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+import * as THREE from 'three';
 import { Chunk } from './core/chunk-system.js';
 import { ScalingTool } from './core/scaling-tool.js';
+import { SculptTool } from './core/sculpt-tool.js';
+import { VertexEditTool } from './core/vertex-edit-tool.js';
 
 export class VoxelEngine {
     constructor(scene, materialDB, moduleSystem, camera, renderer, controls) {
@@ -79,6 +80,12 @@ export class VoxelEngine {
          
          // Initialize ScalingTool
          this.scalingTool = new ScalingTool(this, this.scene, this.camera, this.renderer);
+         
+         // Initialize SculptTool
+         this.sculptTool = new SculptTool(this, this.scene, this.camera, this.renderer);
+         
+         // Initialize VertexEditTool
+         this.vertexEditTool = new VertexEditTool(this, this.scene, this.camera, this.renderer);
     }
 
     _setupEvents() {
@@ -490,10 +497,15 @@ _setupEvents() {
             const hit = this._raycast(event);
             if (!hit) return;
 
-            // In scaling mode, let the scaling tool handle click-selection
-            if (this.activeTool === 'scaling') {
-              return; // Scaling tool handles click directly
-            }
+             // In scaling mode, let the scaling tool handle click-selection
+             if (this.activeTool === 'scaling') {
+               return; // Scaling tool handles click directly
+             }
+
+             // In vertexEdit mode, let the vertexEdit tool handle click-selection
+             if (this.activeTool === 'vertexEdit') {
+               return; // VertexEdit tool handles click directly
+             }
     
             if (this.activeTool === 'add') {
               let pos;
@@ -561,8 +573,12 @@ _setupEvents() {
            this.setTool('add');
          } else if (key === 'r') {
            this.setTool('remove');
-         } else if (key === 'f') {
-           this.setTool('fill');
+          } else if (key === 'f') {
+            this.setTool('fill');
+          } else if (key === 'd') {
+            this.setTool('sculpt');
+          } else if (key === 'e') {
+            this.setTool('vertexEdit');
          } else if (event.ctrlKey && key === 'x') {
            this.clearAll();
          } else if (event.ctrlKey && key === 'z') {
@@ -749,26 +765,44 @@ const chunkKey = this._getChunkKey(pos);
           this._onVoxelChanged();
         }
    
-       setTool(tool) {
-         this.setCameraNavigationMode(false);
-         this.activeTool = tool;
-         
-         // Activate/deactivate scaling tool
-         if (this.scalingTool) {
-           if (tool === 'scaling') {
-             this.scalingTool.activate();
-           } else {
-             this.scalingTool.deactivate();
+        setTool(tool) {
+          this.setCameraNavigationMode(false);
+          this.activeTool = tool;
+          
+          // Activate/deactivate scaling tool
+          if (this.scalingTool) {
+            if (tool === 'scaling') {
+              this.scalingTool.activate();
+            } else {
+              this.scalingTool.deactivate();
+            }
+          }
+          
+          // Activate/deactivate sculpt tool
+          if (this.sculptTool) {
+            if (tool === 'sculpt') {
+              this.sculptTool.activate();
+            } else {
+              this.sculptTool.deactivate();
+            }
+          }
+          
+           // Activate/deactivate vertex edit tool
+           if (this.vertexEditTool) {
+             if (tool === 'vertexEdit') {
+               this.vertexEditTool.activate();
+             } else {
+               this.vertexEditTool.deactivate();
+             }
            }
-         }
-         
-         const btns = document.querySelectorAll('.tool');
-         for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-         const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling' };
-         const el = document.getElementById(btnMap[tool]);
-         if (el) el.classList.add('active');
-         window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));
-       }
+           
+           const btns = document.querySelectorAll('.tool');
+           for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+           const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit' };
+          const el = document.getElementById(btnMap[tool]);
+          if (el) el.classList.add('active');
+          window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));
+        }
 
        setCameraNavigationMode(enabled) {
          this.cameraNavigationMode = !!enabled;

@@ -3,8 +3,7 @@
  * Three.js-based voxel editor with physics & module system
  */
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelEngine } from './voxel-engine.js';
 import { MaterialSystem } from './material-system.js';

@@ -9,8 +9,7 @@
  */
 
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+import * as THREE from 'three';
 import { Brick } from './brick-system.js';
 
 export class BrickAdapter {

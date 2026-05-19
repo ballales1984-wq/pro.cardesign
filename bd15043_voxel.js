@@ -5,8 +5,7 @@
  * instead of one per voxel. Improvement: ~10-50x with large scenes.
  */
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+import * as THREE from 'three';
 import { Chunk } from './core/chunk-system.js';
 import { ScalingTool } from './core/scaling-tool.js';
 

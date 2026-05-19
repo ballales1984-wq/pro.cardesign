@@ -112,6 +112,41 @@
           Scala
         </button>
 
+        <!-- Tool: Sculpt -->
+        <button
+          id="tool-sculpt" class="tool"
+          type="button"
+          title="Scultura (D)"
+          aria-label="Strumento Scultura voxel, scorciatoia D"
+          aria-pressed="false">
+          <svg width="14" height="14" viewBox="0 0 16 16"
+               fill="none" stroke="currentColor"
+               stroke-width="1.4" stroke-linecap="round"
+               aria-hidden="true">
+            <path d="M8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0-2c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>
+          </svg>
+           Scultura
+        </button>
+
+        <!-- Tool: Vertex Edit -->
+        <button
+          id="tool-vertex-edit" class="tool"
+          type="button"
+          title="Modifica Vertici (E)"
+          aria-label="Strumento Modifica Vertici voxel, scorciatoia E"
+          aria-pressed="false">
+          <svg width="14" height="14" viewBox="0 0 18 18"
+               fill="currentColor" stroke="none"
+               aria-hidden="true">
+            <!-- Diamond at minZ corner -->
+            <polygon points="4,3 14,3 9,12"/>
+            <!-- Diamond at maxZ corner -->
+            <polygon points="4,6 14,6 9,15"
+                     fill="none" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+          Vertice
+        </button>
+
         <!-- Fill level input -->
         <div class="fill-input-wrap" title="Livello Y per Fill">
           <label for="fill-y-prompt" class="sr-only">Livello Y per riempimento</label>
@@ -158,10 +193,34 @@
           <button id="apply-scale" class="btn-primary">Applica Scala</button>
         </div>
       </div>
-    </div>
+     </div>
 
-    <!-- ═══════════════════════════════════════════════════
-         SIDEBAR
+     <!-- ═══════════════════════════════════════════════════
+          VERTEX EDIT PANEL  (shown by JS when vertexEdit tool active)
+     ═══════════════════════════════════════════════════════ -->
+     <div id="vertex-edit-panel" class="panel" hidden>
+       <div class="panel-header" role="button" aria-expanded="true">
+         🔧 Modifica Vertici
+         <span class="arrow" aria-hidden="true">▼</span>
+       </div>
+       <div class="panel-body">
+         <div class="hint" style="margin-bottom:8px;">
+           1. Seleziona un brick, poi clicca un vertice per trascinarlo.<br/>
+           Handle per vertice: 8 bordi dorati ai vertici del cubo.<br/>
+           Le modifiche sono applicate direttamente.
+         </div>
+         <div id="vertex-handle-info" style="font-family:monospace;font-size:12px;color:#00d2ff;">
+           <span id="vertex-corner-label">—</span><br/>
+           <span id="vertex-size-label">W: — | H: — | D: —</span>
+         </div>
+         <button id="btn-vertex-apply" class="btn-primary" style="width:100%;margin-top:6px;">
+           Conferma Modifiche
+         </button>
+       </div>
+     </div>
+
+     <!-- ═══════════════════════════════════════════════════
+          SIDEBAR
     ═══════════════════════════════════════════════════════ -->
     <aside id="sidebar" aria-label="Pannelli laterali">
 

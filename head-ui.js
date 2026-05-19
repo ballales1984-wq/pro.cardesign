@@ -5,6 +5,9 @@
 
 import { ComponentLibrary } from './core/component-library.js';
 import { ScalingTool } from './core/scaling-tool.js';
+import { StressAnalysis } from './core/stress-analysis.js';
+import { Aerodynamics } from './core/aerodynamics.js';
+import { STLImporter } from './core/stl-import.js';
 
 export class UI {
     constructor(opts) {
@@ -558,35 +561,33 @@ export class UI {
         '<div class="prop-row"><span class="prop-label">Dimensioni</span><span class="prop-value">' + dimsX + ' x ' + dimsY + ' x ' + dimsZ + '</span></div>';
     }
 
-    // ── Stress Analysis ──────────────────────────────────────────
-    try {
-      const { StressAnalysis } = await import('./core/stress-analysis.js');
-      const sa = new StressAnalysis(this.voxelEngine, this.materialDB);
-      sa.analyze(allVoxels);
-      const sf = sa.getSafetyFactor();
-      const crit = sa.getCriticalZones();
-      const maxS = crit.length > 0 ? crit[0].stress : 0;
-      html += '<hr style="border-color:var(--border);margin:8px 0;">' +
-        '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">🔬 Stress Strutturale:</div>' +
-        '<div class="prop-row"><span class="prop-label">Stress max</span><span class="prop-value" style="color:var(--orange);">' + (maxS / 1e6).toFixed(2) + ' MPa</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Zone critiche</span><span class="prop-value">' + crit.length + '</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Safety Factor</span><span class="prop-value" style="color:' + (sf >= 2 ? 'var(--accent)' : 'var(--orange)') + ';">' + sf.toFixed(2) + '</span></div>';
-    } catch(e) { /* modulo non disponibile */ }
+     // ── Stress Analysis ──────────────────────────────────────────
+     try {
+       const sa = new StressAnalysis(this.voxelEngine, this.materialDB);
+       sa.analyze(allVoxels);
+       const sf = sa.getSafetyFactor();
+       const crit = sa.getCriticalZones();
+       const maxS = crit.length > 0 ? crit[0].stress : 0;
+       html += '<hr style="border-color:var(--border);margin:8px 0;">' +
+         '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">🔬 Stress Strutturale:</div>' +
+         '<div class="prop-row"><span class="prop-label">Stress max</span><span class="prop-value" style="color:var(--orange);">' + (maxS / 1e6).toFixed(2) + ' MPa</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Zone critiche</span><span class="prop-value">' + crit.length + '</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Safety Factor</span><span class="prop-value" style="color:' + (sf >= 2 ? 'var(--accent)' : 'var(--orange)') + ';">' + sf.toFixed(2) + '</span></div>';
+     } catch(e) { /* modulo non disponibile */ }
 
-    // ── Aerodynamics ─────────────────────────────────────────────
-    try {
-      const { Aerodynamics } = await import('./core/aerodynamics.js');
-      const aero = new Aerodynamics(this.meshExporter);
-      const summary = aero.getSummary(allVoxels);
-      const drag10 = summary.estimatedDragAt10ms;
-      const drag30 = aero.calculateDrag(30, summary.estimatedFrontalArea).force;
-      html += '<hr style="border-color:var(--border);margin:8px 0;">' +
-        '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">💨 Aerodinamica (stima):</div>' +
-        '<div class="prop-row"><span class="prop-label">Area frontale est.</span><span class="prop-value">' + summary.estimatedFrontalArea.toFixed(2) + ' m²</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Drag a 10 m/s</span><span class="prop-value">' + drag10.toFixed(2) + ' N</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Drag a 30 m/s</span><span class="prop-value">' + drag30.toFixed(2) + ' N</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">0.30</span></div>';
-    } catch(e) { /* modulo non disponibile */ }
+     // ── Aerodynamics ─────────────────────────────────────────────
+     try {
+       const aero = new Aerodynamics(this.meshExporter);
+       const summary = aero.getSummary(allVoxels);
+       const drag10 = summary.estimatedDragAt10ms;
+       const drag30 = aero.calculateDrag(30, summary.estimatedFrontalArea).force;
+       html += '<hr style="border-color:var(--border);margin:8px 0;">' +
+         '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">💨 Aerodinamica (stima):</div>' +
+         '<div class="prop-row"><span class="prop-label">Area frontale est.</span><span class="prop-value">' + summary.estimatedFrontalArea.toFixed(2) + ' m²</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Drag a 10 m/s</span><span class="prop-value">' + drag10.toFixed(2) + ' N</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Drag a 30 m/s</span><span class="prop-value">' + drag30.toFixed(2) + ' N</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">0.30</span></div>';
+     } catch(e) { /* modulo non disponibile */ }
 
     physicsPanel.innerHTML = html;
     this._notify('Simulazione completata', 'success');
@@ -748,22 +749,19 @@ export class UI {
       input.click();
     }
 
-  async _runImport(file) {
-    this._notify('Importazione ' + file.name + '...', 'info');
-    try {
-      const mod = await import('./core/stl-import.js');
-      const STLImporter = mod.STLImporter;
-      const QualityAnalyzer = mod.QualityAnalyzer;
-      const importer = new STLImporter(this.scene, this.camera, this.renderer);
-      const result = await importer.fitToScene(await importer.importFile(file));
-      const analyzer = new QualityAnalyzer();
-      const analysis = analyzer.analyzeGeometry(result.geometry);
-      this._showImportResults(analysis, result);
-      this._notify('Import completato: ' + file.name, 'success');
-    } catch (err) {
-      this._notify('Errore import: ' + err.message, 'error');
-    }
-  }
+   async _runImport(file) {
+     this._notify('Importazione ' + file.name + '...', 'info');
+     try {
+       const importer = new STLImporter(this.scene, this.camera, this.renderer);
+       const result = await importer.fitToScene(await importer.importFile(file));
+       const analyzer = new QualityAnalyzer();
+       const analysis = analyzer.analyzeGeometry(result.geometry);
+       this._showImportResults(analysis, result);
+       this._notify('Import completato: ' + file.name, 'success');
+     } catch (err) {
+       this._notify('Errore import: ' + err.message, 'error');
+     }
+   }
 
   _showImportResults(analysis, importInfo) {
     var panel = document.createElement('div');
