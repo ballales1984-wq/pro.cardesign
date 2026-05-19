@@ -22,12 +22,12 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0f1923);
 scene.fog = new THREE.FogExp2(0x0f1923, 0.035);
 
-const viewport = document.getElementById('viewport');
-const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 2000);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(8, 10, 12);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+renderer.setSize(window.innerWidth - 270, window.innerHeight - 48);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -35,14 +35,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 let controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.minPolarAngle = 0.05;
-controls.maxPolarAngle = Math.PI - 0.05;
-controls.minDistance = 1.5;
-controls.maxDistance = 500;
-controls.zoomSpeed = 0.85;
-controls.panSpeed = 0.8;
-controls.rotateSpeed = 0.75;
-controls.screenSpacePanning = true;
+controls.maxPolarAngle = Math.PI / 2.1;
 controls.mouseButtons = {
   LEFT: false, // Left click is reserved for interacting with voxels
   MIDDLE: THREE.MOUSE.PAN, // Middle click + drag to Pan
@@ -79,6 +72,9 @@ scene.add(originMarker);
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
 
+// Brick Dimension Display (selected brick)
+const dimensionDiv = document.getElementById('brick-dimensions');
+
 // Core Systems
 const materialDB = new MaterialSystem();
 const moduleSystem = new ModuleSystem(materialDB);
@@ -103,62 +99,38 @@ const ui = new UI({
 });
 
 // Resize
-function resizeRenderer() {
-  const rect = viewport.getBoundingClientRect();
-  const w = Math.max(1, Math.floor(rect.width));
-  const h = Math.max(1, Math.floor(rect.height));
+window.addEventListener('resize', () => {
+  const w = window.innerWidth - 270;
+  const h = window.innerHeight - 48;
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(w, h, false);
-}
-
-window.addEventListener('resize', resizeRenderer);
-resizeRenderer();
-
-// ── DOM references cached once (no layout thrashing per-frame) ──────────────
-const dimensionDiv  = document.getElementById('brick-dimensions');
-const fpsCounterEl  = document.getElementById('fps-counter');
-
-// HUD state — dirty flag pattern: update DOM only on change
-let lastSelectedBrickId = null;
-let lastHUDDims        = '';
-let frameCount = 0;
-let fpsTimer   = 0;
-
-function updateHUD(time) {
-  const sel = brickSystem.selectedBrick;
-
-  // Brick dimension display
-  if (sel) {
-    const id = sel.id;
-    if (id !== lastSelectedBrickId || brickSystem.dimensionsText !== lastHUDDims) {
-      dimensionDiv.textContent  = brickSystem.dimensionsText;
-      dimensionDiv.style.display = 'block';
-      lastSelectedBrickId = id;
-      lastHUDDims         = brickSystem.dimensionsText;
-    }
-  } else if (lastSelectedBrickId !== null) {
-    dimensionDiv.style.display = 'none';
-    lastSelectedBrickId = null;
-    lastHUDDims         = '';
-  }
-
-  // FPS counter — throttled to once every 1000ms, no re-lookup
-  frameCount++;
-  if (time - fpsTimer >= 1000) {
-    fpsCounterEl.textContent = 'FPS: ' + frameCount;
-    frameCount = 0;
-    fpsTimer  = time;
-  }
-}
+  renderer.setSize(w, h);
+});
 
 // Animation Loop
+let frameCount = 0;
+let fpsTimer = 0;
+
 function animate(time) {
-  requestAnimationFrame(animate);
-  controls.update();
-  voxelEngine.update(time * 0.001);
-  renderer.render(scene, camera);
-  updateHUD(time);
+    requestAnimationFrame(animate);
+    controls.update();
+
+    if (brickSystem.selectedBrick) {
+        dimensionDiv.textContent = brickSystem.dimensionsText;
+        dimensionDiv.style.display = 'block';
+    } else {
+        dimensionDiv.style.display = 'none';
+    }
+
+    frameCount++;
+    if (time - fpsTimer >= 1000) {
+        document.getElementById('fps-counter').textContent = 'FPS: ' + frameCount;
+        frameCount = 0;
+        fpsTimer = time;
+    }
+
+    voxelEngine.update(time * 0.001);
+    renderer.render(scene, camera);
 }
 requestAnimationFrame(animate);
 
