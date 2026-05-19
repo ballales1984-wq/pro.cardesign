@@ -538,6 +538,52 @@ form#add-material-form {
   font-weight:   500;
 }
 
+#camera-controls {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(0, 210, 255, 0.18);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+#camera-controls button {
+  min-width: 42px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+#camera-controls button:hover {
+  background: rgba(0, 210, 255, 0.18);
+  border-color: rgba(0, 210, 255, 0.45);
+  color: var(--accent2);
+}
+
+#camera-controls button.active {
+  background: var(--accent);
+  border-color: var(--accent2);
+  color: #fff;
+}
+
+#camera-controls button:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: 2px;
+}
+
 /* Brick dimension badge — top-right of viewport */
 #brick-dimensions {
   position: absolute;

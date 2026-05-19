@@ -71,6 +71,23 @@ export class UI {
     document.getElementById('btn-save').addEventListener('click', function() { self._saveProject(); });
     document.getElementById('btn-load').addEventListener('click', function() { self._loadProject(); });
     document.getElementById('btn-reset-cam').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
+    document.getElementById('cam-fit').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
+    document.getElementById('cam-iso').addEventListener('click', function() { self.voxelEngine.setCameraView('iso'); });
+    document.getElementById('cam-front').addEventListener('click', function() { self.voxelEngine.setCameraView('front'); });
+    document.getElementById('cam-right').addEventListener('click', function() { self.voxelEngine.setCameraView('right'); });
+    document.getElementById('cam-top').addEventListener('click', function() { self.voxelEngine.setCameraView('top'); });
+    document.getElementById('cam-orbit').addEventListener('click', function() {
+      self.voxelEngine.setCameraNavigationMode(!self.voxelEngine.cameraNavigationMode);
+    });
+    document.getElementById('cam-zoom-in').addEventListener('click', function() { self.voxelEngine.zoomCamera(0.82); });
+    document.getElementById('cam-zoom-out').addEventListener('click', function() { self.voxelEngine.zoomCamera(1.22); });
+
+    window.addEventListener('camera-navigation-changed', function(e) {
+      document.getElementById('cam-orbit').classList.toggle('active', !!e.detail);
+      document.getElementById('tool-hint').textContent = e.detail
+        ? 'Camera: orbit 360 (drag sinistro), pan centrale, zoom rotella'
+        : 'Strumento: ' + (toolNames[self.voxelEngine.activeTool] || self.voxelEngine.activeTool);
+    });
 
     var toolNames = { add: 'Aggiungi (A)', remove: 'Rimuovi (R)', select: 'Seleziona (V)', fill: 'Riempimento (F)' };
     window.addEventListener('tool-changed', function(e) {

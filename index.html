@@ -379,6 +379,17 @@
       <!-- Live brick-dimension badge (injected by main.js via JS) -->
       <div id="brick-dimensions" aria-live="polite"></div>
 
+      <div id="camera-controls" role="group" aria-label="Controlli camera">
+        <button id="cam-fit" type="button" title="Inquadra modello (0 / Home)" aria-label="Inquadra modello">Fit</button>
+        <button id="cam-iso" type="button" title="Vista isometrica" aria-label="Vista isometrica">ISO</button>
+        <button id="cam-front" type="button" title="Vista frontale (1)" aria-label="Vista frontale">Front</button>
+        <button id="cam-right" type="button" title="Vista destra (3)" aria-label="Vista destra">Right</button>
+        <button id="cam-top" type="button" title="Vista dall'alto (7)" aria-label="Vista dall'alto">Top</button>
+        <button id="cam-orbit" type="button" title="Modalita camera: drag sinistro orbit 360 (C)" aria-label="Attiva modalita camera">Orbit</button>
+        <button id="cam-zoom-in" type="button" title="Zoom avanti (+ / Page Up)" aria-label="Zoom avanti">+</button>
+        <button id="cam-zoom-out" type="button" title="Zoom indietro (- / Page Down)" aria-label="Zoom indietro">-</button>
+      </div>
+
       <div id="viewport-info">
         <span id="voxel-count" aria-live="polite">Voxel: 0</span>
         <span id="fps-counter" aria-live="polite" aria-label="Framerate">FPS: --</span>

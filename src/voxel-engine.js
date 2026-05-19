@@ -67,6 +67,7 @@ export class VoxelEngine {
         this.activeMaterial = 'steel';
         this.activeModule = null;
         this.activeTool = 'add';
+        this.cameraNavigationMode = false;
 
         this._history = [];
         this._redoStack = [];
@@ -370,10 +371,10 @@ _setupEvents() {
    
        _gridPos(worldPos) {
          return {
-           x: Math.round(worldPos.x / this.voxelSize),
-           y: Math.round(worldPos.y / this.voxelSize),
-           z: Math.round(worldPos.z / this.voxelSize),
-         };
+           x: Math.floor(worldPos.x / this.voxelSize),
+           y: Math.floor(worldPos.y / this.voxelSize),
+           z: Math.floor(worldPos.z / this.voxelSize),
+          };
        }
    
        _gridKey(v) {
@@ -382,10 +383,10 @@ _setupEvents() {
    
        _worldPos(gridPos) {
          return new THREE.Vector3(
-           gridPos.x * this.voxelSize,
-           gridPos.y * this.voxelSize,
-           gridPos.z * this.voxelSize
-         );
+           (gridPos.x + 0.5) * this.voxelSize,
+           (gridPos.y + 0.5) * this.voxelSize,
+           (gridPos.z + 0.5) * this.voxelSize
+          );
        }
    
        // ── Raycast with InstancedMesh and ground plane support ───────────────────────
@@ -423,9 +424,9 @@ _setupEvents() {
           if (groundIntersects.length > 0) {
           const p = groundIntersects[0].point;
           return {
-            x: Math.round(p.x),
+            x: Math.floor(p.x / this.voxelSize),
             y: 0,
-            z: Math.round(p.z),
+            z: Math.floor(p.z / this.voxelSize),
             point: p,
             faceNormal: new THREE.Vector3(0, 1, 0),
             isGround: true,
@@ -436,6 +437,12 @@ _setupEvents() {
        }
    
         _onPointerMove(event) {
+          if (this.cameraNavigationMode) {
+            this.highlight.visible = false;
+            this.ghost.visible = false;
+            return;
+          }
+
           const hit = this._raycast(event);
 
           if (!hit) {
@@ -479,6 +486,7 @@ _setupEvents() {
 
         _onPointerClick(event) {
             if (event.button !== 0) return;
+            if (this.cameraNavigationMode) return;
             const hit = this._raycast(event);
             if (!hit) return;
 
@@ -539,6 +547,12 @@ _setupEvents() {
             this.setCameraView('right');
           } else if (key === '7') {
             this.setCameraView('top');
+          } else if (key === 'c') {
+            this.setCameraNavigationMode(!this.cameraNavigationMode);
+          } else if (key === '+' || key === '=' || key === 'pageup') {
+            this.zoomCamera(0.82);
+          } else if (key === '-' || key === '_' || key === 'pagedown') {
+            this.zoomCamera(1.22);
           } else if (key === 'v') {
             this.setTool('select');
           } else if (key === 's') {
@@ -736,6 +750,7 @@ const chunkKey = this._getChunkKey(pos);
         }
    
        setTool(tool) {
+         this.setCameraNavigationMode(false);
          this.activeTool = tool;
          
          // Activate/deactivate scaling tool
@@ -753,6 +768,28 @@ const chunkKey = this._getChunkKey(pos);
          const el = document.getElementById(btnMap[tool]);
          if (el) el.classList.add('active');
          window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));
+       }
+
+       setCameraNavigationMode(enabled) {
+         this.cameraNavigationMode = !!enabled;
+
+         if (this.controls) {
+           if (!this.controls.mouseButtons) this.controls.mouseButtons = {};
+           this.controls.mouseButtons.LEFT = this.cameraNavigationMode ? THREE.MOUSE.ROTATE : false;
+           this.controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;
+           this.controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
+           this.controls.enableRotate = true;
+           this.controls.enablePan = true;
+           this.controls.enableZoom = true;
+           this.controls.update();
+         }
+
+         if (this.cameraNavigationMode) {
+           this.highlight.visible = false;
+           this.ghost.visible = false;
+         }
+
+         window.dispatchEvent(new CustomEvent('camera-navigation-changed', { detail: this.cameraNavigationMode }));
        }
    
        _pushHistory(action) {
@@ -959,6 +996,22 @@ const chunkKey = this._getChunkKey(pos);
            top: new THREE.Vector3(0, 1, 0.001)
          };
          this.fitCameraToVoxels(directions[view] || directions.iso);
+       }
+
+       zoomCamera(factor) {
+         if (!this.controls || !this.camera) return;
+
+         const target = this.controls.target || new THREE.Vector3();
+         const offset = new THREE.Vector3().subVectors(this.camera.position, target);
+         const minDistance = this.controls.minDistance || 0.25;
+         const maxDistance = this.controls.maxDistance || 500;
+         const nextDistance = THREE.MathUtils.clamp(offset.length() * factor, minDistance, maxDistance);
+
+         if (offset.lengthSq() < 0.0001) offset.set(0.55, 0.65, 0.75);
+         offset.normalize().multiplyScalar(nextDistance);
+         this.camera.position.copy(target).add(offset);
+         this.camera.updateProjectionMatrix();
+         this.controls.update();
        }
 
        resetCamera() {
