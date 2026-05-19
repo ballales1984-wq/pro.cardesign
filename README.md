@@ -4,7 +4,7 @@
 
 ## Current Status
 
-**v0.4.0** — Enhanced Component Library + Proper OBJ Import + Refined Scaling Tool. Build: `npm run build` → **17 modules, 79.9 KB**.
+**v0.5.0** — Enhanced STL Import with Voxel Conversion + Improved Camera Controls. Build: `npm run build` → **17 modules, 82.1 KB**.
 
 ## Features
 
