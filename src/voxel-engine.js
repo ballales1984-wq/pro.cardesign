@@ -244,22 +244,25 @@ export class VoxelEngine {
                mesh.instanceMatrix.needsUpdate = true;
            }
 
-        _applyVoxelScaleToVoxel(voxel, scaleX, scaleY, scaleZ) {
+        _applyVoxelScaleToVoxel(voxel, scaleX, scaleY, scaleZ, newCenter) {
               // Update voxel data
               voxel.scale = [scaleX, scaleY, scaleZ];
 
-              // Update InstancedMesh
+              // Update InstancedMesh — use provided center or fall back to computed world pos
               const materialName = voxel.material;
               const mesh = this.instancedMeshes.get(materialName);
               if (mesh) {
                   const key = this._gridKey({ x: voxel.x, y: voxel.y, z: voxel.z });
                   const instanceId = this.keyToInstance.get(materialName).get(key);
                   if (instanceId !== undefined) {
-                      this._setInstanceMatrix(mesh, instanceId, this._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z }), 
+                      const worldCenter = newCenter
+                          ? new THREE.Vector3(newCenter.x, newCenter.y, newCenter.z)
+                          : this._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z });
+                      this._setInstanceMatrix(mesh, instanceId, worldCenter,
                                              new THREE.Vector3(scaleX, scaleY, scaleZ));
-           }
-       }
-      }
+                  }
+              }
+          }
    
        // ── Rendering ────────────────────────────────────────────────
    
@@ -874,13 +877,24 @@ const chunkKey = this._getChunkKey(pos);
                  this._removeVoxelSilently(action.x, action.y, action.z);
              } else if (action.type === 'remove') {
                  this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
-             } else if (action.type === 'scale') {
-                 // Revert to old scale
-                 const voxel = this.getVoxelAt(action.x, action.y, action.z);
-                 if (voxel) {
-                     this._applyVoxelScaleToVoxel(voxel, action.oldScale[0], action.oldScale[1], action.oldScale[2]);
-                 }
-             }
+              } else if (action.type === 'scale') {
+                  // Revert to old scale
+                  const voxel = this.getVoxelAt(action.x, action.y, action.z);
+                  if (voxel) {
+                      const c = action.oldCenter ?
+                          new THREE.Vector3(action.oldCenter.x, action.oldCenter.y, action.oldCenter.z) :
+                          this._worldPos({ x: action.x, y: action.y, z: action.z });
+                      this._applyVoxelScaleToVoxel(voxel, action.oldScale[0], action.oldScale[1], action.oldScale[2], c);
+                  }
+              } else if (action.type === 'vertexScale') {
+                  const voxel = this.getVoxelAt(action.x, action.y, action.z);
+                  if (voxel) {
+                      const c = action.oldCenter ?
+                          new THREE.Vector3(action.oldCenter.x, action.oldCenter.y, action.oldCenter.z) :
+                          this._worldPos({ x: action.x, y: action.y, z: action.z });
+                      this._applyVoxelScaleToVoxel(voxel, action.oldScale[0], action.oldScale[1], action.oldScale[2], c);
+                  }
+              }
              this._onVoxelChanged();
          }
    
@@ -892,13 +906,24 @@ const chunkKey = this._getChunkKey(pos);
                  this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
              } else if (action.type === 'remove') {
                  this._removeVoxelSilently(action.x, action.y, action.z);
-             } else if (action.type === 'scale') {
-                 // Apply the new scale again
-                 const voxel = this.getVoxelAt(action.x, action.y, action.z);
-                 if (voxel) {
-                     this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2]);
-                 }
-             }
+              } else if (action.type === 'scale') {
+                  // Apply the new scale again
+                  const voxel = this.getVoxelAt(action.x, action.y, action.z);
+                  if (voxel) {
+                      const c = action.newCenter ?
+                          new THREE.Vector3(action.newCenter.x, action.newCenter.y, action.newCenter.z) :
+                          this._worldPos({ x: action.x, y: action.y, z: action.z });
+                      this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2], c);
+                  }
+              } else if (action.type === 'vertexScale') {
+                  const voxel = this.getVoxelAt(action.x, action.y, action.z);
+                  if (voxel) {
+                      const c = action.newCenter ?
+                          new THREE.Vector3(action.newCenter.x, action.newCenter.y, action.newCenter.z) :
+                          this._worldPos({ x: action.x, y: action.y, z: action.z });
+                      this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2], c);
+                  }
+              }
              this._onVoxelChanged();
          }
    
