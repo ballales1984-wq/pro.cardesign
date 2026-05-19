@@ -229,7 +229,7 @@ export class STLImporter {
      return geometry;
    }
 
-  fitToScene(geometry, targetSize = 500) {
+  fitToScene(geometry, targetSize = 24) {
     // Resize geometry to fit targetSize (mm)
     geometry.computeBoundingBox();
     const bbox = geometry.boundingBox;
@@ -241,9 +241,11 @@ export class STLImporter {
     const scaled = geometry.clone();
     scaled.scale(scaleFactor, scaleFactor, scaleFactor);
     
-    // Center
+    // Center on X/Z, then place the bottom on the editor ground plane.
     scaled.center();
-    scaled.translate(0, 0, 0);
+    scaled.computeBoundingBox();
+    scaled.translate(0, -scaled.boundingBox.min.y, 0);
+    scaled.computeBoundingBox();
     
     return {
       geometry: scaled,
@@ -251,6 +253,37 @@ export class STLImporter {
       originalSize: size.clone(),
       bbox: bbox.clone()
     };
+  }
+
+  /**
+   * Convert a fitted mesh into editable surface voxels in editor grid coordinates.
+   */
+  meshToVoxels(geometry, voxelSize = 1.0) {
+    const positions = geometry.getAttribute('position');
+    const occupied = new Set();
+
+    const addPoint = (x, y, z) => {
+      const gx = Math.round(x / voxelSize);
+      const gy = Math.max(0, Math.round(y / voxelSize));
+      const gz = Math.round(z / voxelSize);
+      occupied.add(`${gx},${gy},${gz}`);
+    };
+
+    for (let i = 0; i < positions.count; i += 3) {
+      const ax = positions.getX(i), ay = positions.getY(i), az = positions.getZ(i);
+      const bx = positions.getX(i + 1), by = positions.getY(i + 1), bz = positions.getZ(i + 1);
+      const cx = positions.getX(i + 2), cy = positions.getY(i + 2), cz = positions.getZ(i + 2);
+
+      addPoint(ax, ay, az);
+      addPoint(bx, by, bz);
+      addPoint(cx, cy, cz);
+      addPoint((ax + bx + cx) / 3, (ay + by + cy) / 3, (az + bz + cz) / 3);
+    }
+
+    return Array.from(occupied, key => {
+      const [x, y, z] = key.split(',').map(Number);
+      return { x, y, z, material: 'steel', scale: [1, 1, 1] };
+    });
   }
 }
 
@@ -347,68 +380,6 @@ export class QualityAnalyzer {
     return geometry;
   }
 
-  /**
-   * Convert mesh to voxel grid using occupancy grid approach
-   */
-  meshToVoxels(geometry, voxelSize = 1.0) {
-    const positions = geometry.getAttribute('position');
-    const bbox = geometry.boundingBox;
-    
-    // Calculate grid dimensions
-    const size = new THREE.Vector3();
-    bbox.getSize(size);
-    
-    const gridSizeX = Math.ceil(size.x / voxelSize) + 1;
-    const gridSizeY = Math.ceil(size.y / voxelSize) + 1;
-    const gridSizeZ = Math.ceil(size.z / voxelSize) + 1;
-    
-    // Create occupancy grid
-    const occupied = new Set();
-    for (let i = 0; i < positions.count; i += 3) {
-      // Sample triangle centroid
-      const cx = (positions.getX(i) + positions.getX(i+1) + positions.getX(i+2)) / 3;
-      const cy = (positions.getY(i) + positions.getY(i+1) + positions.getY(i+2)) / 3;
-      const cz = (positions.getZ(i) + positions.getZ(i+1) + positions.getZ(i+2)) / 3;
-      
-      const gx = Math.floor((cx - bbox.min.x) / voxelSize);
-      const gy = Math.floor((cy - bbox.min.y) / voxelSize);
-      const gz = Math.floor((cz - bbox.min.z) / voxelSize);
-      
-      occupied.add(`${gx},${gy},${gz}`);
-    }
-    
-    // Fill interior voxels
-    const voxels = [];
-    for (let x = 0; x < gridSizeX; x++) {
-      for (let y = 0; y < gridSizeY; y++) {
-        for (let z = 0; z < gridSizeZ; z++) {
-          // Check if this voxel is inside the mesh (simplified: surface + adjacent)
-          const key = `${x},${y},${z}`;
-          if (occupied.has(key)) {
-            voxels.push({
-              x: x, y: y, z: z,
-              material: 'steel',
-              scale: [1, 1, 1]
-            });
-          } else {
-            // Check neighbors for surface voxels
-            for (const [dx, dy, dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]) {
-              if (occupied.has(`${x+dx},${y+dy},${z+dz}`)) {
-                voxels.push({
-                  x: x, y: y, z: z,
-                  material: 'steel',
-                  scale: [1, 1, 1]
-                });
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    return voxels;
-  }
 }
 
 export default STLImporter;

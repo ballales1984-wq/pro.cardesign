@@ -23,12 +23,12 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0f1923);
 scene.fog = new THREE.FogExp2(0x0f1923, 0.035);
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const viewport = document.getElementById('viewport');
+const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 2000);
 camera.position.set(8, 10, 12);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-renderer.setSize(window.innerWidth - 270, window.innerHeight - 48);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -37,6 +37,12 @@ let controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI / 2.1;
+controls.minDistance = 1.5;
+controls.maxDistance = 500;
+controls.zoomSpeed = 0.85;
+controls.panSpeed = 0.8;
+controls.rotateSpeed = 0.75;
+controls.screenSpacePanning = true;
 controls.mouseButtons = {
   LEFT: false, // Left click is reserved for interacting with voxels
   MIDDLE: THREE.MOUSE.PAN, // Middle click + drag to Pan
@@ -97,13 +103,17 @@ const ui = new UI({
 });
 
 // Resize
-window.addEventListener('resize', () => {
-  const w = window.innerWidth - 270;
-  const h = window.innerHeight - 48;
+function resizeRenderer() {
+  const rect = viewport.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
-});
+  renderer.setSize(w, h, false);
+}
+
+window.addEventListener('resize', resizeRenderer);
+resizeRenderer();
 
 // ── DOM references cached once (no layout thrashing per-frame) ──────────────
 const dimensionDiv  = document.getElementById('brick-dimensions');

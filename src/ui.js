@@ -755,11 +755,19 @@ export class UI {
       const STLImporter = mod.STLImporter;
       const QualityAnalyzer = mod.QualityAnalyzer;
       const importer = new STLImporter(this.scene, this.camera, this.renderer);
-      const result = await importer.fitToScene(await importer.importFile(file));
+      const result = await importer.fitToScene(await importer.importFile(file), 24);
       const analyzer = new QualityAnalyzer();
       const analysis = analyzer.analyzeGeometry(result.geometry);
+      const voxels = importer.meshToVoxels(result.geometry, 1.0);
+      let added = 0;
+      for (const voxel of voxels) {
+        if (this.voxelEngine.addVoxel(voxel, 'steel', this.voxelEngine.activeModule)) added++;
+      }
       this._showImportResults(analysis, result);
-      this._notify('Import completato: ' + file.name, 'success');
+      this.voxelEngine._onVoxelChanged();
+      this.voxelEngine.setTool('remove');
+      this.voxelEngine.resetCamera();
+      this._notify('Import completato: ' + added + ' voxel modificabili da ' + file.name, 'success');
     } catch (err) {
       this._notify('Errore import: ' + err.message, 'error');
     }

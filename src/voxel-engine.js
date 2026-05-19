@@ -33,13 +33,15 @@ export class VoxelEngine {
         this.voxelGroup = new THREE.Group();
         this.scene.add(this.voxelGroup);
 
+        this.voxelSize = 1.0;
+
         this.ghost = null;
         this._createGhost();
 
         this.highlight = null;
         this._createHighlight();
 
-        this.sharedGeometry = new THREE.BoxGeometry(1.0, 1.0, 1.0);
+        this.sharedGeometry = new THREE.BoxGeometry(this.voxelSize, this.voxelSize, this.voxelSize);
 
         this._createAxisLabels();
 
@@ -65,7 +67,6 @@ export class VoxelEngine {
         this.activeMaterial = 'steel';
         this.activeModule = null;
         this.activeTool = 'add';
-        this.voxelSize = 1.0;
 
         this._history = [];
         this._redoStack = [];
@@ -192,9 +193,12 @@ export class VoxelEngine {
          return map ? map.size : 0;
        }
    
-         _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
-               const matrix = new THREE.Matrix4();
-               matrix.makeScale(scale.x, scale.y, scale.z);
+          _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
+                const normalizedScale = Array.isArray(scale)
+                  ? new THREE.Vector3(scale[0] || 1, scale[1] || 1, scale[2] || 1)
+                  : new THREE.Vector3(scale?.x || 1, scale?.y || 1, scale?.z || 1);
+                const matrix = new THREE.Matrix4();
+                matrix.makeScale(normalizedScale.x, normalizedScale.y, normalizedScale.z);
                // Apply translation after scale
                matrix.elements[12] = position.x;
                matrix.elements[13] = position.y;
@@ -405,7 +409,9 @@ _setupEvents() {
                 const key = this.instanceToKey.get(materialName)?.[hit.instanceId];
                 if (key) {
                   const parts = key.split(',').map(Number);
-                  return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal: hit.face.normal, isGround: false };
+                  if (this.getVoxelAt(parts[0], parts[1], parts[2])) {
+                    return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal: hit.face.normal, isGround: false };
+                  }
                 }
               }
             }
@@ -456,13 +462,19 @@ _setupEvents() {
               this.ghost.visible = true;
             }
 } else {
-             // Ground hit: show ghost when adding, otherwise nothing to show
-             if (this.activeTool === 'add') {
-               const ghostPos = { x: hit.x, y: 0, z: hit.z };
-               this.ghost.position.copy(this._worldPos(ghostPos));
-               this.ghost.visible = true;
-             }
-           }
+             // Ground hit: show ghost when adding, or highlight an existing voxel while removing/selecting.
+              if (this.activeTool === 'add') {
+                const ghostPos = { x: hit.x, y: 0, z: hit.z };
+                this.ghost.position.copy(this._worldPos(ghostPos));
+                this.ghost.visible = true;
+              } else if (this.activeTool === 'remove' || this.activeTool === 'select') {
+                const target = this.getVoxelAt(hit.x, 0, hit.z) || this.getVoxelAt(hit.x, 1, hit.z);
+                if (target) {
+                  this.highlight.position.copy(this._worldPos(target));
+                  this.highlight.visible = true;
+                }
+              }
+            }
          }
 
         _onPointerClick(event) {
@@ -519,10 +531,18 @@ _setupEvents() {
          if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
    
          const key = event.key.toLowerCase();
-         if (key === 'v') {
-           this.setTool('select');
-         } else if (key === 's') {
-           this.setTool('scaling');
+          if (key === '0' || key === 'home') {
+            this.resetCamera();
+          } else if (key === '1') {
+            this.setCameraView('front');
+          } else if (key === '3') {
+            this.setCameraView('right');
+          } else if (key === '7') {
+            this.setCameraView('top');
+          } else if (key === 'v') {
+            this.setTool('select');
+          } else if (key === 's') {
+            this.setTool('scaling');
          } else if (key === 'a') {
            this.setTool('add');
          } else if (key === 'r') {
@@ -683,7 +703,7 @@ const chunkKey = this._getChunkKey(pos);
                 mesh.instanceMatrix.needsUpdate = true;
 
           instMap.delete(worldKey);
-          idxMap.delete(worldKey);
+          idxMap[instanceId] = null;
           this.freeIndices.get(matName)?.push(instanceId);
               }
             }
@@ -868,12 +888,81 @@ const chunkKey = this._getChunkKey(pos);
      console.log(`[VoxelEngine] Loaded ${loaded} voxels from JSON`);
    }
    
-       resetCamera() {
+       getVoxelBounds() {
+         let minX = Infinity, minY = Infinity, minZ = Infinity;
+         let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+         let count = 0;
+
+         for (const voxel of this.voxelsIterator()) {
+           const scale = voxel.scale || [1, 1, 1];
+           const sx = (scale[0] || 1) * this.voxelSize;
+           const sy = (scale[1] || 1) * this.voxelSize;
+           const sz = (scale[2] || 1) * this.voxelSize;
+           const center = this._worldPos(voxel);
+
+           minX = Math.min(minX, center.x - sx / 2);
+           maxX = Math.max(maxX, center.x + sx / 2);
+           minY = Math.min(minY, center.y - sy / 2);
+           maxY = Math.max(maxY, center.y + sy / 2);
+           minZ = Math.min(minZ, center.z - sz / 2);
+           maxZ = Math.max(maxZ, center.z + sz / 2);
+           count++;
+         }
+
+         if (count === 0) {
+           return {
+             min: new THREE.Vector3(-5, 0, -5),
+             max: new THREE.Vector3(5, 3, 5),
+             center: new THREE.Vector3(0, 1, 0),
+             size: new THREE.Vector3(10, 3, 10),
+             radius: 7
+           };
+         }
+
+         const min = new THREE.Vector3(minX, minY, minZ);
+         const max = new THREE.Vector3(maxX, maxY, maxZ);
+         const center = new THREE.Vector3().addVectors(min, max).multiplyScalar(0.5);
+         const size = new THREE.Vector3().subVectors(max, min);
+         const radius = Math.max(size.length() * 0.5, this.voxelSize * 3);
+         return { min, max, center, size, radius };
+       }
+
+       fitCameraToVoxels(direction = null) {
          if (!this.controls) return;
-         this.camera.position.set(8, 10, 12);
-         this.camera.lookAt(0, 0, 0);
-         this.controls.target.set(0, 0, 0);
+
+         const bounds = this.getVoxelBounds();
+         const target = bounds.center;
+         const fov = THREE.MathUtils.degToRad(this.camera.fov);
+         const fitHeightDistance = bounds.radius / Math.sin(fov / 2);
+         const fitWidthDistance = fitHeightDistance / Math.max(this.camera.aspect || 1, 0.1);
+         const distance = Math.max(fitHeightDistance, fitWidthDistance) * 1.15;
+
+         let viewDir = direction ? direction.clone() : new THREE.Vector3().subVectors(this.camera.position, this.controls.target);
+         if (viewDir.lengthSq() < 0.0001) viewDir = new THREE.Vector3(0.55, 0.65, 0.75);
+         viewDir.normalize();
+
+         this.controls.target.copy(target);
+         this.camera.position.copy(target).addScaledVector(viewDir, distance);
+         this.camera.near = Math.max(0.01, distance / 500);
+         this.camera.far = Math.max(2000, distance * 20);
+         this.camera.updateProjectionMatrix();
+         this.controls.minDistance = Math.max(0.25, bounds.radius * 0.08);
+         this.controls.maxDistance = Math.max(50, bounds.radius * 12);
          this.controls.update();
+       }
+
+       setCameraView(view) {
+         const directions = {
+           iso: new THREE.Vector3(0.55, 0.65, 0.75),
+           front: new THREE.Vector3(0, 0.12, 1),
+           right: new THREE.Vector3(1, 0.12, 0),
+           top: new THREE.Vector3(0, 1, 0.001)
+         };
+         this.fitCameraToVoxels(directions[view] || directions.iso);
+       }
+
+       resetCamera() {
+         this.setCameraView('iso');
        }
    
    // Get total number of voxels across all chunks
