@@ -1,74 +1,43 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// three-mock-provider.cjs  —  Provider mock THREE per Node ESM + CJS
-// Registra 'three' direttamente nella cache di sistema PRIMA che ESM lo risolva.
+// three-mock-provider.cjs  —  Intercepts THREE for Node ESM + CJS
+//
+//  Uses Module.register (Node 20+, stable public API) to intercept
+//  `import * as THREE from 'three'` at the ESM resolver level — before
+//  Node ever reaches node_modules.  CJS require('three') is still handled
+//  by the Module._resolveFilename fallback.
 // ══════════════════════════════════════════════════════════════════════════════
-const path   = require('path');
-const Module = require('module');
+'use strict';
+
+const path         = require('path');
+const Module       = require('module');
 const { pathToFileURL } = require('url');
 
-const MOCK_DIR = __dirname;
-const MOCK_ESM = path.resolve(MOCK_DIR, 'three-mock.js');
-const MOCK_URL = pathToFileURL(MOCK_ESM).href;
+const MOCK_DIR   = __dirname;
+const MOCK_ESM   = path.resolve(MOCK_DIR, 'three-mock.js');
+const MOCK_URL   = pathToFileURL(MOCK_ESM).href;
 
-// ── 1. PATCH SYNCHRONISATION: registra i percorsi mock PRIMA di qualsiasi import() ──
-// Intercetta require('three') (CJS)
+// ── 1. ESM INTERCEPTION ────────────────────────────────────────────────────────
+// Module.register runs BEFORE the file-system resolver.
+// Every ESM  `import 'three'` / `import * as THREE from 'three'`  is resolved
+// to the mock URL and returns the named-export namespace defined in three-mock.js.
+if (typeof Module.register === 'function') {
+  Module.register('three', MOCK_URL);
+}
+
+// ── 2. CJS INTERCEPTION ────────────────────────────────────────────────────────
+// Module.register handles ESM; _resolveFilename handles CJS require('three').
 const origResolveFilename = Module._resolveFilename;
 Module._resolveFilename = function(request, parent, ...rest) {
-  if (request === 'three')          return MOCK_ESM;
-  if (request === 'three/package.json') return path.join(MOCK_DIR, 'three-mock-package.json');
+  if (request === 'three')             return MOCK_ESM;
   return origResolveFilename.call(this, request, parent, ...rest);
 };
 
-// Aggiungi tests/ a tutte le ricerche di moduli Node (effettivo per CJS e sintattico per ESM)
-const origNodeModPaths = Module._nodeModulePaths;
-Module._nodeModulePaths = function(from) {
-  const paths = origNodeModPaths.call(this, from);
-  if (!paths.includes(MOCK_DIR)) paths.unshift(MOCK_DIR);
-  return paths;
-};
-
+// ── 3. NODE_PATH — sandbox tests/ at the front of search paths ─────────────────
 Module._initPaths = (() => {
   const origInit = Module._initPaths;
-  return function() {
+  return function () {
     const p = process.env.NODE_PATH || '';
     process.env.NODE_PATH = [MOCK_DIR, p].filter(Boolean).join(path.delimiter || ';');
     origInit.call(this);
   };
 })();
-
-// Pre-cache i file che Node CJS risolverà per 'three'
-const filenames = [
-  MOCK_ESM,
-  path.join(MOCK_DIR, 'three.js'),
-  path.join(MOCK_DIR, 'three.mjs'),
-];
-for (const fn of filenames) {
-  // Placeholder: verrà sovrascritto una volta caricato ESM, ma evita null reference fino a quel momento
-  if (!Module._cache[fn]) {
-    Module._cache[fn] = {
-      id: fn,
-      filename: fn,
-      loaded: false,
-      _placeholder: true,
-      exports: {},
-    };
-  }
-}
-
-// ── 2. CARICA IL MOCK ESM: popola la cache definitiva ──────────────────────────
-import(MOCK_URL).then(esmMod => {
-  Module._cache[MOCK_URL] = {
-    id: MOCK_URL, filename: MOCK_ESM, loaded: true, exports: esmMod,
-  };
-
-  // Aggiorna tutte le entries CJS placeholder con il modulo ESM definitivo
-  for (const fn of filenames) {
-    if (Module._cache[fn] && Module._cache[fn]._placeholder) {
-      Module._cache[fn].loaded = true;
-      Module._cache[fn].exports = esmMod;
-      delete Module._cache[fn]._placeholder;
-    }
-  }
-}).catch(err => {
-  console.error('[three-mock-provider] WARN:', err.message);
-});

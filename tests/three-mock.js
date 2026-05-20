@@ -33,6 +33,14 @@ export class Euler {
   set(x, y, z) { this.x = x; this.y = y; this.z = z; return this; }
 }
 
+// ── Quaternion ───────────────────────────────────────────────────────────────
+export class Quaternion {
+  constructor(x = 0, y = 0, z = 0, w = 1) { this.x = x; this.y = y; this.z = z; this.w = w; }
+  set(x, y, z, w) { this.x = x; this.y = y; this.z = z; this.w = w; return this; }
+  copy(q) { this.x = q.x; this.y = q.y; this.z = q.z; this.w = q.w; return this; }
+  identity() { this.x = 0; this.y = 0; this.z = 0; this.w = 1; return this; }
+}
+
 // ── Math helpers ──────────────────────────────────────────────────────────────
 export const MathUtils = {
   clamp: (v, lo, hi) => Math.max(lo, Math.min(hi, v)),
@@ -74,6 +82,7 @@ export class BufferGeometry {
   setIndex(idx) { this.index = Array.isArray(idx) ? { array: new Uint32Array(idx), count: idx.length } : idx; }
   getIndex() { return this.index; }
   computeBoundingSphere() { this.boundingSphere = { getCenter: () => new Vector3(), radius: 1 }; }
+  computeBoundingBox() { this.boundingBox = new Box3(new Vector3(-0.5,-0.5,-0.5), new Vector3(0.5,0.5,0.5)); }
   computeVertexNormals() {}
   dispose() {}
 }
@@ -85,6 +94,21 @@ export class PlaneGeometry extends BufferGeometry { constructor(w = 1, h = 1) { 
 export class SphereGeometry extends BufferGeometry { constructor(r = 1, ws = 16, hs = 12) { super(); this.parameters = { radius: r, widthSegments: ws, heightSegments: hs }; } }
 export class CylinderGeometry extends BufferGeometry { constructor(rt = 0, rb = 1, h = 1) { super(); this.parameters = { radiusTop: rt, radiusBottom: rb, height: h }; } }
 export class EdgesGeometry extends BufferGeometry { constructor(geo) { super(); this.geometry = geo; } }
+
+// ── Box3, Sphere ─────────────────────────────────────────────────────────────
+export class Box3 {
+  constructor(min = new Vector3(), max = new Vector3()) {
+    this.min = min;
+    this.max = max;
+  }
+  set(min, max) { this.min = min; this.max = max; return this; }
+}
+export class Sphere {
+  constructor(center = new Vector3(), radius = 1) {
+    this.center = center;
+    this.radius = radius;
+  }
+}
 
 // ── Buffer attribute ────────────────────────────────────────────────────────────
 export class Float32BufferAttribute {
