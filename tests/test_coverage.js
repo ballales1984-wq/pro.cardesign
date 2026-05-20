@@ -74,8 +74,53 @@ mockDocAndGlobals();
 
 // ── Minimal THREE.js mock (only what the tests touch) ────────────────────────
 (function buildThreeMock() {
-  const v3 = (x=0,y=0,z=0) => ({ x, y, z, set(){}, copy(){}, clone(){}, add(){}, multiplyScalar(){}, sub(){}, normalize(){}, cross(){}, dot(){}, length(){}, distanceTo(){}, applyMatrix4(){}, angleTo(){}, lerp(){} });
-  const v2 = (x=0,y=0) => ({ x, y });
+  const v3 = (x=0,y=0,z=0) => {
+    return {
+      x, y, z,
+      set(){},
+      copy(){ return this; },
+      clone(){ return v3(this.x, this.y, this.z); },
+      add(){ return this; },
+      multiplyScalar(){ return this; },
+      sub(){ return this; },
+      normalize(){ return this; },
+      cross(){ return v3(); },
+      dot(){ return 0; },
+      length(){ return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z); },
+      distanceTo(v) {
+        const dx = this.x - v.x;
+        const dy = this.y - v.y;
+        const dz = this.z - v.z;
+        return Math.sqrt(dx*dx + dy*dy + dz*dz);
+      },
+      applyMatrix4(){ return this; },
+      angleTo(){ return 0; },
+      lerp(){ return this; }
+    };
+  };
+  const v2 = (x=0,y=0) => {
+    return {
+      x, y,
+      set(){},
+      copy(){ return this; },
+      clone(){ return v2(this.x, this.y); },
+      add(){ return this; },
+      multiplyScalar(){ return this; },
+      sub(){ return this; },
+      normalize(){ return this; },
+      cross(){ return 0; },
+      dot(){ return 0; },
+      length(){ return Math.sqrt(this.x*this.x + this.y*this.y); },
+      distanceTo(v) {
+        const dx = this.x - v.x;
+        const dy = this.y - v.y;
+        return Math.sqrt(dx*dx + dy*dy);
+      },
+      applyMatrix3(){ return this; },
+      angleTo(){ return 0; },
+      lerp(){ return this; }
+    };
+  };
 
   function Vec3(x=0,y=0,z=0){ return v3(x,y,z); }
   function Vec2(x=0,y=0){ return v2(x,y); }
@@ -85,12 +130,24 @@ mockDocAndGlobals();
     FogExp2: function(){},
     PerspectiveCamera: function(){ this.position={ set:_=>{}, copy:_=>{}, x:0,y:0,z:0 }; this.lookAt=_=>{}; this.aspect=1; this.updateProjectionMatrix=_=>{}; },
     WebGLRenderer: function(){ this.domElement=global.document.createElement('canvas'); this.setSize=_=>{}; this.setPixelRatio=_=>{}; this.shadowMap={ enabled:false, type:1 }; this.render=_=>{}; },
-    BoxGeometry: function(){ this.dispose=_=>{}; return this; },
-    PlaneGeometry: function(){ this.dispose=_=>{}; return this; },
-    SphereGeometry: function(){ this.dispose=_=>{}; return this; },
-    CylinderGeometry: function(){ this.dispose=_=>{}; return this; },
+BoxGeometry: function(){ this.dispose=_=>{}; return this; },
+     PlaneGeometry: function(){ this.dispose=_=>{}; return this; },
+     SphereGeometry: function(){ this.dispose=_=>{}; return this; },
+     CylinderGeometry: function(){ this.dispose=_=>{}; return this; },
+     OctahedronGeometry: function(){ this.dispose=_=>{}; return this; },
     EdgesGeometry: function(geo){ this.geometry=geo; this.dispose=_=>{}; return this; },
-    MeshStandardMaterial: function(opts){ this.color=opts.color||0xffffff; this.roughness=opts.roughness||0.4; this.metalness=opts.metalness||0.3; this.opacity=opts.opacity||1; this.transparent=false; this.wireframe=false; this.name=''; this.depthWrite=true; },
+     MeshStandardMaterial: function(opts){ 
+       this.color=opts.color||0xffffff; 
+       this.roughness=opts.roughness||0.4; 
+       this.metalness=opts.metalness||0.3; 
+       this.opacity=opts.opacity||1; 
+       this.transparent=opts.transparent||false; 
+       this.wireframe=false; 
+       this.name=''; 
+       this.depthWrite=true;
+       this.side=opts.side;
+       this.dispose = function(){};
+     },
     MeshBasicMaterial: function(opts){ this.color=opts.color||0xffffff; this.opacity=opts.opacity||1; this.transparent=false; this.wireframe=false; this.depthWrite=true; },
     LineBasicMaterial: function(opts){ this.color=opts.color||0; },
     Mesh: function(geo,mat){ this.geometry=geo||{}; this.material=mat; this.position=v3(); this.scale=v3(); this.visible=true; this.castShadow=false; this.receiveShadow=false; this.userData={}; this.add=_=>{}; this.add=this.add; },
@@ -114,12 +171,14 @@ Euler: function(x,y,z){ this.x=x; this.y=y; this.z=z; this.set=_=>{}; },
      Box3: function(min,max){ this.min=min||{x:-1,y:-1,z:-1}; this.max=max||{x:1,y:1,z:1}; this.getCenter=_=>{return{set:_=>{}}}; this.getSize=_=>{return{set:_=>{}}}; },
      Vector3: Vec3,
      Vector2: Vec2,
-    BufferGeometry: function(){
-      this.attributes = {};
-      this.index = null;
-      this.groups = [];
+BufferGeometry: function(){
+       this.attributes = {};
+       this.index = null;
+       this.groups = [];
+       this.boundingSphere = null;
+       this.boundingBox = null;
 
-      function _mkIndex(arr) {
+       function _mkIndex(arr) {
         // Wrap plain array so real THREE-like callers can call getX/i/i+1/i+2
         const _arr = new Float32Array(arr);
         const attr = { count: _arr.length, array: _arr,
