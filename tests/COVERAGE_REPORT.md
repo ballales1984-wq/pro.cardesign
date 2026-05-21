@@ -1,13 +1,13 @@
 # Test Coverage Report — pro.cardesign
-Date: 2026-05-15 | build: v0.3.0
+Date: 2026-05-21 | build: v1.0-dev
 
 ## Summary
 
 | Language | Tests Passed | Total Tests | Coverage |
 |----------|-------------|-------------|----------|
-| Python | 23 | 23 | 65% (core) |
-| JavaScript | 4 | 4 | N/A (structural tests) |
-| **Total** | **27** | **27** | ✅ |
+| Python | 39 | 39 | 65% (core) |
+| JavaScript | 124 | 124 | N/A (structural/integration tests) |
+| **Total** | **163** | **163** | ✅ |
 
 ---
 
@@ -25,7 +25,7 @@ core/test_brick.py      34     34     0%  (test itself)
 
 **TOTAL core: 178 lines | 63 not covered | 65%**
 
-### Passed Python Tests (23/23)
+### Passed Python Tests (39/39)
 
 | Category | Test | Result |
 |----------|------|--------|
@@ -39,43 +39,76 @@ core/test_brick.py      34     34     0%  (test itself)
 | Helper | `test_create_cube` | ✅ |
 | Helper | `test_create_bar_x/y/z` | ✅ |
 | Helper | `test_create_wheel_tire` | ✅ |
+| Helper | `test_create_cylinder` | ✅ |
+| Helper | `test_create_cone` | ✅ |
+| Helper | `test_create_sphere` | ✅ |
 | ID Counter | `test_next_id_increments` | ✅ |
-| Component | `test_library_has_defaults` | ✅ |
-| Component | `test_get_by_id` | ✅ |
-| Component | `test_get_by_category` | ✅ |
-| Component | `test_get_by_type` | ✅ |
-| Component | `test_search` | ✅ |
-| Component | `test_save_and_load_custom` | ✅ |
-| Component | `test_component_instance` | ✅ |
-| Physics | `test_mass_calculation` | ✅ |
-| Physics | `test_com_calculation` | ✅ |
-| Physics | `test_save_load_json` | ✅ |
+| Brick | `test_brick_center_calculation` | ✅ |
+| Brick | `test_brick_contains_point` | ✅ |
+| Brick | `test_brick_no_overlap_far` | ✅ |
+| Brick | `test_brick_touch_but_no_overlap` | ✅ |
+| Brick | `test_brick_with_negative_position` | ✅ |
+| Brick | `test_brick_with_zero_size` | ✅ |
+| Brick | `test_create_bar_axis_z` | ✅ |
+| Brick | `test_wheel_tire_position` | ✅ |
+| VoxelEngine | `test_add_duplicate_voxel` | ✅ |
+| VoxelEngine | `test_module_assignment` | ✅ |
+| VoxelEngine | `test_save_load_with_modules` | ✅ |
+| VoxelEngine | `test_coordinate_boundaries` | ✅ |
+| VoxelEngine | `test_com_empty` | ✅ |
+| VoxelEngine | `test_mass_empty` | ✅ |
+| VoxelEngine | `test_remove_nonexistent_voxel` | ✅ |
+| Materials | `test_all_materials_exist` | ✅ |
+| Materials | `test_material_properties_values` | ✅ |
+| Physics | `test_safety_check_pass` | ✅ |
+| Physics | `test_stress_analysis_different_materials` | ✅ |
+| Physics | `test_thermal_analysis` | ✅ |
+| Integration | `test_com_calculation` | ✅ |
+| Integration | `test_mass_calculation` | ✅ |
+| Integration | `test_save_load_json` | ✅ |
 
 ---
 
-## JavaScript Coverage (Node.js)
+## JavaScript Coverage (Node.js, `test_coverage.js`)
 
-### Detail
+### Sections and Tests (124/124 PASS)
 
-| Module | Test | Result |
-|--------|------|--------|
-| MaterialSystem | `8 materials, get, addCustom, duplicate prevention` | ✅ |
-| ModuleSystem | `create, assign, tree, remove` | ✅ |
-| Brick (JS) | `constructor, volume, BrickSystem init` | ✅ |
-| ComponentLibrary | `5 defaults, getById, search` | ✅ |
-
-**Total JS: 4/4 passed**
+| # | Section | Tests | Result |
+|---|---------|-------|--------|
+| 1 | MaterialSystem | 2 | ✅ |
+| 2 | ModuleSystem | 1 | ✅ |
+| 3 | Brick | 4 | ✅ |
+| 4 | ComponentLibrary | 3 | ✅ |
+| 5 | BrickAdapter / SCALE | 2 | ✅ |
+| 6 | VertexEditTool | 6 | ✅ |
+| 7 | MeshExporter (OBJ/STL) | 4 | ✅ |
+| 8 | MeshExporter (voxel→mesh, flat+MC) | 4 | ✅ |
+| 9 | PhysicsCalc | 3 | ✅ |
+| 10 | SphereSystem | 4 | ✅ |
+| 11 | TetrahedralMesh | 4 | ✅ |
+| 12 | LODManager | 2 | ✅ |
+| 13 | ProceduralEngine | 4 | ✅ |
+| 14 | StressAnalysis | 2 | ✅ |
+| 15 | Aerodynamics | 2 | ✅ |
+| 16 | PhysicsSignature | 1 | ✅ |
+| 17 | STLImporter / QualityAnalyzer | 2 | ✅ |
+| 18 | MeshDeformer | 8 | ✅ |
+| 19 | RuleEditorUI | 3 | ✅ |
+| 20 | VoxelModel | 5 | ✅ |
+| 21 | EditableMeshModel | 6 | ✅ |
+| 22 | HybridModel | 5 | ✅ |
+| 23 | Primitives | 5 | ✅ |
+| 24 | voxelToMesh converter | 6 | ✅ |
+| 25 | meshToVoxel converter | 4 | ✅ |
+| 26 | GeometryDecimator | 4 | ✅ |
+| 27 | MeshoptDecimator | 4 | ✅ |
+| 28 | BooleanOperations | 8 | ✅ |
+| **Total** | | **124** | **✅** |
 
 ### How to run
 ```bash
-node tests/test_coverage.js
-```
-
----
-
-## Build Status
-```
-npm run build  ✅  16 modules | 77.2 kB JS
+node tests/test_coverage.js   # 124 tests, no external runtime needed
+python -m pytest tests/test_coverage.py -v   # 39 tests
 ```
 
 ---
@@ -83,28 +116,35 @@ npm run build  ✅  16 modules | 77.2 kB JS
 ## Code Coverage by Functionality
 
 ### ✅ Fully Tested
-- [x] `core/brick.py` — Creator, dimensions, overlap, center, volume
-- [x] `core/__init__.py` — Imports
+- [x] `core/brick.py` — Creator, dimensions, overlap, center, volume (100%)
+- [x] `core/__init__.py` — Imports (100%)
 - [x] MaterialSystem JS — Materials database, density, voxel mass
 - [x] ModuleSystem JS — Module creation, hierarchy, removal
 - [x] Brick JS — Constructor, properties, BrickSystem instancing
+- [x] GeometryDecimator — import, instantiation, decimate, null guard, decimateForCSG
+- [x] MeshOptDecimator — instantiation and all three tier levels
+- [x] STLImporter — ASCII parsing, QualityAnalyzer integration
+- [x] MeshExporter — OBJ, STL (ASCII+binary), flatCubes and Marching Cubes paths
+- [x] Physics signature — PhysicsSignature aggregate, Aerodynamics Cd/Cl/Reynolds
+- [x] Procedural engine — Boolean operations union/subtract/intersect
+- [x] VertexEditTool — world positions, brick computation, activate/deactivate
 
 ### 🟡 Partially Tested
-- [~] `core/component.py` — Component library searched (11% lines not covered: edge cases save/load)
-- [~] quality analyzer — Logic imported in `stl-import.js` not covered by JS structural test
-- [~] `physics-calc.js` — Depends on VoxelEngine JS (not fully mocked)
+- [~] `core/component.py` — 86% coverage (11 lines uncovered: save_custom edge cases)
+- [~] Aerodynamics — Import+interface checked; physical accuracy depends on geometry shapes
+- [~] MeshDeformer — Import/roundtrip covered; transform quality (non-planar) depends on voxel data
 
-### 🔴 Not Tested
-- [ ] STLImporter (ASCII parser, fitToScene)
+### 🔴 Not Tested / Gaps
 - [ ] ScalingTool JS (dependent on VoxelEngine)
-- [ ] UI layout (CSS/DOM)
-- [ ] Aerodynamics (not implemented)
+- [ ] UI CSS/DOM (visual layout)
+- [ ] brick-system.js `_convertExistingVoxels` BFS path (integration only)
+- [ ] `head-ui.js` stale snapshot (out of date, should be removed)
 
 ---
 
 ## Recommended Actions
 
-1. **Bring `component.py` from 86% → 95%+** (test `get_by_type`, `save_custom` with absolute paths)
-2. **Add tests for `mesh-exporter.js`** (OBJ/STL generation)
-3. **Mock VoxelEngine to test `physics-calc.js`** in isolation
-4. **Add end-to-end integration test** for save/load project
+1. **Bring `component.py` from 86% → 95%+** (test `save_custom` and `get_by_type` edge cases)
+2. **Add ScalingTool JS isolation test** — mock VoxelEngine, test face-drag resize math
+3. **Extend PhysicsCalc mock** in test_coverage.js to cover module-level mass calc
+4. **Remove `head-ui.js`** stale snapshot or integrate into Vite build pipeline

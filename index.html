@@ -10,7 +10,7 @@
   <script type="importmap">
     {
       "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js"
+        "three": "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js"
       }
     }
   </script>
@@ -29,130 +29,167 @@
         <span class="version" aria-label="Versione 0.1.0">v0.1.0</span>
       </div>
 
-      <div class="tools" role="group" aria-label="Strumenti">
-        <!-- Tool: Seleziona -->
-        <button
-          id="tool-select" class="tool active"
-          type="button"
-          title="Seleziona (V)"
-          aria-label="Strumento Seleziona, scorciatoia V"
-          aria-pressed="true">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
-               stroke="currentColor" stroke-width="1.5"
-               stroke-linecap="round" stroke-linejoin="round"
-               aria-hidden="true">
-            <path d="M1 1 L1.5 7.5 L6 3.5 L12 9
-                     L8 13 L9.5 14.5 L6 16 L4.5 14.5 L6 8 L2 2 Z"/>
-          </svg>
-          Seleziona
-        </button>
+       <div class="tools" role="group" aria-label="Strumenti">
+         <!-- Tool: Seleziona -->
+         <button
+           id="tool-select" class="tool active"
+           type="button"
+           title="Seleziona (V)"
+           aria-label="Strumento Seleziona, scorciatoia V"
+           aria-pressed="true">
+           <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+                stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round"
+                aria-hidden="true">
+             <path d="M1 1 L1.5 7.5 L6 3.5 L12 9
+                      L8 13 L9.5 14.5 L6 16 L4.5 14.5 L6 8 L2 2 Z"/>
+           </svg>
+           Seleziona
+         </button>
 
-        <!-- Tool: Aggiungi -->
-        <button
-          id="tool-add" class="tool"
-          type="button"
-          title="Aggiungi Voxel (A)"
-          aria-label="Strumento Aggiungi voxel, scorciatoia A"
-          aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16"
-               fill="currentColor" aria-hidden="true">
-            <rect x="5"  y="1" width="6" height="11" rx="1"/>
-            <rect x="1"  y="5" width="14" height="4" rx="1"/>
-          </svg>
-          Aggiungi
-        </button>
+         <!-- Tool: Aggiungi -->
+         <button
+           id="tool-add" class="tool"
+           type="button"
+           title="Aggiungi Voxel (A)"
+           aria-label="Strumento Aggiungi voxel, scorciatoia A"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 16 16"
+                fill="currentColor" aria-hidden="true">
+             <rect x="5"  y="1" width="6" height="11" rx="1"/>
+             <rect x="1"  y="5" width="14" height="4" rx="1"/>
+           </svg>
+           Aggiungi
+         </button>
 
-        <!-- Tool: Rimuovi -->
-        <button
-          id="tool-remove" class="tool"
-          type="button"
-          title="Rimuovi Voxel (R)"
-          aria-label="Strumento Rimuovi voxel, scorciatoia R"
-          aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16"
-               fill="currentColor" aria-hidden="true">
-            <rect x="4"  y="1" width="8" height="14" rx="1"/>
-            <line x1="8" y1="4"  x2="8" y2="10"
-                  stroke="white" stroke-width="1.5"
-                  stroke-linecap="round"/>
-          </svg>
-          Rimuovi
-        </button>
+         <!-- Tool: Rimuovi -->
+         <button
+           id="tool-remove" class="tool"
+           type="button"
+           title="Rimuovi Voxel (R)"
+           aria-label="Strumento Rimuovi voxel, scorciatoia R"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 16 16"
+                fill="currentColor" aria-hidden="true">
+             <rect x="4"  y="1" width="8" height="14" rx="1"/>
+             <line x1="8" y1="4"  x2="8" y2="10"
+                   stroke="white" stroke-width="1.5"
+                   stroke-linecap="round"/>
+           </svg>
+           Rimuovi
+         </button>
 
-        <!-- Tool: Fill -->
-        <button
-          id="tool-fill" class="tool"
-          type="button"
-          title="Riempimento (F)"
-          aria-label="Strumento Riempimento livello Y, scorciatoia F"
-          aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16"
-               fill="currentColor" aria-hidden="true">
-            <polygon points="3,1 13,1 13,9 11,13 3,13"/>
-          </svg>
-          Fill
-        </button>
+         <!-- Tool: Fill -->
+         <button
+           id="tool-fill" class="tool"
+           type="button"
+           title="Riempimento (F)"
+           aria-label="Strumento Riempimento livello Y, scorciatoia F"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 16 16"
+                fill="currentColor" aria-hidden="true">
+             <polygon points="3,1 13,1 13,9 11,13 3,13"/>
+           </svg>
+           Fill
+         </button>
 
-        <!-- Tool: Scale -->
-        <button
-          id="tool-scaling" class="tool"
-          type="button"
-          title="Scala (S)"
-          aria-label="Strumento Scala voxel, scorciatoia S"
-          aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16"
-               fill="none" stroke="currentColor"
-               stroke-width="1.4" stroke-linecap="round"
-               aria-hidden="true">
-            <polyline points="2,2 5,2 5,1 6,1"/>
-            <rect x="6"   y="1" width="9" height="5" rx="1"/>
-            <line   x1="6.5" y1="7.5" x2="14.5" y2="14.5"/>
-            <line   x1="14.5" y1="7.5" x2="6.5" y2="14.5"/>
-          </svg>
-          Scala
-        </button>
+         <!-- Tool: Scale -->
+         <button
+           id="tool-scaling" class="tool"
+           type="button"
+           title="Scala (S)"
+           aria-label="Strumento Scala voxel, scorciatoia S"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 16 16"
+                fill="none" stroke="currentColor"
+                stroke-width="1.4" stroke-linecap="round"
+                aria-hidden="true">
+             <polyline points="2,2 5,2 5,1 6,1"/>
+             <rect x="6"   y="1" width="9" height="5" rx="1"/>
+             <line   x1="6.5" y1="7.5" x2="14.5" y2="14.5"/>
+             <line   x1="14.5" y1="7.5" x2="6.5" y2="14.5"/>
+           </svg>
+           Scala
+         </button>
 
-        <!-- Tool: Sculpt -->
-        <button
-          id="tool-sculpt" class="tool"
-          type="button"
-          title="Scultura (D)"
-          aria-label="Strumento Scultura voxel, scorciatoia D"
-          aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16"
-               fill="none" stroke="currentColor"
-               stroke-width="1.4" stroke-linecap="round"
-               aria-hidden="true">
-            <path d="M8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0-2c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>
-          </svg>
-           Scultura
-        </button>
+         <!-- Tool: Sculpt -->
+         <button
+           id="tool-sculpt" class="tool"
+           type="button"
+           title="Scultura (D)"
+           aria-label="Strumento Scultura voxel, scorciatoia D"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 16 16"
+                fill="none" stroke="currentColor"
+                stroke-width="1.4" stroke-linecap="round"
+                aria-hidden="true">
+             <path d="M8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0-2c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>
+           </svg>
+            Scultura
+         </button>
 
-        <!-- Tool: Vertex Edit -->
-        <button
-          id="tool-vertex-edit" class="tool"
-          type="button"
-          title="Modifica Vertici (E)"
-          aria-label="Strumento Modifica Vertici voxel, scorciatoia E"
-          aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 18 18"
-               fill="currentColor" stroke="none"
-               aria-hidden="true">
-            <!-- Diamond at minZ corner -->
-            <polygon points="4,3 14,3 9,12"/>
-            <!-- Diamond at maxZ corner -->
-            <polygon points="4,6 14,6 9,15"
-                     fill="none" stroke="currentColor" stroke-width="1.2"/>
-          </svg>
-          Vertice
-        </button>
+         <!-- Tool: Vertex Edit -->
+         <button
+           id="tool-vertex-edit" class="tool"
+           type="button"
+           title="Modifica Vertici (E)"
+           aria-label="Strumento Modifica Vertici voxel, scorciatoia E"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 18 18"
+                fill="currentColor" stroke="none"
+                aria-hidden="true">
+             <!-- Diamond at minZ corner -->
+             <polygon points="4,3 14,3 9,12"/>
+             <!-- Diamond at maxZ corner -->
+             <polygon points="4,6 14,6 9,15"
+                      fill="none" stroke="currentColor" stroke-width="1.2"/>
+           </svg>
+           Vertice
+         </button>
 
-        <!-- Fill level input -->
-        <div class="fill-input-wrap" title="Livello Y per Fill">
-          <label for="fill-y-prompt" class="sr-only">Livello Y per riempimento</label>
-          <input type="number" id="fill-y-prompt" value="0" min="-20" max="20" step="1" />
-          <span>Y</span>
-        </div>
+         <!-- Tool: Cylinder -->
+         <button
+           id="tool-cylinder" class="tool"
+           type="button"
+           title="Cilindro (CY)"
+           aria-label="Strumento Cilindro, scorciatoia CY"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 16 16"
+                fill="currentColor" aria-hidden="true">
+             <ellipse cx="8" cy="3" rx="6" ry="2"/>
+             <path d="M2 3 v10 h12 V3 Z"/>
+           </svg>
+           Cilindro
+         </button>
+
+         <!-- Tool: Cone -->
+         <button
+           id="tool-cone" class="tool"
+           type="button"
+           title="Cono (CO)"
+           aria-label="Strumento Cono, scorciatoia CO"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 16 16"
+                fill="currentColor" aria-hidden="true">
+             <polygon points="8,2 2,14 14,14"/>
+           </svg>
+           Cono
+         </button>
+
+         <!-- Tool: Sphere -->
+         <button
+           id="tool-sphere" class="tool"
+           type="button"
+           title="Sfera (SP)"
+           aria-label="Strumento Sfera, scorciatoia SP"
+           aria-pressed="false">
+           <svg width="14" height="14" viewBox="0 0 16 16"
+                fill="currentColor" aria-hidden="true">
+             <circle cx="8" cy="8" r="6"/>
+           </svg>
+           Sfera
+         </button>
+       </div>
       </div>
 
       <div class="actions" role="group" aria-label="Azioni progetto">
@@ -166,66 +203,86 @@
         <button id="btn-reset-cam" title="Reset inquadratura"    aria-label="Reset camera">🎯 Reset Cam</button>
         <button id="btn-clear"  title="Cancella scena"           aria-label="Pulisci tutti i voxel">🗑️ Pulisci</button>
       </div>
-    </header>
+</header>
 
-    <!-- ═══════════════════════════════════════════════════
-         SCALE PANEL  (shown by JS when voxel selected)
-    ═══════════════════════════════════════════════════════ -->
-    <div id="scale-panel" class="panel" hidden>
-      <div class="panel-header" role="button" aria-expanded="true">
-        ⚖️ Scala Voxel
-        <span class="arrow" aria-hidden="true">▼</span>
-      </div>
-      <div class="panel-body">
-        <div class="scale-row">
-          <label for="scale-x">Scala X</label>
-          <input type="number" id="scale-x" step="0.1" value="1.0" />
-        </div>
-        <div class="scale-row">
-          <label for="scale-y">Scala Y</label>
-          <input type="number" id="scale-y" step="0.1" value="1.0" />
-        </div>
-        <div class="scale-row">
-          <label for="scale-z">Scala Z</label>
-          <input type="number" id="scale-z" step="0.1" value="1.0" />
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-          <button id="apply-scale" class="btn-primary">Applica Scala</button>
-        </div>
-      </div>
-     </div>
-
-     <!-- ═══════════════════════════════════════════════════
-          VERTEX EDIT PANEL  (shown by JS when vertexEdit tool active)
+      <!-- ═══════════════════════════════════════════════════
+           SIDEBAR
      ═══════════════════════════════════════════════════════ -->
-     <div id="vertex-edit-panel" class="panel" hidden>
-       <div class="panel-header" role="button" aria-expanded="true">
-         🔧 Modifica Vertici
-         <span class="arrow" aria-hidden="true">▼</span>
-       </div>
-       <div class="panel-body">
-         <div class="hint" style="margin-bottom:8px;">
-           1. Seleziona un brick, poi clicca un vertice per trascinarlo.<br/>
-           Handle per vertice: 8 bordi dorati ai vertici del cubo.<br/>
-           Le modifiche sono applicate direttamente.
-         </div>
-         <div id="vertex-handle-info" style="font-family:monospace;font-size:12px;color:#00d2ff;">
-           <span id="vertex-corner-label">—</span><br/>
-           <span id="vertex-size-label">W: — | H: — | D: —</span>
-         </div>
-         <button id="btn-vertex-apply" class="btn-primary" style="width:100%;margin-top:6px;">
-           Conferma Modifiche
-         </button>
-       </div>
-     </div>
+     <aside id="sidebar" aria-label="Pannelli laterali">
 
-     <!-- ═══════════════════════════════════════════════════
-          SIDEBAR
-    ═══════════════════════════════════════════════════════ -->
-    <aside id="sidebar" aria-label="Pannelli laterali">
+       <!-- Scale panel (shown by JS when voxel selected) -->
+       <div id="scale-panel" class="panel" hidden>
+         <div class="panel-header" role="button" aria-expanded="true">
+           ⚖️ Scala Voxel
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body">
+           <div class="scale-row">
+             <label for="scale-x">Scala X</label>
+             <input type="number" id="scale-x" step="0.1" value="1.0" />
+           </div>
+           <div class="scale-row">
+             <label for="scale-y">Scala Y</label>
+             <input type="number" id="scale-y" step="0.1" value="1.0" />
+           </div>
+           <div class="scale-row">
+             <label for="scale-z">Scala Z</label>
+             <input type="number" id="scale-z" step="0.1" value="1.0" />
+           </div>
+           <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+             <button id="apply-scale" class="btn-primary">Applica Scala</button>
+           </div>
+         </div>
+        </div>
 
-      <!-- ── Materiali ── -->
-      <div class="panel" id="panel-materials">
+       <!-- Vertex edit panel (shown by JS when vertexEdit tool active) -->
+       <div id="vertex-edit-panel" class="panel" hidden>
+         <div class="panel-header" role="button" aria-expanded="true">
+           🔧 Modifica Vertici
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body">
+           <div class="hint" style="margin-bottom:8px;">
+             1. Seleziona un brick, poi clicca un vertice per trascinarlo.<br/>
+             Handle per vertice: 8 bordi dorati ai vertici del cubo.<br/>
+             Le modifiche sono applicate direttamente.
+           </div>
+           <div id="vertex-handle-info" style="font-family:monospace;font-size:12px;color:#00d2ff;">
+             <span id="vertex-corner-label">—</span><br/>
+             <span id="vertex-size-label">W: — | H: — | D: —</span>
+           </div>
+           <button id="btn-vertex-apply" class="btn-primary" style="width:100%;margin-top:6px;">
+             Conferma Modifiche
+           </button>
+         </div>
+        </div>
+
+        <!-- Sculpt panel (shown by JS when sculpt tool active) -->
+        <div id="sculpt-panel" class="panel" hidden>
+          <div class="panel-header" role="button" aria-expanded="true">
+            🗿 Scultura
+            <span class="arrow" aria-hidden="true">▼</span>
+          </div>
+          <div class="panel-body">
+            <div class="hint" style="margin-bottom:8px;">
+              Trascina sulla superficie per <b>spingere</b> (default) o <b>tirare</b> (Shift).<br/>
+              Regola i parametri qui sotto.
+            </div>
+            <div style="margin-bottom:6px;">
+              <label for="sculpt-strength">Forza (mm/pixel)</label>
+              <input type="range" id="sculpt-strength" min="0.01" max="5" step="0.01" value="0.5" style="width:100%;" />
+              <span id="sculpt-strength-val" style="font-size:11px;color:var(--text-dim);">0.50</span>
+            </div>
+            <div>
+              <label for="sculpt-sensitivity">Sensibilità (px/mm)</label>
+              <input type="range" id="sculpt-sensitivity" min="10" max="500" step="1" value="100" style="width:100%;" />
+              <span id="sculpt-sensitivity-val" style="font-size:11px;color:var(--text-dim);">100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Materiali ── -->
+       <div class="panel" id="panel-materials">
         <div
           class="panel-header"
           role="button"

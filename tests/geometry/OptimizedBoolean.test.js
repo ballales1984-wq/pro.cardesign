@@ -1,21 +1,27 @@
 // tests/geometry/OptimizedBoolean.test.js
-import * as THREE from 'three';
-import { GeometryDecimator } from '../../src/geometry/Decimator.js';
+// NOTE: full coverage handled in test_coverage.js §27–28
+// This file skips the ESM/cjs interop issue with SimplifyModifier (three.js ESM subpath)
+// by importing Decimator under a stub mock already resolved in test_coverage.js
 
-// Mock the prepareForCSG function from the module
+import * as THREE from 'three';
+
+// GeometryDecimator mock — real behaviour verified in test_coverage.js
+jest.mock('../../src/geometry/Decimator.js', () => ({
+  GeometryDecimator: jest.fn().mockImplementation(() => ({
+    decimate: jest.fn().mockReturnValue(new THREE.BoxGeometry()),
+    decimateForCSG: jest.fn().mockReturnValue(new THREE.BoxGeometry()),
+    simplifyModifier: {},
+  })),
+}));
+
+// prepareForCSG stub
 jest.mock('../../src/geometry/OptimizedBoolean.js', () => {
   const actual = jest.requireActual('../../src/geometry/OptimizedBoolean.js');
   return {
     ...actual,
-    prepareForCSG: (mesh) => {
-      // Just return the mesh as is for testing
-      return mesh;
-    }
+    prepareForCSG: jest.fn(mesh => mesh),
   };
 });
-
-// We need to mock the GeometryDecimator as well to control its behavior
-jest.mock('../../src/geometry/Decimator.js');
 
 import { OptimizedBoolean } from '../../src/geometry/OptimizedBoolean.js';
 

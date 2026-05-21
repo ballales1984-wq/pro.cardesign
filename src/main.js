@@ -3,9 +3,7 @@
  * Three.js-based voxel editor with physics & module system
  */
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelEngine } from './voxel-engine.js';
 import { MaterialSystem } from './material-system.js';
@@ -29,7 +27,7 @@ camera.position.set(8, 10, 12);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-renderer.setSize(window.innerWidth - 270, window.innerHeight - 48);
+renderer.setSize(window.innerWidth - 260, window.innerHeight - 48);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -102,7 +100,7 @@ const ui = new UI({
 
 // Resize
 window.addEventListener('resize', () => {
-  const w = window.innerWidth - 270;
+  const w = window.innerWidth - 260;
   const h = window.innerHeight - 48;
   camera.aspect = w / h;
   camera.updateProjectionMatrix();

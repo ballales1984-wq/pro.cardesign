@@ -125,14 +125,17 @@ export class SculptTool {
     return this.pointer;
   }
 
-_onMouseDown(event) {
+  _onMouseDown(event) {
+    console.log('[SculptTool._onMouseDown] isActive:', this.isActive, 'button:', event.button);
     if (!this.isActive || event.button !== 0) return;
 
     const mouse = this._getMousePos(event);
+    console.log('[SculptTool._onMouseDown] pointer:', mouse.x.toFixed(3), mouse.y.toFixed(3));
     this.raycaster.setFromCamera(mouse, this.camera);
 
     // Intersect with voxel group children (InstancedMeshes)
     const voxelGroup = this.voxelEngine.voxelGroup;
+    console.log('[SculptTool._onMouseDown] voxelGroup children:', voxelGroup?.children?.length ?? 'none');
     const intersections = this.raycaster.intersectObjects(
       voxelGroup.children, true
     );
@@ -189,6 +192,7 @@ _onMouseDown(event) {
     if (!this.isDragging) return;
 
     const mouse = this._getMousePos(event);
+    console.log('[Sculpt._onMouseMove] dragging, pointer:', mouse.x.toFixed(3), mouse.y.toFixed(3));
 
     if (this.isDragging && this.selectedVoxel && this.dragStartPoint) {
       this.raycaster.setFromCamera(mouse, this.camera);
@@ -225,6 +229,11 @@ _onMouseDown(event) {
           this.selectedVoxel.z
         );
 
+        console.log('[Sculpt._onMouseMove] voxel found:', !!voxel,
+                    'dragDist:', dragDistance.toFixed(4),
+                    'deformation:', deformation.toFixed(4),
+                    'finalDeform:', finalDeformation.toFixed(4));
+
         if (voxel) {
           if (!voxel.scale) voxel.scale = [1, 1, 1];
 
@@ -234,6 +243,10 @@ _onMouseDown(event) {
 
           const baseScale = this.startVoxelData ? this.startVoxelData.scale[normalAxis] : 1;
           const newScale = Math.max(0.1, baseScale + finalDeformation); // Minimum 0.1 to prevent collapsing
+
+          console.log('[Sculpt._onMouseMove] normalAxis:', normalAxis,
+                      'baseScale:', baseScale.toFixed(3),
+                      'newScale:', newScale.toFixed(3));
 
           voxel.scale[normalAxis] = newScale;
 
@@ -282,12 +295,14 @@ _onMouseDown(event) {
 
   _applyVoxelScale(voxel) {
     const key = voxel.x + ',' + voxel.y + ',' + voxel.z;
+    console.log('[Sculpt._applyVoxelScale] key:', key, 'scale:', voxel.scale?.join(','));
     const materialName = voxel.material;
     const mesh = this.voxelEngine.instancedMeshes.get(materialName);
 
     if (mesh) {
       const instMap = this.voxelEngine.keyToInstance.get(materialName);
       const instanceId = instMap ? instMap.get(key) : undefined;
+      console.log('[Sculpt._applyVoxelScale] instMap exists:', !!instMap, 'instanceId:', instanceId);
       if (instanceId !== undefined) {
         const scale = voxel.scale || [1, 1, 1];
         this.voxelEngine._setInstanceMatrix(
@@ -296,7 +311,12 @@ _onMouseDown(event) {
           this.voxelEngine._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z }),
           new THREE.Vector3(scale[0], scale[1], scale[2])
         );
+        console.log('[Sculpt._applyVoxelScale] _setInstanceMatrix DONE, newScale:', scale.join(','));
+      } else {
+        console.warn('[Sculpt._applyVoxelScale] instanceId is undefined for key:', key);
       }
+    } else {
+      console.warn('[Sculpt._applyVoxelScale] No mesh for material:', materialName);
     }
   }
 

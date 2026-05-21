@@ -26,9 +26,10 @@ export class UI {
       this._subscribeEvents();
       
       // Defer non-critical UI work
-      requestIdleCallback(() => {
-        this._setupPanels();
-        this._setupProceduralPanel();
+       requestIdleCallback(() => {
+         this._setupPanels();
+        this._setupSculptPanelListeners();
+         this._setupProceduralPanel();
         this._populateMaterials();
         this._populateModules();
         this._setupLibrary();
@@ -53,50 +54,64 @@ export class UI {
     }, 2500);
   }
 
-    // Toolbar
-    _setupToolbar() {
-        var self = this;
-        document.getElementById('tool-select').addEventListener('click', function() { self.voxelEngine.setTool('select'); });
-        document.getElementById('tool-add').addEventListener('click', function() { self.voxelEngine.setTool('add'); });
-        document.getElementById('tool-remove').addEventListener('click', function() { self.voxelEngine.setTool('remove'); });
-        document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
-document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
-         document.getElementById('tool-sculpt').addEventListener('click', function() { self.voxelEngine.setTool('sculpt'); });
-         document.getElementById('tool-vertex-edit').addEventListener('click', function() { self.voxelEngine.setTool('vertexEdit'); });
+  // Toolbar
+  _setupToolbar() {
+      var self = this;
+      document.getElementById('tool-select').addEventListener('click', function() { self.voxelEngine.setTool('select'); });
+      document.getElementById('tool-add').addEventListener('click', function() { self.voxelEngine.setTool('add'); });
+      document.getElementById('tool-remove').addEventListener('click', function() { self.voxelEngine.setTool('remove'); });
+      document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
+      document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
+      document.getElementById('tool-sculpt').addEventListener('click', function() { self.voxelEngine.setTool('sculpt'); });
+      document.getElementById('tool-vertex-edit').addEventListener('click', function() { self.voxelEngine.setTool('vertexEdit'); });
+      document.getElementById('tool-cylinder').addEventListener('click', function() { self.voxelEngine.setTool('cylinder'); });
+      document.getElementById('tool-cone').addEventListener('click', function() { self.voxelEngine.setTool('cone'); });
+      document.getElementById('tool-sphere').addEventListener('click', function() { self.voxelEngine.setTool('sphere'); });
 
-        document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
-        document.getElementById('btn-import').addEventListener('click', function() { self._openImportModal(); });
-        document.getElementById('btn-sim').addEventListener('click', function() { self._runSimulation(); });
-        document.getElementById('btn-clear').addEventListener('click', function() { self._confirmClear(); });
-        document.getElementById('btn-undo').addEventListener('click', function() { self.voxelEngine.undo(); self._refreshProperties(); });
-        document.getElementById('btn-redo').addEventListener('click', function() { self.voxelEngine.redo(); self._refreshProperties(); });
-        document.getElementById('btn-save').addEventListener('click', function() { self._saveProject(); });
-        document.getElementById('btn-load').addEventListener('click', function() { self._loadProject(); });
-        document.getElementById('btn-reset-cam').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
-        document.getElementById('cam-fit').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
-        document.getElementById('cam-iso').addEventListener('click', function() { self.voxelEngine.setCameraView('iso'); });
-        document.getElementById('cam-front').addEventListener('click', function() { self.voxelEngine.setCameraView('front'); });
-        document.getElementById('cam-right').addEventListener('click', function() { self.voxelEngine.setCameraView('right'); });
-        document.getElementById('cam-top').addEventListener('click', function() { self.voxelEngine.setCameraView('top'); });
-        document.getElementById('cam-orbit').addEventListener('click', function() {
-            self.voxelEngine.setCameraNavigationMode(!self.voxelEngine.cameraNavigationMode);
-        });
-        document.getElementById('cam-zoom-in').addEventListener('click', function() { self.voxelEngine.zoomCamera(0.82); });
-        document.getElementById('cam-zoom-out').addEventListener('click', function() { self.voxelEngine.zoomCamera(1.22); });
+      document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
+      document.getElementById('btn-import').addEventListener('click', function() { self._openImportModal(); });
+      document.getElementById('btn-sim').addEventListener('click', function() { self._runSimulation(); });
+      document.getElementById('btn-clear').addEventListener('click', function() { self._confirmClear(); });
+      document.getElementById('btn-undo').addEventListener('click', function() { self.voxelEngine.undo(); self._refreshProperties(); });
+      document.getElementById('btn-redo').addEventListener('click', function() { self.voxelEngine.redo(); self._refreshProperties(); });
+      document.getElementById('btn-save').addEventListener('click', function() { self._saveProject(); });
+      document.getElementById('btn-load').addEventListener('click', function() { self._loadProject(); });
+      document.getElementById('btn-reset-cam').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
+      document.getElementById('cam-fit').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
+      document.getElementById('cam-iso').addEventListener('click', function() { self.voxelEngine.setCameraView('iso'); });
+      document.getElementById('cam-front').addEventListener('click', function() { self.voxelEngine.setCameraView('front'); });
+      document.getElementById('cam-right').addEventListener('click', function() { self.voxelEngine.setCameraView('right'); });
+      document.getElementById('cam-top').addEventListener('click', function() { self.voxelEngine.setCameraView('top'); });
+      document.getElementById('cam-orbit').addEventListener('click', function() {
+          self.voxelEngine.setCameraNavigationMode(!self.voxelEngine.cameraNavigationMode);
+      });
+      document.getElementById('cam-zoom-in').addEventListener('click', function() { self.voxelEngine.zoomCamera(0.82); });
+      document.getElementById('cam-zoom-out').addEventListener('click', function() { self.voxelEngine.zoomCamera(1.22); });
 
-        window.addEventListener('camera-navigation-changed', function(e) {
-            document.getElementById('cam-orbit').classList.toggle('active', !!e.detail);
-            document.getElementById('tool-hint').textContent = e.detail
-                ? 'Camera: orbit 360 (drag sinistro), pan centrale, zoom rotella'
-                : 'Strumento: ' + (toolNames[self.voxelEngine.activeTool] || self.voxelEngine.activeTool);
-        });
+      window.addEventListener('camera-navigation-changed', function(e) {
+          document.getElementById('cam-orbit').classList.toggle('active', !!e.detail);
+          document.getElementById('tool-hint').textContent = e.detail
+              ? 'Camera: orbit 360 (drag sinistro), pan centrale, zoom rotella'
+              : 'Strumento: ' + (toolNames[self.voxelEngine.activeTool] || self.voxelEngine.activeTool);
+      });
 
-        var toolNames = { add: 'Aggiungi (A)', remove: 'Rimuovi (R)', select: 'Seleziona (V)', fill: 'Riempimento (F)', scaling: 'Scala (S)', sculpt: 'Scultura (D)', vertexEdit: 'Vertice (E)' };
-        window.addEventListener('tool-changed', function(e) {
-            var hint = toolNames[e.detail] || e.detail;
-            document.getElementById('tool-hint').textContent = 'Strumento: ' + hint;
-        });
-    }
+      var toolNames = { 
+        add: 'Aggiungi (A)', 
+        remove: 'Rimuovi (R)', 
+        select: 'Seleziona (V)', 
+        fill: 'Riempimento (F)', 
+        scaling: 'Scala (S)', 
+        sculpt: 'Scultura (D)', 
+        vertexEdit: 'Vertice (E)',
+        cylinder: 'Cilindro (CY)',
+        cone: 'Cono (CO)',
+        sphere: 'Sfera (SP)'
+      };
+      window.addEventListener('tool-changed', function(e) {
+          var hint = toolNames[e.detail] || e.detail;
+          document.getElementById('tool-hint').textContent = 'Strumento: ' + hint;
+      });
+  }
 
   // Panels
   _setupPanels() {
@@ -127,13 +142,13 @@ document.getElementById('tool-scaling').addEventListener('click', function() { s
       if (!self.voxelEngine.activeModule) return self._notify('Seleziona un modulo dal pannello Moduli', 'warn');
       var mod = self.moduleSystem.get(self.voxelEngine.activeModule);
       if (!mod) return;
-      if (confirm('Rimuovere modulo "' + mod.name + '" e tutti i suoi figli?')) {
+      self._showConfirm('Rimuovere modulo "' + mod.name + '" e tutti i suoi figli?', function() {
         self.moduleSystem.removeModule(self.voxelEngine.activeModule);
         self.voxelEngine.activeModule = null;
         self._refreshModules();
         self._showVoxelProperties(null);
         self._notify('Modulo "' + mod.name + '" rimosso', 'success');
-      }
+      });
     });
 
     // Add custom material
@@ -165,12 +180,12 @@ document.getElementById('tool-scaling').addEventListener('click', function() { s
     document.getElementById('btn-remove-material').addEventListener('click', function() {
       var matName = self.voxelEngine.activeMaterial;
       if (self.materialDB.count() <= 1) return self._notify('Non puoi rimuovere tutti i materiali', 'warn');
-      if (confirm('Rimuovere il materiale "' + matName + '"?')) {
+      self._showConfirm('Rimuovere il materiale "' + matName + '"?', function() {
         self.materialDB.remove(matName);
         self.voxelEngine.activeMaterial = self.materialDB.getAll()[0].name;
         self._refreshMaterials();
         self._notify('Materiale "' + matName + '" rimosso', 'success');
-      }
+      });
     });
   }
 
@@ -264,12 +279,12 @@ document.getElementById('tool-scaling').addEventListener('click', function() { s
         document.querySelectorAll('.rule-delete-btn').forEach(btn => {
           btn.addEventListener('click', function() {
             const ruleName = this.getAttribute('data-rule');
-            if (confirm(`Eliminare la regola "${ruleName}"?`)) {
+            self._showConfirm('Eliminare la regola "' + ruleName + '"?', function() {
               self.proceduralEngine.rules.delete(ruleName);
               populateRulesList();
               bindRuleButtons();
-              self._notify(`Regola "${ruleName}" eliminata`, 'success');
-            }
+              self._notify('Regola "' + ruleName + '" eliminata', 'success');
+            });
           });
         });
       }
@@ -667,15 +682,38 @@ document.getElementById('tool-scaling').addEventListener('click', function() { s
     input.click();
   }
 
+  // Modal confirmation helper (replaces native confirm)
+  _showConfirm(message, callback) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    overlay.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:320px;box-shadow:0 24px 64px rgba(0,0,0,.6);">
+        <p style="margin:0 0 18px;font-size:14px;color:var(--text);line-height:1.5;">${message}</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button id="q-cancel" style="padding:8px 18px;background:var(--hover);color:var(--text);border:none;border-radius:6px;cursor:pointer;">Annulla</button>
+          <button id="q-ok" style="padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Conferma</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    const onCancel = () => { close(); overlay.removeEventListener('click', onBackdrop); };
+    const onBackdrop = (e) => { if (e.target === overlay) onCancel(); };
+
+    document.getElementById('q-cancel').addEventListener('click', onCancel, { once: true });
+    document.getElementById('q-ok').addEventListener('click', () => { close(); callback(); }, { once: true });
+    overlay.addEventListener('click', onBackdrop);
+  }
+
   // Clear confirmation
   _confirmClear() {
-    if (confirm('Eliminare tutti i voxel?')) {
+    this._showConfirm('Eliminare tutti i voxel?', () => {
       this.voxelEngine.clearAll();
       document.getElementById('properties-panel').innerHTML = '<p class="hint">Seleziona un voxel o un modulo</p>';
       document.getElementById('physics-panel').innerHTML = '<p class="hint">Clicca per calcolare</p>';
       this._renderModuleTree();
       this._notify('Tutto cancellato', 'info');
-    }
+    });
   }
 
   // ── Export Mesh ───────────────────────────────────────────────
@@ -820,39 +858,42 @@ document.getElementById('tool-scaling').addEventListener('click', function() { s
     setTimeout(() => { if (panel.parentNode) panel.remove(); }, 15000);
   }
 
-// Keyboard shortcuts
-  _setupKeyboard() {
-    var self = this;
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        self.voxelEngine.selectedVoxel = null;
-        self._showVoxelProperties(null);
-      }
-      // Ctrl+Z → Undo
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        self.voxelEngine.undo();
-        self._refreshProperties();
-        self._notify('Undo', 'info');
-      }
-      // Ctrl+Y or Ctrl+Shift+Z → Redo
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-        e.preventDefault();
-        self.voxelEngine.redo();
-        self._refreshProperties();
-        self._notify('Redo', 'info');
-      }
-// Tool shortcuts
-       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-         if (e.key === 'a' || e.key === 'A') self.voxelEngine.setTool('add');
-         if (e.key === 'r' || e.key === 'R') self.voxelEngine.setTool('remove');
-         if (e.key === 'v' || e.key === 'V') self.voxelEngine.setTool('select');
-         if (e.key === 's' || e.key === 'S') self.voxelEngine.setTool('scaling');
-         if (e.key === 'd' || e.key === 'D') self.voxelEngine.setTool('sculpt');
-         if (e.key === 'e' || e.key === 'E') self.voxelEngine.setTool('vertexEdit');
+   // Keyboard shortcuts
+   _setupKeyboard() {
+     var self = this;
+     document.addEventListener('keydown', function(e) {
+       if (e.key === 'Escape') {
+         self.voxelEngine.selectedVoxel = null;
+         self._showVoxelProperties(null);
        }
-    });
-  }
+       // Ctrl+Z → Undo
+       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+         e.preventDefault();
+         self.voxelEngine.undo();
+         self._refreshProperties();
+         self._notify('Undo', 'info');
+       }
+       // Ctrl+Y or Ctrl+Shift+Z → Redo
+       if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+         e.preventDefault();
+         self.voxelEngine.redo();
+         self._refreshProperties();
+         self._notify('Redo', 'info');
+       }
+     // Tool shortcuts
+      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === 'a' || e.key === 'A') self.voxelEngine.setTool('add');
+        if (e.key === 'r' || e.key === 'R') self.voxelEngine.setTool('remove');
+        if (e.key === 'v' || e.key === 'V') self.voxelEngine.setTool('select');
+        if (e.key === 's' || e.key === 'S') self.voxelEngine.setTool('scaling');
+        if (e.key === 'd' || e.key === 'D') self.voxelEngine.setTool('sculpt');
+        if (e.key === 'e' || e.key === 'E') self.voxelEngine.setTool('vertexEdit');
+        if (e.key === 'c' || e.key === 'C') self.voxelEngine.setTool('cylinder');
+        if (e.key === 'o' || e.key === 'O') self.voxelEngine.setTool('cone');
+        if (e.key === 'p' || e.key === 'P') self.voxelEngine.setTool('sphere');
+      }
+     });
+   }
 
   // Event subscriptions
   _subscribeEvents() {
@@ -862,12 +903,49 @@ document.getElementById('tool-scaling').addEventListener('click', function() { s
     });
 
     window.addEventListener('tool-changed', function(e) {
+    // Show/hide sculpt panel
+    const sculptPanel = document.getElementById('sculpt-panel');
+    if (sculptPanel) {
+      sculptPanel.hidden = (e.detail !== 'sculpt');
+    }
       self._showVoxelProperties(self.voxelEngine.getVoxelAt(
         self.voxelEngine.selectedVoxel ? self.voxelEngine.selectedVoxel.x : undefined,
         self.voxelEngine.selectedVoxel ? self.voxelEngine.selectedVoxel.y : undefined,
         self.voxelEngine.selectedVoxel ? self.voxelEngine.selectedVoxel.z : undefined
       ));
     });
+  }
+
+  _setupSculptPanelListeners() {
+    var self = this;
+    const strengthInput   = document.getElementById('sculpt-strength');
+    const strengthVal     = document.getElementById('sculpt-strength-val');
+    const sensitivityInput = document.getElementById('sculpt-sensitivity');
+    const sensitivityVal  = document.getElementById('sculpt-sensitivity-val');
+
+    if (this.voxelEngine.sculptTool) {
+      // Sync initial values
+      if (strengthInput) strengthInput.value = this.voxelEngine.sculptTool.strength;
+      if (strengthVal)   strengthVal.textContent   = this.voxelEngine.sculptTool.strength.toFixed(2);
+      if (sensitivityInput) sensitivityInput.value = this.voxelEngine.sculptTool.sensitivity;
+      if (sensitivityVal)  sensitivityVal.textContent  = this.voxelEngine.sculptTool.sensitivity;
+
+      if (strengthInput) {
+        strengthInput.addEventListener('input', function() {
+          const v = parseFloat(this.value);
+          if (self.voxelEngine.sculptTool) self.voxelEngine.sculptTool.strength = v;
+          if (strengthVal) strengthVal.textContent = v.toFixed(2);
+        });
+      }
+
+      if (sensitivityInput) {
+        sensitivityInput.addEventListener('input', function() {
+          const v = parseInt(this.value, 10);
+          if (self.voxelEngine.sculptTool) self.voxelEngine.sculptTool.sensitivity = v;
+          if (sensitivityVal) sensitivityVal.textContent = v;
+        });
+      }
+    }
   }
 
   // Random color

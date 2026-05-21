@@ -99,6 +99,48 @@ export class BrickSystem {
         return brick;
     }
 
+    createCylinder(id, name, radius, height, position = {x: 0, y: 0, z: 0}, material = 'steel') {
+        // Cylinder occupies a box of [2*radius, height, 2*radius]
+        const brick = new Brick(
+            id,
+            name,
+            position,
+            { x: 2 * radius, y: height, z: 2 * radius },
+            material
+        );
+        this.bricks.set(brick.id, brick);
+        this.updateBrickVisual(brick);
+        return brick;
+    }
+
+    createCone(id, name, radius, height, position = {x: 0, y: 0, z: 0}, material = 'steel') {
+        // Cone occupies same bounding box as cylinder: [2*radius, height, 2*radius]
+        const brick = new Brick(
+            id,
+            name,
+            position,
+            { x: 2 * radius, y: height, z: 2 * radius },
+            material
+        );
+        this.bricks.set(brick.id, brick);
+        this.updateBrickVisual(brick);
+        return brick;
+    }
+
+    createSphere(id, name, diameter, position = {x: 0, y: 0, z: 0}, material = 'steel') {
+        // Sphere occupies a cube: [diameter, diameter, diameter]
+        const brick = new Brick(
+            id,
+            name,
+            position,
+            { x: diameter, y: diameter, z: diameter },
+            material
+        );
+        this.bricks.set(brick.id, brick);
+        this.updateBrickVisual(brick);
+        return brick;
+    }
+
     updateBrickVisual(brick) {
         if (brick.mesh) {
             this.brickGroup.remove(brick.mesh);

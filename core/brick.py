@@ -87,11 +87,41 @@ def create_bar(id: int, name: str, length_mm: float, axis: str = 'x',
 
 
 def create_wheel_tire(id: int, name: str, radius_mm: float = 270, 
-                      width_mm: float = 250, position_mm: list = None) -> Brick:
+                       width_mm: float = 250, position_mm: list = None) -> Brick:
     """Brick approximation for tire"""
     if position_mm is None:
         position_mm = [0, radius_mm, 0]
     return create_brick(id, name, [width_mm, radius_mm*2, radius_mm*2], position_mm, "rubber")
+
+
+def create_cylinder(id: int, name: str, radius_mm: float, height_mm: float, 
+                    position_mm: list = None, material: str = "steel") -> Brick:
+    """Create a cylinder with specified radius and height in mm"""
+    if position_mm is None:
+        position_mm = [0.0, 0.0, 0.0]
+    # Cylinder occupies a box of [2*radius, height, 2*radius]
+    size = [2 * radius_mm, height_mm, 2 * radius_mm]
+    return create_brick(id, name, size, position_mm, material)
+
+
+def create_cone(id: int, name: str, radius_mm: float, height_mm: float, 
+                position_mm: list = None, material: str = "steel") -> Brick:
+    """Create a cone with specified radius and height in mm"""
+    if position_mm is None:
+        position_mm = [0.0, 0.0, 0.0]
+    # Cone occupies same bounding box as cylinder: [2*radius, height, 2*radius]
+    size = [2 * radius_mm, height_mm, 2 * radius_mm]
+    return create_brick(id, name, size, position_mm, material)
+
+
+def create_sphere(id: int, name: str, diameter_mm: float, 
+                  position_mm: list = None, material: str = "steel") -> Brick:
+    """Create a sphere with specified diameter in mm"""
+    if position_mm is None:
+        position_mm = [0.0, 0.0, 0.0]
+    # Sphere occupies a cube: [diameter, diameter, diameter]
+    size = [diameter_mm, diameter_mm, diameter_mm]
+    return create_brick(id, name, size, position_mm, material)
 
 
 # ID counter for new bricks

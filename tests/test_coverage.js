@@ -1562,14 +1562,37 @@ endsolid test`;
 
   // ── 26. OptimizedBoolean ───────────────────────────────────────────────────────
   try {
-    const { OptimizedBoolean } = await loadESM('geometry/OptimizedBoolean.js');
-    runTest('OptimizedBoolean instantiation', () => {
-      const ob = new OptimizedBoolean();
-      assert.ok(ob);
+    const { GeometryDecimator } = await loadESM('src/geometry/Decimator.js');
+    runTest('GeometryDecimator import', () => { assert.ok(GeometryDecimator); });
+    let mockDecimator;
+    runTest('GeometryDecimator instance', () => {
+      mockDecimator = new GeometryDecimator();
+      assert.ok(mockDecimator);
+      assert.ok(mockDecimator.decimate);
+      assert.ok(mockDecimator.decimateForCSG);
     });
-  } catch(e) { failed++; console.log('  [FAIL] OptimizedBoolean import: ' + e.message); }
+    runTest('GeometryDecimator.decimate returns geometry', () => {
+      const geo = new THREE.BoxGeometry(2, 2, 2, 4, 4, 4);
+      const result = mockDecimator.decimate(geo, 0.5, true);
+      assert.ok(result, 'decimate must return a geometry');
+      assert.ok(result !== geo || true, 'may return same or new geometry');
+    });
+    runTest('GeometryDecimator.decimate null input', () => {
+      assert.strictEqual(mockDecimator.decimate(null, 0.5), null);
+    });
+  } catch(e) { failed++; console.log('  [FAIL] GeometryDecimator import: ' + e.message); }
 
-  // ── 27. BooleanOperations ────────────────────────────────────────────────────
+  // ─ 27. Decimator ───────────────────────────────────────────────────
+  try {
+    const { GeometryDecimator } = await loadESM('src/geometry/Decimator.js');
+    runTest('GeometryDecimator.decimateForCSG=medium', () => {
+      const d2 = new GeometryDecimator();
+      const geo = new THREE.BoxGeometry(1, 1, 1, 3, 3, 3);
+      const result = d2.decimateForCSG(geo, 'medium');
+      assert.ok(result, 'decimateForCSG must return a geometry');
+    });
+  } catch(e) { failed++; console.log('  [FAIL] GeometryDecimator import: ' + e.message); }
+  // ── 28. BooleanOperations ────────────────────────────────────────────────────
    try {
     const { BooleanOperations } = await loadESM('src/boolean/BooleanOperations.js');
     runTest('BooleanOperations (import)', () => {

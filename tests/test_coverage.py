@@ -14,7 +14,7 @@ import numpy as np
 # Add root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.brick import Brick, create_brick, create_cube, create_bar, create_wheel_tire, next_brick_id
+from core.brick import Brick, create_brick, create_cube, create_bar, create_wheel_tire, create_cylinder, create_cone, create_sphere, next_brick_id
 from core.component import ComponentDefinition, ComponentInstance, ComponentLibrary, create_component_instance
 
 
@@ -60,36 +60,60 @@ class TestBrick(unittest.TestCase):
 
 class TestCreateHelpers(unittest.TestCase):
     """Tests for factory functions"""
-    
+
     def test_create_cube(self):
         cube = create_cube(1, "Cube", 50, [0, 0, 0])
         self.assertAlmostEqual(cube.size[0], 50)
         self.assertAlmostEqual(cube.size[1], 50)
         self.assertAlmostEqual(cube.size[2], 50)
-    
+
     def test_create_bar_x(self):
         bar = create_bar(1, "Bar X", 200, 'x', 20)
         self.assertAlmostEqual(bar.size[0], 200)
         self.assertAlmostEqual(bar.size[1], 20)
         self.assertAlmostEqual(bar.size[2], 20)
-    
+
     def test_create_bar_y(self):
         bar = create_bar(1, "Bar Y", 300, 'y', 25)
         self.assertAlmostEqual(bar.size[0], 25)
         self.assertAlmostEqual(bar.size[1], 300)
         self.assertAlmostEqual(bar.size[2], 25)
-    
+
     def test_create_bar_z(self):
         bar = create_bar(1, "Bar Z", 150, 'z', 15)
         self.assertAlmostEqual(bar.size[0], 15)
         self.assertAlmostEqual(bar.size[1], 15)
         self.assertAlmostEqual(bar.size[2], 150)
-    
+
     def test_create_wheel_tire(self):
         wheel = create_wheel_tire(1, "Wheel", 270, 250)
         self.assertAlmostEqual(wheel.size[1], 540)  # diameter = 2*radius
         self.assertAlmostEqual(wheel.size[2], 540)
         self.assertAlmostEqual(wheel.size[0], 250)  # width
+
+    def test_create_cylinder(self):
+        cylinder = create_cylinder(1, "Cylinder", 30, 100, [10, 20, 30])
+        # Cylinder occupies [2*radius, height, 2*radius] = [60, 100, 60]
+        self.assertAlmostEqual(cylinder.size[0], 60)
+        self.assertAlmostEqual(cylinder.size[1], 100)
+        self.assertAlmostEqual(cylinder.size[2], 60)
+        np.testing.assert_array_equal(cylinder.position, [10, 20, 30])
+
+    def test_create_cone(self):
+        cone = create_cone(1, "Cone", 25, 80, [5, 15, 25])
+        # Cone occupies same bounding box as cylinder: [2*radius, height, 2*radius] = [50, 80, 50]
+        self.assertAlmostEqual(cone.size[0], 50)
+        self.assertAlmostEqual(cone.size[1], 80)
+        self.assertAlmostEqual(cone.size[2], 50)
+        np.testing.assert_array_equal(cone.position, [5, 15, 25])
+
+    def test_create_sphere(self):
+        sphere = create_sphere(1, "Sphere", 40, [0, 0, 0])
+        # Sphere occupies a cube: [diameter, diameter, diameter] = [40, 40, 40]
+        self.assertAlmostEqual(sphere.size[0], 40)
+        self.assertAlmostEqual(sphere.size[1], 40)
+        self.assertAlmostEqual(sphere.size[2], 40)
+        np.testing.assert_array_equal(sphere.position, [0, 0, 0])
 
 
 class TestIDCounter(unittest.TestCase):

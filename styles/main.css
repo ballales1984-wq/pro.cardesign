@@ -956,20 +956,7 @@ button[disabled] {
 .rule-edit-btn:hover  { background: var(--surface);   color: var(--text); }
 .rule-delete-btn:hover { background: #4a2020; color: #f88; }
 
-/* --------------------------------------------------------------------------
-   SCALE PANEL
-   -------------------------------------------------------------------------- */
-
-#scale-panel.panel {
-  background:  var(--bg-surface);
-  border-top:  1px solid var(--border);
-  display:     none;
-}
-
-#scale-panel .panel-body {
-  padding: var(--gutter-sm) var(--gutter-md);
-}
-
+/* Scale row - used in scale-panel */
 .scale-row {
   display:         flex;
   align-items:     center;

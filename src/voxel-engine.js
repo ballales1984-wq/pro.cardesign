@@ -5,9 +5,7 @@
  * instead of one per voxel. Improvement: ~10-50x with large scenes.
  */
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+import * as THREE from 'three';
 import { Chunk } from './core/chunk-system.js';
 import { ScalingTool } from './core/scaling-tool.js';
 import { SculptTool } from './core/sculpt-tool.js';
@@ -266,34 +264,34 @@ export class VoxelEngine {
               }
           }
    
-       // ── Rendering ────────────────────────────────────────────────
-   
-       _createAxisLabels() {
-         const makeLabel = (text, color, pos) => {
-           const canvas = document.createElement('canvas');
-           canvas.width = 128;
-           canvas.height = 64;
-           const ctx = canvas.getContext('2d');
-           ctx.font = 'bold 48px sans-serif';
-           ctx.fillStyle = '#' + color;
-           ctx.textAlign = 'center';
-           ctx.textBaseline = 'middle';
-           ctx.fillText(text, 64, 32);
-           const tex = new THREE.CanvasTexture(canvas);
-           tex.needsUpdate = true;
-           const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
-           const sprite = new THREE.Sprite(spriteMat);
-           sprite.position.copy(pos);
-           sprite.scale.set(1.2, 0.6, 1);
-           this.scene.add(sprite);
-         };
-   
-         makeLabel('X', 'ff4444', new THREE.Vector3(6, 0, 0));
-         makeLabel('Y', '44ff44', new THREE.Vector3(0, 6, 0));
-         makeLabel('Z', '4488ff', new THREE.Vector3(0, 0, 6));
-       }
-   
-_createGhost() {
+        // ── Rendering ────────────────────────────────────────────────
+    
+        _createAxisLabels() {
+          const makeLabel = (text, color, pos) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.font = 'bold 48px sans-serif';
+            ctx.fillStyle = '#' + color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 64, 32);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.position.copy(pos);
+            sprite.scale.set(1.2, 0.6, 1);
+            this.scene.add(sprite);
+          };
+    
+          makeLabel('X', 'ff4444', new THREE.Vector3(6, 0, 0));
+          makeLabel('Y', '44ff44', new THREE.Vector3(0, 6, 0));
+          makeLabel('Z', '4488ff', new THREE.Vector3(0, 0, 6));
+        }
+    
+        _createGhost() {
           const geo = new THREE.BoxGeometry(this.voxelSize, this.voxelSize, this.voxelSize);
           const mat = new THREE.MeshBasicMaterial({
             color: 0x00d2ff,
@@ -302,71 +300,28 @@ _createGhost() {
             depthWrite: false,
             wireframe: true,
           });
-         this.ghost = new THREE.Mesh(geo, mat);
-         this.ghost.visible = false;
-         this.scene.add(this.ghost);
-       }
-   
-       _createHighlight() {
-         const geo = new THREE.BoxGeometry(
-           this.voxelSize * 1.05,
-           this.voxelSize * 1.05,
-           this.voxelSize * 1.05
-         );
-const edges = new THREE.EdgesGeometry(geo);
+          this.ghost = new THREE.Mesh(geo, mat);
+          this.ghost.visible = false;
+          this.scene.add(this.ghost);
+        }
+    
+        _createHighlight() {
+          const geo = new THREE.BoxGeometry(
+            this.voxelSize * 1.05,
+            this.voxelSize * 1.05,
+            this.voxelSize * 1.05
+          );
+          const edges = new THREE.EdgesGeometry(geo);
           const mat = new THREE.LineBasicMaterial({
             color: 0xe94560,
             transparent: true,
             opacity: 0.8,
           });
-         this.highlight = new THREE.LineSegments(edges, mat);
-         this.highlight.visible = false;
-         this.scene.add(this.highlight);
-       }
-   
-_setupEvents() {
-              const canvas = this.renderer.domElement;
-              canvas.addEventListener('pointermove', (e) => this._onPointerMove(e));
-              canvas.addEventListener('click', (e) => {
-                this._onPointerClick(e);
-                // Prevent OrbitControls from handling this click
-                e.stopPropagation();
-              });
-              canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-              window.addEventListener('keydown', (e) => this._onKeyDown(e));
-          }
-   
-         _setupScalePanelListeners() {
-             const self = this;
-             
-             // Apply scale button
-             document.getElementById('apply-scale').addEventListener('click', function() {
-                 if (!self.selectedVoxel) {
-                     self._notify('Select a voxel before applying scale', 'warn');
-                     return;
-                 }
-                 
-                 const scaleX = parseFloat(document.getElementById('scale-x').value) || 1.0;
-                 const scaleY = parseFloat(document.getElementById('scale-y').value) || 1.0;
-                 const scaleZ = parseFloat(document.getElementById('scale-z').value) || 1.0;
-                 
-                 self.scaleSelectedVoxel(scaleX, scaleY, scaleZ);
-             });
-             
-             // Update scale inputs when voxel is selected
-             window.addEventListener('voxel-selected', function(e) {
-                 const voxel = e.detail;
-                 if (voxel) {
-                     document.getElementById('scale-x').value = voxel.scale ? voxel.scale[0] : 1;
-                     document.getElementById('scale-y').value = voxel.scale ? voxel.scale[1] : 1;
-                     document.getElementById('scale-z').value = voxel.scale ? voxel.scale[2] : 1;
-                     document.getElementById('scale-panel').style.display = 'block';
-                 } else {
-                     document.getElementById('scale-panel').style.display = 'none';
-                 }
-             });
-         }
-         
+          this.highlight = new THREE.LineSegments(edges, mat);
+          this.highlight.visible = false;
+          this.scene.add(this.highlight);
+        }
+    
         scaleSelectedVoxel(scaleX, scaleY, scaleZ) {
             if (!this.selectedVoxel) return false;
             
@@ -577,6 +532,18 @@ _setupEvents() {
             }
           } else if (this.activeTool === 'select') {
             this.selectVoxel(hit.x, hit.y, hit.z);
+          } else if (this.activeTool === 'cylinder') {
+            const pos = hit.isGround ? { x: hit.x, y: 25, z: hit.z } : { x: hit.x, y: hit.y, z: hit.z };
+            const count = this.addCylinder(pos, 20, 50, this.activeMaterial);
+            this._notify(`Cilindro creato: ${count.length} voxel`, 'success');
+          } else if (this.activeTool === 'cone') {
+            const pos = hit.isGround ? { x: hit.x, y: 25, z: hit.z } : { x: hit.x, y: hit.y, z: hit.z };
+            const count = this.addCone(pos, 20, 50, this.activeMaterial);
+            this._notify(`Cono creato: ${count.length} voxel`, 'success');
+          } else if (this.activeTool === 'sphere') {
+            const pos = hit.isGround ? { x: hit.x, y: 20, z: hit.z } : { x: hit.x, y: hit.y, z: hit.z };
+            const count = this.addSphere(pos, 40, this.activeMaterial);
+            this._notify(`Sfera creata: ${count.length} voxel`, 'success');
           }
         }
    
@@ -830,9 +797,9 @@ const chunkKey = this._getChunkKey(pos);
              }
            }
            
-           const btns = document.querySelectorAll('.tool');
-           for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-           const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit' };
+            const btns = document.querySelectorAll('.tool');
+            for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+            const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere' };
           const el = document.getElementById(btnMap[tool]);
           if (el) el.classList.add('active');
           window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));
@@ -1151,17 +1118,177 @@ const chunkKey = this._getChunkKey(pos);
       return true;
     }
 
-        /**
-        * Cambia modulo di appartenenza a un voxel esistente.
-        * @returns {boolean} true se voxel esisteva e modulo aggiornato
-        */
-        setVoxelModule(x, y, z, module) {
-            const v = this.getVoxelAt(x, y, z);
-            if (!v) return false;
-            v.module = module;
-            this._onVoxelChanged();
-            return true;
+    /**
+     * Cambia modulo di appartenenza a un voxel esistente.
+     * @returns {boolean} true se voxel esisteva e modulo aggiornato
+     */
+    setVoxelModule(x, y, z, module) {
+        const v = this.getVoxelAt(x, y, z);
+        if (!v) return false;
+        v.module = module;
+        this._onVoxelChanged();
+        return true;
+    }
+
+    // ── Primitive Creation Methods ─────────────────────────────────────
+    /**
+     * Create a cylinder primitive
+     * @param {Object} position - {x, y, z} position in voxel coordinates
+     * @param {number} radius - radius in mm
+     * @param {number} height - height in mm
+     * @param {string} material - material name
+     * @param {number|null} moduleId - module ID
+     * @returns {Array} Array of created voxel positions
+     */
+    addCylinder(position, radius, height, materialName = 'steel', moduleId = null) {
+        if (moduleId === undefined) moduleId = null;
+        
+        // Convert radius and height to voxel units (1 voxel = 1mm)
+        const voxelRadius = Math.max(1, Math.round(radius));
+        const voxelHeight = Math.max(1, Math.round(height));
+        
+        const voxels = [];
+        const centerX = position.x;
+        const centerY = position.y;
+        const centerZ = position.z;
+        
+        // Generate voxels for cylinder using midpoint circle algorithm for each layer
+        for (let y = 0; y < voxelHeight; y++) {
+            const yOffset = y - Math.floor(voxelHeight / 2);
+            
+            // For each layer, fill a circle
+            for (let dx = -voxelRadius; dx <= voxelRadius; dx++) {
+                for (let dz = -voxelRadius; dz <= voxelRadius; dz++) {
+                    const distanceFromCenter = Math.sqrt(dx * dx + dz * dz);
+                    if (distanceFromCenter <= voxelRadius) {
+                        const voxelPos = {
+                            x: centerX + dx,
+                            y: centerY + yOffset,
+                            z: centerZ + dz
+                        };
+                        
+                        // Check if voxel already exists
+                        const existingVoxel = this.getVoxelAt(voxelPos.x, voxelPos.y, voxelPos.z);
+                        if (!existingVoxel) {
+                            const voxelData = this._addVoxelInternal(voxelPos, materialName, moduleId);
+                            if (voxelData) {
+                                voxels.push(voxelPos);
+                            }
+                        }
+                    }
+                }
+            }
         }
+        
+        this._notify(`Cilindro creato: ${voxels.length} voxel`, 'success');
+        return voxels;
+    }
+
+    /**
+     * Create a cone primitive
+     * @param {Object} position - {x, y, z} position in voxel coordinates
+     * @param {number} radius - base radius in mm
+     * @param {number} height - height in mm
+     * @param {string} material - material name
+     * @param {number|null} moduleId - module ID
+     * @returns {Array} Array of created voxel positions
+     */
+    addCone(position, radius, height, materialName = 'steel', moduleId = null) {
+        if (moduleId === undefined) moduleId = null;
+        
+        // Convert radius and height to voxel units (1 voxel = 1mm)
+        const voxelRadius = Math.max(1, Math.round(radius));
+        const voxelHeight = Math.max(1, Math.round(height));
+        
+        const voxels = [];
+        const centerX = position.x;
+        const centerY = position.y;
+        const centerZ = position.z;
+        
+        // Generate voxels for cone
+        for (let y = 0; y < voxelHeight; y++) {
+            // Calculate radius at this height (linear taper from base to tip)
+            const yProgress = y / (voxelHeight - 1); // 0 at base, 1 at top
+            const currentRadius = voxelRadius * (1 - yProgress); // Decreases from base radius to 0
+            
+            const yOffset = y - Math.floor(voxelHeight / 2);
+            
+            // For each layer, fill a circle with current radius
+            for (let dx = -Math.ceil(currentRadius); dx <= Math.ceil(currentRadius); dx++) {
+                for (let dz = -Math.ceil(currentRadius); dz <= Math.ceil(currentRadius); dz++) {
+                    const distanceFromCenter = Math.sqrt(dx * dx + dz * dz);
+                    if (distanceFromCenter <= currentRadius) {
+                        const voxelPos = {
+                            x: centerX + dx,
+                            y: centerY + yOffset,
+                            z: centerZ + dz
+                        };
+                        
+                        // Check if voxel already exists
+                        const existingVoxel = this.getVoxelAt(voxelPos.x, voxelPos.y, voxelPos.z);
+                        if (!existingVoxel) {
+                            const voxelData = this._addVoxelInternal(voxelPos, materialName, moduleId);
+                            if (voxelData) {
+                                voxels.push(voxelPos);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        this._notify(`Cono creato: ${voxels.length} voxel`, 'success');
+        return voxels;
+    }
+
+    /**
+     * Create a sphere primitive
+     * @param {Object} position - {x, y, z} position in voxel coordinates
+     * @param {number} diameter - diameter in mm
+     * @param {string} material - material name
+     * @param {number|null} moduleId - module ID
+     * @returns {Array} Array of created voxel positions
+     */
+    addSphere(position, diameter, materialName = 'steel', moduleId = null) {
+        if (moduleId === undefined) moduleId = null;
+        
+        // Convert diameter to voxel units (1 voxel = 1mm)
+        const voxelDiameter = Math.max(1, Math.round(diameter));
+        const voxelRadius = Math.floor(voxelDiameter / 2);
+        
+        const voxels = [];
+        const centerX = position.x;
+        const centerY = position.y;
+        const centerZ = position.z;
+        
+        // Generate voxels for sphere using 3D distance check
+        for (let dx = -voxelRadius; dx <= voxelRadius; dx++) {
+            for (let dy = -voxelRadius; dy <= voxelRadius; dy++) {
+                for (let dz = -voxelRadius; dz <= voxelRadius; dz++) {
+                    const distanceFromCenter = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    if (distanceFromCenter <= voxelRadius) {
+                        const voxelPos = {
+                            x: centerX + dx,
+                            y: centerY + dy,
+                            z: centerZ + dz
+                        };
+                        
+                        // Check if voxel already exists
+                        const existingVoxel = this.getVoxelAt(voxelPos.x, voxelPos.y, voxelPos.z);
+                        if (!existingVoxel) {
+                            const voxelData = this._addVoxelInternal(voxelPos, materialName, moduleId);
+                            if (voxelData) {
+                                voxels.push(voxelPos);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        this._notify(`Sfera creata: ${voxels.length} voxel`, 'success');
+        return voxels;
+    }
 
     // ── Optimize: clean up stale references ───────────────────────
     /**
