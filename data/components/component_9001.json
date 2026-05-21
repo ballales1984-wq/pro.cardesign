@@ -1,0 +1,17 @@
+{
+  "id": 9001,
+  "name": "Road Wheel 700c",
+  "type": "wheel",
+  "category": "wheels",
+  "parameters": {
+    "outer_radius": 350,
+    "inner_radius": 311,
+    "width": 30,
+    "rim_width": 21,
+    "spoke_count": 32
+  },
+  "default_voxels": [],
+  "icon": "",
+  "color": "#333",
+  "description": "700c road wheel with 30mm tire"
+}

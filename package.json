@@ -1,0 +1,47 @@
+{
+  "name": "pro.cardesign-desktop",
+  "version": "1.0.0",
+  "description": "A desktop voxel CAD application for the pro.cardesign design system",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite --port 5176 --host 0.0.0.0",
+    "start": "electron .",
+    "build": "vite build",
+    "preview": "vite preview",
+    "package": "npm run build && electron-builder"
+  },
+  "build": {
+    "appId": "com.procardesign.voxelcad",
+    "productName": "VoxelCAD",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "keywords": [
+    "design-system",
+    "electron",
+    "desktop",
+    "voxel",
+    "cad",
+    "three.js"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^27.3.11",
+    "electron-builder": "^24.0.0",
+    "electron-packager": "^17.1.2",
+    "vite": "^5.4.21",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "meshoptimizer": "^0.21.0",
+    "three": "^0.179.0",
+    "three-bvh-csg": "^0.0.18",
+    "three-mesh-bvh": "^0.9.10"
+  }
+}

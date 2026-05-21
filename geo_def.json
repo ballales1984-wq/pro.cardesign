@@ -1,0 +1,48 @@
+{
+  "$schema": "pro.cardesign/geodef/v1",
+  "metadata": {
+    "project": "example_spoiler",
+    "version": "1.0",
+    "description": "Alettone Ferrari futuristico — esempio formato universale",
+    "created_by": "ai_engine | user",
+    "units": "mm"
+  },
+  "components": [
+    {
+      "id": "spoiler_main_01",
+      "type": "spoiler",
+      "position_mm": [200, 100, 20],
+      "rotation_deg": [0, 0, -5],
+      "scale_mm": [300, 80, 30],
+      "material": "carbon_fiber",
+      "parameters": {
+        "element_profile": "airfoil_naca0012",
+        "attack_angle_deg": 12,
+        "endplate_height_mm": 180
+      }
+    },
+    {
+      "id": "winglet_01",
+      "type": "endplate",
+      "position_mm": [320, 100, 20],
+      "rotation_deg": [0, 0, 0],
+      "scale_mm": [10, 180, 80],
+      "material": "carbon_fiber",
+      "parameters": {
+        "element_profile": "vertical_flat"
+      }
+    },
+    {
+      "id": "support_strut_01",
+      "type": "tube",
+      "position_mm": [200, 100, -15],
+      "rotation_deg": [90, 0, 0],
+      "scale_mm": [20, 300, 20],
+      "material": "titanium",
+      "parameters": {
+        "inner_diameter_mm": 14,
+        "wall_thickness_mm": 2
+      }
+    }
+  ]
+}

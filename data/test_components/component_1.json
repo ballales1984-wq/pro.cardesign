@@ -1,0 +1,17 @@
+{
+  "id": 1,
+  "name": "Ruota Strada 700c",
+  "type": "wheel",
+  "category": "wheels",
+  "parameters": {
+    "outer_radius": 350,
+    "inner_radius": 311,
+    "width": 30,
+    "rim_width": 21,
+    "spoke_count": 32
+  },
+  "default_voxels": [],
+  "icon": "\u26ab",
+  "color": "#333",
+  "description": "Ruota strada 700c con pneumatico da 30mm"
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "pro.cardesign/dataset/v1",
+  "name": "automotive_components",
+  "version": "1.0",
+  "description": "Componenti automobilistici parametrici",
+  "units": "mm",
+  "components": [
+    {
+      "id": "spoiler_classic",
+      "type": "spoiler",
+      "description": "Alettone classico 3 elementi, attacco a doppia ala",
+      "parameters": {
+        "chord_mm":        { "value": 180, "min": 100, "max": 400, "unit": "mm" },
+        "span_mm":         { "value": 1400, "min": 800, "max": 2000, "unit": "mm" },
+        "element_count":   { "value": 3, "min": 1, "max": 5 },
+        "element_thickness_mm": { "value": 20, "min": 10, "max": 50, "unit": "mm" },
+        "endplate_height_mm":   { "value": 200, "min": 100, "max": 400, "unit": "mm" },
+        "attack_angle_deg":     { "value": 14, "min": 0, "max": 30 }
+      }
+    },
+    {
+      "id": "spoiler_futuristic",
+      "type": "spoiler",
+      "description": "Alettone futuristico tipo DTM / Le Mans — elemento singolo esteso",
+      "parameters": {
+        "chord_mm":        { "value": 250, "min": 150, "max": 500, "unit": "mm" },
+        "span_mm":         { "value": 1600, "min": 900, "max": 2200, "unit": "mm" },
+        "element_count":   { "value": 1, "min": 1, "max": 3 },
+        "element_thickness_mm": { "value": 35, "min": 20, "max": 80, "unit": "mm" },
+        "endplate_height_mm":   { "value": 300, "min": 150, "max": 500, "unit": "mm" },
+        "attack_angle_deg":     { "value": 18, "min": 0, "max": 35 }
+      }
+    },
+    {
+      "id": "side_skirt",
+      "type": "body_panel",
+      "description": "Muscle laterale / side skirt",
+      "parameters": {
+        "length_mm":       { "value": 1800, "min": 1200, "max": 2200, "unit": "mm" },
+        "thickness_mm":    { "value": 6, "min": 2, "max": 12, "unit": "mm" },
+        "height_mm":       { "value": 140, "min": 80, "max": 280, "unit": "mm" }
+      }
+    },
+    {
+      "id": "hood_scoop",
+      "type": "air_intake",
+      "description": "Prese d'aria sul cofano",
+      "parameters": {
+        "width_mm":        { "value": 300, "min": 120, "max": 500, "unit": "mm" },
+        "height_mm":       { "value": 120, "min": 60, "max": 200, "unit": "mm" },
+        "depth_mm":        { "value": 80,  "min": 40, "max": 150, "unit": "mm" }
+      }
+    },
+    {
+      "id": "front_splitter",
+      "type": "aerodynamic",
+      "description": "Splitter anteriore in carbonio",
+      "parameters": {
+        "chord_mm":        { "value": 220, "min": 120, "max": 400, "unit": "mm" },
+        "span_mm":         { "value": 1650, "min": 900, "max": 2100, "unit": "mm" },
+        "thickness_mm":    { "value": 12, "min": 5, "max": 30, "unit": "mm" },
+        "ride_height_mm":  { "value": 40,  "min": 20, "max": 100, "unit": "mm" }
+      }
+    },
+    {
+      "id": "diffuser_rear",
+      "type": "aerodynamic",
+      "description": "Diffusore posteriore a canale",
+      "parameters": {
+        "inlet_width_mm":  { "value": 140,  "min": 80,  "max": 300, "unit": "mm" },
+        "outlet_width_mm": { "value": 900,  "min": 500, "max": 1400, "unit": "mm" },
+        "length_mm":       { "value": 300,  "min": 150, "max": 500, "unit": "mm" },
+        "channel_count":   { "value": 7,    "min": 3,   "max": 13 }
+      }
+    }
+  ]
+}
