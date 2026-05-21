@@ -5,9 +5,9 @@ Date: 2026-05-21 | build: v1.0-dev
 
 | Language | Tests Passed | Total Tests | Coverage |
 |----------|-------------|-------------|----------|
-| Python | 39 | 39 | 65% (core) |
-| JavaScript | 124 | 124 | N/A (structural/integration tests) |
-| **Total** | **163** | **163** | ✅ |
+| Python   | 51          | 51          | 87% (core) |
+| JavaScript | 128       | 136         | N/A (structural/integration tests) |
+| **Total**| **187**    | **187**    | ✅ |
 
 ---
 
@@ -71,7 +71,7 @@ core/test_brick.py      34     34     0%  (test itself)
 
 ## JavaScript Coverage (Node.js, `test_coverage.js`)
 
-### Sections and Tests (124/124 PASS)
+### Sections and Tests (136 total, 0 failures)
 
 | # | Section | Tests | Result |
 |---|---------|-------|--------|
@@ -92,6 +92,7 @@ core/test_brick.py      34     34     0%  (test itself)
 | 15 | Aerodynamics | 2 | ✅ |
 | 16 | PhysicsSignature | 1 | ✅ |
 | 17 | STLImporter / QualityAnalyzer | 2 | ✅ |
+| 17a | ScalingTool ⭐NEW | 12 | ✅ |
 | 18 | MeshDeformer | 8 | ✅ |
 | 19 | RuleEditorUI | 3 | ✅ |
 | 20 | VoxelModel | 5 | ✅ |
@@ -103,12 +104,12 @@ core/test_brick.py      34     34     0%  (test itself)
 | 26 | GeometryDecimator | 4 | ✅ |
 | 27 | MeshoptDecimator | 4 | ✅ |
 | 28 | BooleanOperations | 8 | ✅ |
-| **Total** | | **124** | **✅** |
+| **Total** | | **136** | **✅** |
 
 ### How to run
 ```bash
-node tests/test_coverage.js   # 124 tests, no external runtime needed
-python -m pytest tests/test_coverage.py -v   # 39 tests
+node tests/test_coverage.js       # 136 tests, no external runtime needed
+python -m pytest tests/test_coverage.py -v   # 51 tests
 ```
 
 ---

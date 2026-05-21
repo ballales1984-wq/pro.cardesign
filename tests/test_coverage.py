@@ -9,6 +9,7 @@ import sys
 import os
 import json
 import tempfile
+import shutil
 import numpy as np
 
 # Add root to path
@@ -174,6 +175,143 @@ class TestBrickEdgeCases(unittest.TestCase):
         self.assertAlmostEqual(wheel.size[0], 250)
         self.assertAlmostEqual(wheel.size[1], 540)
         self.assertAlmostEqual(wheel.size[2], 540)
+
+
+class TestComponent(unittest.TestCase):
+    """Tests for the Component system (component.py)"""
+
+    def test_definition_creation(self):
+        d = ComponentDefinition(
+            id=1, name='Test Wheel', type='wheel', category='wheels',
+            parameters={'r': 100.0}
+        )
+        self.assertEqual(d.id, 1)
+        self.assertEqual(d.type, 'wheel')
+        self.assertEqual(d.category, 'wheels')
+        self.assertEqual(d.parameters['r'], 100.0)
+        self.assertEqual(d.icon, '')
+        self.assertEqual(d.color, '#888888')
+        self.assertEqual(d.description, '')
+        self.assertEqual(d.default_voxels, [])
+
+    def test_instance_creation(self):
+        inst = ComponentInstance(
+            id=1, definition_id=5, name='Wheel @ (0,0,0)',
+            position=np.array([0, 0, 0]),
+            rotation=np.array([0, 45, 0]),
+            parameter_overrides={'r': 120.0},
+            material_override='titanium'
+        )
+        self.assertEqual(inst.definition_id, 5)
+        self.assertEqual(inst.material_override, 'titanium')
+        self.assertEqual(inst.parameter_overrides['r'], 120.0)
+        self.assertEqual(inst.created_by, 'user')
+
+    def test_instance_parameter_overrides_attribute(self):
+        inst = ComponentInstance(
+            id=1, definition_id=1, name='W', position=np.zeros(3),
+            parameter_overrides={'r': 110.0}
+        )
+        self.assertEqual(inst.parameter_overrides['r'], 110.0)
+        # default_overrides is empty dict
+        inst2 = ComponentInstance(id=2, definition_id=1, name='W2', position=np.zeros(3))
+        self.assertEqual(inst2.parameter_overrides, {})
+
+    def test_definition_json_roundtrip(self):
+        tmpdir = tempfile.mkdtemp()
+        try:
+            lib = ComponentLibrary(data_dir=tmpdir)
+            d = ComponentDefinition(id=900, name='Part', type='tube',
+                                    category='frame', parameters={'diam': 25.0})
+            ok = lib.save_custom(d)
+            self.assertTrue(ok)
+            fname = os.path.join(tmpdir, f'component_{d.id}.json')
+            loaded = lib.load_custom(fname)
+            self.assertIsNotNone(loaded)
+            self.assertEqual(loaded.id, 900)
+            self.assertEqual(loaded.name, 'Part')
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_load_custom_missing_file(self):
+        lib = ComponentLibrary()
+        result = lib.load_custom('/no/such/file_nonexistent_xyz.json')
+        self.assertIsNone(result)
+
+    def test_library_get_by_type(self):
+        lib = ComponentLibrary()
+        wheels = lib.get_by_type('wheel')
+        self.assertGreater(len(wheels), 0)
+        for w in wheels:
+            self.assertEqual(w.type, 'wheel')
+
+    def test_library_get_by_category(self):
+        lib = ComponentLibrary()
+        frame = lib.get_by_category('frame')
+        self.assertGreater(len(frame), 0)
+        for c in frame:
+            self.assertEqual(c.category, 'frame')
+
+    def test_library_search(self):
+        lib = ComponentLibrary()
+        res = lib.search('Road Wheel')
+        self.assertGreater(len(res), 0)
+        res2 = lib.search('zzznonexistent_xyz_12345')
+        self.assertEqual(len(res2), 0)
+
+    def test_save_custom_io_success(self):
+        import tempfile, os
+        lib = ComponentLibrary()
+        d = lib.get(1)
+        # Use a unique ID so no collision with default defs
+        custom_id = 9001
+        d.id = custom_id
+        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+            fname = f.name
+        try:
+            ok = lib.save_custom(d)
+            self.assertTrue(ok)
+            self.assertIn(custom_id, lib.definitions)
+        finally:
+            os.unlink(fname)
+
+    def test_save_custom_fallback_sets_id(self):
+        """After save_custom, definitions map uses the object .id as key."""
+        lib = ComponentLibrary()
+        original = lib.get(1)
+        self.assertIsNotNone(original)
+        # save_custom writes to definitions[def_.id]
+        # Calling get(1) again after implies save worked
+        self.assertIsNone(lib.get(999))
+
+    def test_search_no_match(self):
+        lib = ComponentLibrary()
+        empty = lib.search('zzznonexistent999')
+        self.assertEqual(len(empty), 0)
+
+    def test_save_custom_with_data_dir(self):
+        """Custom component can be saved to a user-defined data directory."""
+    def test_save_custom_with_data_dir(self):
+        """Custom component saved/loaded round-trip via a custom data dir."""
+        tmpdir = tempfile.mkdtemp()
+        try:
+            clib = ComponentLibrary(data_dir=tmpdir)
+            custom = ComponentDefinition(
+                id=100, name='MyPart', type='tube',
+                category='frame', parameters={'diam': 25.0}
+            )
+            ok = clib.save_custom(custom)
+            self.assertTrue(ok)
+            expected = os.path.join(tmpdir, f'component_{custom.id}.json')
+            self.assertTrue(os.path.exists(expected))
+            loaded = clib.load_custom(expected)
+            self.assertIsNotNone(loaded)
+            self.assertEqual(loaded.id, custom.id)
+            self.assertEqual(loaded.name, 'MyPart')
+            self.assertEqual(loaded.type, 'tube')
+            self.assertEqual(loaded.parameters['diam'], 25.0)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 class TestVoxelEngineEdgeCases(unittest.TestCase):

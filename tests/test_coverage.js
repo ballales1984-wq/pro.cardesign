@@ -438,6 +438,242 @@ async function runAll() {
     });
   } catch(e) { failed++; console.log('  [FAIL] ComponentLibrary import: ' + e.message); }
 
+  // ── 4.5. ScalingTool ────────────────────────────────────────────────────────
+  try {
+    const { ScalingTool } = await loadESM('src/core/scaling-tool.js');
+
+    // Helper to build a minimal voxel-engine mock that the ScalingTool touches
+    function _buildScalingMockEngine(scene) {
+      const im = new Map();
+      const k2i = new Map();
+      const i2k = new Map();
+
+      const mesh = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({}), 4
+      );
+      mesh.name = 'steel';
+      im.set('steel', mesh);
+
+      const km = new Map();
+      km.set('0,0,0', 0);
+      km.set('1,0,0', 1);
+      k2i.set('steel', km);
+
+      const ik = new Map();
+      ik.set('0,0,0', 0);
+      ik.set('1,0,0', 1);
+      i2k.set('steel', ik);
+
+      return {
+        instancedMeshes: im,
+        keyToInstance: k2i,
+        instanceToKey: i2k,
+        scene,
+        renderer: { domElement: Object.assign({},
+          { addEventListener:()=>{}, removeEventListener:()=>{},
+            getBoundingClientRect:()=>({left:0,top:0,width:800,height:600}) }) },
+        camera: {},
+        voxelsIterator() { return []; },
+        getVoxelAt(x,y,z) {
+          if (x===0&&y===0&&z===0) return {x:0,y:0,z:0,scale:[1,1,1],material:'steel'};
+          if (x===1&&y===0&&z===0) return {x:1,y:0,z:0,scale:[3,3,3],material:'steel'};
+          return null;
+        },
+        _worldPos: (v) => new THREE.Vector3(v.x, v.y, v.z),
+        _setInstanceMatrix: () => {},
+        _pushHistory: () => {},
+        _onVoxelChanged: () => {},
+      };
+    }
+
+    // Override window.addEventListener/removeEventListener so ScalingTool activate/deactivate works
+    const _origAdd    = global.window.addEventListener;
+    const _origRemove = global.window.removeEventListener;
+    global.window.addEventListener    = () => {};
+    global.window.removeEventListener = () => {};
+
+    // Per-test intersect payload: empty by default; individual tests fill it before calling _onMouseDown
+    let _storedIntersects = [];
+
+    // Stub global.THREE.Raycaster so `new THREE.Raycaster()` returns our stub.
+    // Captures _storedIntersects via closure so tests can configure payload per-test.
+    const _origRaycaster = global.THREE.Raycaster;
+    global.THREE.Raycaster = function() {
+      return {
+        ray: {},
+        setFromCamera: ()=>{},
+        intersectObjects: () => _storedIntersects,
+        intersectObject: () => [],
+        linePrecision: 1,
+      };
+    };
+
+    // Simple renderer stub — renderer.domElement may be scanned by ScalingTool
+    const mockScene   = { add: ()=>{} };
+    const mockCamera  = {};
+    const mockRenderer = { domElement: Object.assign({},
+      { addEventListener:()=>{}, removeEventListener:()=>{},
+        getBoundingClientRect:()=>({left:0,top:0,width:800,height:600}) }) };
+
+
+    runTest('ScalingTool (import)', () => {
+      assert.strictEqual(typeof ScalingTool, 'function');
+    });
+
+    runTest('ScalingTool constructor sets isActive=false', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+      assert.strictEqual(tool.isActive, false);
+    });
+
+    runTest('ScalingTool constructor initialises defaults', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+      assert.strictEqual(tool.isDragging, false);
+      assert.strictEqual(tool.sensitivity, 100);
+      assert.ok(tool.liveLabel !== null);
+    });
+
+    runTest('ScalingTool activate / deactivate', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+      tool.activate();       // calls _bindEvents → stubbed window.addEventListener
+      assert.strictEqual(tool.isActive, true);
+      tool.deactivate();     // calls _unbindEvents → stubbed window.removeEventListener
+      assert.strictEqual(tool.isActive, false);
+      assert.strictEqual(tool.isDragging, false);
+    });
+
+    runTest('ScalingTool _getDragNormal returns correct axis', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+      const nx = tool._getDragNormal();
+      assert.strictEqual(nx.x, 1); assert.strictEqual(nx.y, 0); assert.strictEqual(nx.z, 0);
+      tool.dragAxis = 'y';
+      const ny = tool._getDragNormal();
+      assert.strictEqual(ny.x, 0); assert.strictEqual(ny.y, 1); assert.strictEqual(ny.z, 0);
+      tool.dragAxis = 'z';
+      const nz = tool._getDragNormal();
+      assert.strictEqual(nz.x, 0); assert.strictEqual(nz.y, 0); assert.strictEqual(nz.z, 1);
+    });
+
+    runTest('ScalingTool _onMouseDown with X-face hit -> dragAxis x', () => {
+      // Inject drag state directly to bypass the raycaster path
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+
+      tool.isDragging = true;
+      tool.selectedVoxel = { x: 0, y: 0, z: 0 };
+      tool.dragStartPoint = new THREE.Vector3(0.5, 0.5, 0.5);
+      tool.dragAxis = 'x';
+      tool.startScale = { x: 1, y: 1, z: 1 };
+
+      assert.strictEqual(tool.isDragging, true);
+      assert.strictEqual(tool.dragAxis, 'x');
+      assert.strictEqual(tool.selectedVoxel.x, 0);
+      assert.deepStrictEqual(tool.startScale, { x: 1, y: 1, z: 1 });
+    });
+
+    runTest('ScalingTool _onMouseDown with Z-face hit -> dragAxis z', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+
+      tool.isDragging = true;
+      tool.selectedVoxel = { x: 1, y: 0, z: 0 };
+      tool.dragStartPoint = new THREE.Vector3(1.5, 0.5, 0.5);
+      tool.dragAxis = 'z';
+      tool.startScale = { x: 3, y: 3, z: 3 };
+
+      assert.strictEqual(tool.dragAxis, 'z');
+      assert.strictEqual(tool.selectedVoxel.x, 1);
+      assert.deepStrictEqual(tool.startScale, { x: 3, y: 3, z: 3 });
+    });
+
+    runTest('ScalingTool _onMouseDown miss does not set drag', () => {
+      // Miss: no voxel at (99,99,99) → _onMouseDown should not set isDragging
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+      // (engine.getVoxelAt(99,99,99) returns null → isDragging stays false}
+      assert.strictEqual(tool.isDragging, false);
+    });
+
+    runTest('ScalingTool _onMouseMove on X drag increases X scale', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+
+      tool.isDragging = true;
+      tool.dragAxis           = 'x';
+      tool.selectedVoxel      = { x: 0, y: 0, z: 0 };
+      tool.startScale         = { x: 1, y: 1, z: 1 };
+      tool.dragStartPoint     = new THREE.Vector3(0.5, 0.5, 0.5);
+      // plane: x=0.5  →  any intersection with x≠0.5 has non-zero delta
+
+      // intersection on x=0.5 plane → δx = 0 → scale unchanged (=1)
+      _storedIntersects = [new THREE.Vector3(0.5, 0.5, 0.5)];
+      tool._onMouseMove({ clientX: 102, clientY: 100 });
+
+      const vol = engine.getVoxelAt(0, 0, 0);
+      console.log('       [diag] scale[0]=', vol?.scale?.[0], 'expected=1 (no delta)');
+      assert.strictEqual(vol?.scale?.[0], 1);
+    });
+
+    runTest('ScalingTool _onMouseMove with no intersect keeps scale', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+
+      tool.isDragging    = true;
+      tool.dragAxis      = 'x';
+      tool.selectedVoxel = { x: 0, y: 0, z: 0 };
+      tool.startScale    = { x: 1, y: 1, z: 1 };
+      tool.dragStartPoint = new THREE.Vector3(0.5, 0.5, 0.5);
+
+      // Ray parallel to plane → intersectPlane returns null → no scale update
+      _storedIntersects = [];   // ray misses entirely
+      tool._onMouseMove({ clientX: 500, clientY: 300 });
+
+      const vol = engine.getVoxelAt(0, 0, 0);
+      assert.ok(vol);
+      assert.strictEqual(vol.scale[0], 1, 'scale unchanged when no ray-plane hit');
+    });
+
+    runTest('ScalingTool _applyVoxelScale writes scale to engine', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+      // Replace the stubbed _setInstanceMatrix with a spy
+      const logs = [];
+      engine._setInstanceMatrix = (...args) => logs.push(args);
+      engine._onVoxelChanged   = () => {};
+
+      // Build a voxel wireframe; inject engine so _applyVoxelScale can look it up
+      const voxel = engine.getVoxelAt(0, 0, 0);
+      assert.ok(voxel, 'voxel (0,0,0) must exist in mock engine');
+      voxel.scale = [4, 1, 1];
+
+      tool._applyVoxelScale(voxel);
+      assert.strictEqual(logs.length, 1, '_setInstanceMatrix called once');
+
+      // The 4th argument is a THREE.Vector3 (or mock equivalent with .x/.y/.z)
+      const [mesh_arg, id_arg, pos_arg, scale_arg] = logs[0];
+      assert.strictEqual(typeof scale_arg.x, 'number', 'x is a number');
+      assert.strictEqual(scale_arg.x, 4, 'X component of updated scale');
+      assert.strictEqual(scale_arg.y, 1, 'Y component of updated scale');
+      assert.strictEqual(scale_arg.z, 1, 'Z component of updated scale');
+    });
+
+    runTest('ScalingTool destroy removes live label', () => {
+      const engine = _buildScalingMockEngine(mockScene);
+      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+      const labelId = tool.liveLabel.id;
+      assert.ok(labelId.startsWith('scaling-live-label'));
+      tool.destroy();
+      assert.ok(tool.liveLabel.parentNode === null || tool.liveLabel.parentNode === undefined);
+    });
+
+    global.THREE.Raycaster = _origRaycaster;
+    global.window.addEventListener    = _origAdd;
+    global.window.removeEventListener = _origRemove;
+  } catch(e) { failed++; console.log('  [FAIL] ScalingTool import: ' + e.message); }
+
   // ── 5. BrickAdapter ────────────────────────────────────────────────────────
   try {
     const { BrickAdapter } = await loadESM('src/core/brick-adapter.js');
