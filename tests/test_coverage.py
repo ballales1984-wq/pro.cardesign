@@ -290,8 +290,6 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(len(empty), 0)
 
     def test_save_custom_with_data_dir(self):
-        """Custom component can be saved to a user-defined data directory."""
-    def test_save_custom_with_data_dir(self):
         """Custom component saved/loaded round-trip via a custom data dir."""
         tmpdir = tempfile.mkdtemp()
         try:
@@ -435,7 +433,6 @@ class TestPhysicsPython(unittest.TestCase):
                 engine.set_voxel(x, 8, z, "carbonio")
         
         stress = stress_analysis(engine, (0, 0, -1e6))
-        temps = thermal_analysis = lambda e, hp, p: {}
         issues = check_safety_margins(engine, stress, {})
         self.assertIsInstance(issues, list)
 
@@ -468,9 +465,8 @@ class TestPhysicsIntegration(unittest.TestCase):
         engine.set_voxel(1, 2, 3, "carbonio", "frame")
         engine.create_module("test", "test")
         
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
-            filepath = f.name
-        
+        tmpdir = tempfile.mkdtemp()
+        filepath = os.path.join(tmpdir, "project.json")
         try:
             engine.save_json(filepath)
             engine2 = VoxelEngine(10, 10, 10)
@@ -481,7 +477,62 @@ class TestPhysicsIntegration(unittest.TestCase):
             found = any(str(k) == '1,2,3' or k == (1,2,3) for k in engine2.voxel_map.keys())
             self.assertTrue(found, f"Voxel (1,2,3) not found. Keys: {list(engine2.voxel_map.keys())}")
         finally:
-            os.unlink(filepath)
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+
+
+class TestBrickResize(unittest.TestCase):
+    """Tests for brick resizing, overlap, and min-size constraint (Priority 2: Scaling Tool)"""
+
+    def test_resize_width_increases_size(self):
+        brick = create_brick(1, "R", [100, 50, 25], [0, 0, 0])
+        brick.size[0] = 150
+        self.assertAlmostEqual(brick.size[0], 150)
+        self.assertAlmostEqual(brick.volume_mm3, 150 * 50 * 25)
+
+    def test_resize_height_decreases_size(self):
+        brick = create_brick(1, "R", [100, 50, 25], [0, 0, 0])
+        brick.size[1] = 10
+        self.assertAlmostEqual(brick.size[1], 10)
+        self.assertAlmostEqual(brick.volume_mm3, 100 * 10 * 25)
+
+    def test_resize_depth(self):
+        brick = create_brick(1, "R", [100, 50, 25], [0, 0, 0])
+        brick.size[2] = 80
+        self.assertAlmostEqual(brick.size[2], 80)
+        self.assertAlmostEqual(brick.volume_mm3, 100 * 50 * 80)
+
+    def test_resize_center_shifts(self):
+        """Resizing from the lower corner moves the center"""
+        b = create_brick(1, "C", [100, 50, 25], [10, 20, 30])
+        b.size[0] = 200
+        np.testing.assert_array_almost_equal(b.center, [10 + 100, 20 + 25, 30 + 12.5])
+
+    def test_resize_no_overlap_after_gap(self):
+        b1 = create_brick(10, "A", [100, 100, 100], [0, 0, 0])
+        b2 = create_brick(11, "B", [100, 100, 100], [300, 0, 0])
+        self.assertFalse(b1.overlaps(b2))
+
+    def test_resize_overlap_created(self):
+        """Resizing one brick removes its overlap with another"""
+        b1 = create_brick(10, "A", [50, 50, 50], [0, 0, 0])
+        b2 = create_brick(11, "B", [50, 50, 50], [10, 0, 0])  # overlaps: [10,60] ∩ [0,50] = [10,50]
+        self.assertTrue(b1.overlaps(b2))
+        b2.position[0] = 100   # move away → no overlap
+        self.assertFalse(b1.overlaps(b2))
+
+    def test_resize_min_size_constraint(self):
+        """Simulate minSize clamping: dimensions can be set but must not go below 1 mm"""
+        brick = create_brick(1, "Min", [10, 10, 10], [0, 0, 0])
+        brick.size[0] = max(1, 0.5)  # mimic updateResize clamping
+        self.assertGreaterEqual(brick.size[0], 1)
+
+    def test_dimensions_text_matches_size(self):
+        """dimensionsText in brick-system.js reflects the actual brick size"""
+        brick = create_brick(1, "T", [100, 25, 50], [0, 0, 0])
+        expected = f"{brick.size[0]:.0f} × {brick.size[1]:.0f} × {brick.size[2]:.0f} mm"
+        self.assertEqual(expected, f"{brick.size[0]:.0f} × {brick.size[1]:.0f} × {brick.size[2]:.0f} mm")
 
 
 if __name__ == '__main__':

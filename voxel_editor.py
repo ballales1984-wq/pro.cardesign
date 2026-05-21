@@ -14,6 +14,7 @@ class Voxel:
     temperature_limit: float
     module: str
     color: str
+    scale: np.ndarray = field(default_factory=lambda: np.array([1.0, 1.0, 1.0]))
 
 @dataclass
 class Module:
@@ -57,7 +58,8 @@ class VoxelEngine:
             density=mat_props["density"],
             temperature_limit=mat_props["temperature_limit"],
             module=module or self.active_module or "default",
-            color=mat_props["color"]
+            color=mat_props["color"],
+            scale=np.array([1.0, 1.0, 1.0])
         )
 
         self.grid[x, y, z] = 1
@@ -133,7 +135,8 @@ class VoxelEngine:
                     "density": v.density,
                     "temperature_limit": v.temperature_limit,
                     "module": v.module,
-                    "color": v.color
+                    "color": v.color,
+                    "scale": [float(v.scale[0]), float(v.scale[1]), float(v.scale[2])]
                 }
                 for v in self.voxel_map.values()
             ],
@@ -167,8 +170,12 @@ class VoxelEngine:
                 y=voxel_data["y"],
                 z=voxel_data["z"],
                 material=voxel_data["material"],
-                module=voxel_data["module"]
+                module=voxel_data.get("module")
             )
+            if "scale" in voxel_data:
+                key = (voxel_data["x"], voxel_data["y"], voxel_data["z"])
+                if key in self.voxel_map:
+                    self.voxel_map[key].scale = np.array(voxel_data["scale"], dtype=float)
 
 def main():
     print("Initializing VoxelCAD System...")
