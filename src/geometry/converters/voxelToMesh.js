@@ -229,6 +229,8 @@ function _makeGeo(positions, normals) {
       geo.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
       geo.setAttribute('normal',   new T.Float32BufferAttribute(normals.length ? normals : positions, 3));
       geo.computeBoundingSphere();
+    } else {
+      geo.setAttribute('position', new T.Float32BufferAttribute(new Float32Array(0), 3));
     }
     return geo;
   }

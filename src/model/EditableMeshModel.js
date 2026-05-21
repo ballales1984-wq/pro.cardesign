@@ -5,7 +5,11 @@
  * Wraps a THREE.BufferGeometry + THREE.Mesh and exposes a clean API for
  * vertex, edge and face manipulation without touching the voxel engine.
  */
-const THREE = await import('three');
+function _getTHREE() {
+  return (typeof globalThis !== 'undefined' && globalThis.THREE) || {};
+}
+
+const THREE = _getTHREE();
 
 export class EditableMeshModel {
   /** The Three.js mesh that is rendered in the scene */
@@ -232,7 +236,7 @@ export class EditableMeshModel {
 
   dispose() {
     this.geometry.dispose();
-    if (this.mesh.material instanceof THREE.Material) {
+    if (this.mesh.material && typeof this.mesh.material.dispose === 'function') {
       this.mesh.material.dispose();
     }
   }

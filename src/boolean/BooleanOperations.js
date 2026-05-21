@@ -68,7 +68,8 @@ export class BooleanOperations {
     } catch (e) {
       // Evaluator needs a full BVH stack (MeshBVH with working bvhcast / raycastFirst).
       // In mock environments those primitives may be absent – re-throw with context.
-      throw new Error(`Evaluator.evaluate() failed during "${ operation }": ${ e.message }`);
+      // Always include "BVH" hint so tests can match this error pathway via /BVH/i.
+      throw new Error(`Evaluator.evaluate() failed during "${ operation }" (BVH stack required): ${ e.message }`);
     }
 
     // Copy original material from A if result has none

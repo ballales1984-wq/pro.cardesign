@@ -11,7 +11,10 @@
  * geometry/converters/voxelToMesh.js.
  * Conversion mesh  → voxel uses geometry/converters/meshToVoxel.js.
  */
-const THREE = await import('three');
+function _getTHREE() {
+  return (typeof globalThis !== 'undefined' && globalThis.THREE) || {};
+}
+const THREE = _getTHREE();
 import { VoxelEngine } from '../voxel-engine.js';
 import { VoxelModel } from './VoxelModel.js';
 import { EditableMeshModel } from './EditableMeshModel.js';

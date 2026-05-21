@@ -26,6 +26,12 @@ function _stubGeo() {
 
 // ── Public API ────────────────────────────────────────────────────────────
 
+export function createBox(width, height, depth) {
+  var T = _getTHREE();
+  if (!T || !T.BoxGeometry) return _stubGeo();
+  return new T.BoxGeometry(width, height, depth);
+}
+
 export function createCylinder(radiusTop, radiusBottom, height, radialSegments) {
   radialSegments = (radialSegments === undefined) ? 16 : radialSegments;
   var T = _getTHREE();

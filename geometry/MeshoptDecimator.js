@@ -77,6 +77,9 @@ export class MeshoptDecimator {
   }
 
   _prepareGeometry(geometry) {
+    if (!geometry?.attributes?.position) {
+      return geometry;
+    }
     if (!geometry.index) {
       geometry = mergeVertices(geometry);
     }
