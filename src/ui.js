@@ -60,8 +60,9 @@ export class UI {
         document.getElementById('tool-add').addEventListener('click', function() { self.voxelEngine.setTool('add'); });
         document.getElementById('tool-remove').addEventListener('click', function() { self.voxelEngine.setTool('remove'); });
         document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
-        document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
-        document.getElementById('tool-sculpt').addEventListener('click', function() { self.voxelEngine.setTool('sculpt'); });
+document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
+         document.getElementById('tool-sculpt').addEventListener('click', function() { self.voxelEngine.setTool('sculpt'); });
+         document.getElementById('tool-vertex-edit').addEventListener('click', function() { self.voxelEngine.setTool('vertexEdit'); });
 
         document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
         document.getElementById('btn-import').addEventListener('click', function() { self._openImportModal(); });
@@ -90,7 +91,7 @@ export class UI {
                 : 'Strumento: ' + (toolNames[self.voxelEngine.activeTool] || self.voxelEngine.activeTool);
         });
 
-        var toolNames = { add: 'Aggiungi (A)', remove: 'Rimuovi (R)', select: 'Seleziona (V)', fill: 'Riempimento (F)', scaling: 'Scala (S)', sculpt: 'Scultura (D)' };
+        var toolNames = { add: 'Aggiungi (A)', remove: 'Rimuovi (R)', select: 'Seleziona (V)', fill: 'Riempimento (F)', scaling: 'Scala (S)', sculpt: 'Scultura (D)', vertexEdit: 'Vertice (E)' };
         window.addEventListener('tool-changed', function(e) {
             var hint = toolNames[e.detail] || e.detail;
             document.getElementById('tool-hint').textContent = 'Strumento: ' + hint;
@@ -841,12 +842,15 @@ export class UI {
         self._refreshProperties();
         self._notify('Redo', 'info');
       }
-      // Tool shortcuts
-      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (e.key === 'a' || e.key === 'A') self.voxelEngine.setTool('add');
-        if (e.key === 'r' || e.key === 'R') self.voxelEngine.setTool('remove');
-        if (e.key === 'v' || e.key === 'V') self.voxelEngine.setTool('select');
-      }
+// Tool shortcuts
+       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+         if (e.key === 'a' || e.key === 'A') self.voxelEngine.setTool('add');
+         if (e.key === 'r' || e.key === 'R') self.voxelEngine.setTool('remove');
+         if (e.key === 'v' || e.key === 'V') self.voxelEngine.setTool('select');
+         if (e.key === 's' || e.key === 'S') self.voxelEngine.setTool('scaling');
+         if (e.key === 'd' || e.key === 'D') self.voxelEngine.setTool('sculpt');
+         if (e.key === 'e' || e.key === 'E') self.voxelEngine.setTool('vertexEdit');
+       }
     });
   }
 

@@ -44,15 +44,45 @@ export class SculptTool {
       'font-family:monospace;font-size:12px;' +
       'border:1px solid #ff6b6b;display:none;' +
       'z-index:10000;pointer-events:none;' +
-      'min-width:180px;';
+      'min-width:200px;';
     document.body.appendChild(el);
     this.liveLabel = el;
+  }
+
+  _createHint() {
+    let hint = document.getElementById('sculpt-hint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.id = 'sculpt-hint';
+      hint.style.cssText =
+        'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+        'background:rgba(0,0,0,0.85);color:#fff;padding:10px 20px;' +
+        'border-radius:6px;font-family:sans-serif;font-size:13px;' +
+        'z-index:10000;pointer-events:none;opacity:0.9;';
+      document.body.appendChild(hint);
+    }
+    hint.innerHTML =
+      '<div style="font-weight:bold;margin-bottom:4px;">🗿 Sculpt Tool</div>' +
+      '<div style="font-size:12px;color:#aaa;">Drag: <span style="color:#4caf50">↑ Push</span> / <span style="color:#f44336">↓ Pull</span></div>' +
+      '<div style="font-size:11px;color:#888;margin-top:2px;">Hold <b>Shift</b> to invert</div>';
+  }
+
+  _showHint() {
+    this._createHint();
+    const hint = document.getElementById('sculpt-hint');
+    if (hint) hint.style.display = 'block';
+  }
+
+  _hideHint() {
+    const hint = document.getElementById('sculpt-hint');
+    if (hint) hint.style.display = 'none';
   }
 
   activate() {
     this.isActive = true;
     document.body.style.cursor = 'crosshair';
     this._bindEvents();
+    this._showHint();
   }
 
   deactivate() {
@@ -64,6 +94,7 @@ export class SculptTool {
     this.startVoxelData = null;
     if (this.liveLabel) this.liveLabel.style.display = 'none';
     this._removeHighlight();
+    this._hideHint();
     this._unbindEvents();
   }
 
@@ -94,33 +125,46 @@ export class SculptTool {
     return this.pointer;
   }
 
-  _onMouseDown(event) {
+_onMouseDown(event) {
     if (!this.isActive || event.button !== 0) return;
 
     const mouse = this._getMousePos(event);
     this.raycaster.setFromCamera(mouse, this.camera);
 
-    // Intersect with voxel meshes
+    // Intersect with voxel group children (InstancedMeshes)
+    const voxelGroup = this.voxelEngine.voxelGroup;
     const intersections = this.raycaster.intersectObjects(
-      Array.from(this.voxelEngine.instancedMeshes.values()), true
+      voxelGroup.children, true
     );
+    console.log('[SculptTool] Intersections found:', intersections.length);
 
-    if (intersections.length > 0 && intersections[0].instanceId !== undefined) {
-      const hit = intersections[0];
+    // Find first InstancedMesh hit
+    let hit = null;
+    for (const intr of intersections) {
+      if (intr.object.isInstancedMesh && intr.instanceId !== undefined) {
+        hit = intr;
+        break;
+      }
+    }
+
+    if (hit && hit.instanceId !== undefined) {
       const materialName = hit.object.material.name;
       const instanceId = hit.instanceId;
       const keyObj = this.voxelEngine.instanceToKey.get(materialName);
       const key = keyObj ? keyObj[instanceId] : null;
 
+      console.log('[SculptTool] Hit key:', key, 'instanceId:', instanceId);
+
       if (key) {
-        const parts = key.split(',');
-        const x = parseInt(parts[0], 10);
-        const y = parseInt(parts[1], 10);
-        const z = parseInt(parts[2], 10);
-        this.isDragging = true;
-        this.selectedVoxel = { x, y, z };
-        this.dragStartPoint = hit.point.clone();
-        this.dragNormal = hit.face.normal.clone();
+         const parts = key.split(',');
+         const x = parseInt(parts[0], 10);
+         const y = parseInt(parts[1], 10);
+         const z = parseInt(parts[2], 10);
+         this.isDragging = true;
+         this.selectedVoxel = { x, y, z };
+         this.dragStartPoint = hit.point.clone();
+         // Handle InstancedMesh raycast which may not have face.normal
+         this.dragNormal = (hit.face && hit.face.normal) ? hit.face.normal.clone() : new THREE.Vector3(0, 1, 0);
 
         // Store original voxel data
         const voxel = this.voxelEngine.getVoxelAt(x, y, z);
@@ -142,6 +186,7 @@ export class SculptTool {
 
   _onMouseMove(event) {
     if (!this.isActive) return;
+    if (!this.isDragging) return;
 
     const mouse = this._getMousePos(event);
 
@@ -258,12 +303,12 @@ export class SculptTool {
   _createDragHighlight(point, normal) {
     this._removeHighlight();
 
-    // Create a small circle or square to indicate drag plane
-    const geo = new THREE.CircleGeometry(0.15, 8);
+    // Create a larger, more visible indicator for drag plane
+    const geo = new THREE.RingGeometry(0.25, 0.35, 16);
     const mat = new THREE.MeshBasicMaterial({
       color: 0xff6b6b,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.8,
       side: THREE.DoubleSide,
       depthTest: false
     });
@@ -279,6 +324,18 @@ export class SculptTool {
 
     this.dragHighlight = highlight;
     this.scene.add(highlight);
+
+    // Add a visual "DRAG" label
+    const label = document.createElement('div');
+    label.id = 'sculpt-drag-label';
+    label.style.cssText =
+      'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);' +
+      'background:rgba(255,107,107,0.9);color:#fff;padding:4px 12px;' +
+      'border-radius:4px;font-family:sans-serif;font-size:12px;font-weight:bold;' +
+      'pointer-events:none;z-index:10001;white-space:nowrap;';
+    label.textContent = 'DRAG ↑↓';
+    this._dragLabel = label;
+    document.body.appendChild(label);
   }
 
   _removeHighlight() {
@@ -287,6 +344,10 @@ export class SculptTool {
       if (this.dragHighlight.geometry) this.dragHighlight.geometry.dispose();
       if (this.dragHighlight.material) this.dragHighlight.material.dispose();
       this.dragHighlight = null;
+    }
+    if (this._dragLabel) {
+      this._dragLabel.remove();
+      this._dragLabel = null;
     }
   }
 
@@ -308,6 +369,8 @@ export class SculptTool {
     if (this.liveLabel && this.liveLabel.parentNode) {
       this.liveLabel.parentNode.removeChild(this.liveLabel);
     }
+    const hint = document.getElementById('sculpt-hint');
+    if (hint) hint.remove();
   }
 }
 

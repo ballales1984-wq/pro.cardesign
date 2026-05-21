@@ -3,7 +3,9 @@
  */
 
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-import * as THREE from 'three';
+// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
+const THREE = await import('three');
+;
 
 export class ScalingTool {
   constructor(voxelEngine, scene, camera, renderer) {

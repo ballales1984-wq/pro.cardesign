@@ -4,6 +4,9 @@ project(VoxelEngine LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(Python_EXECUTABLE "C:/Python314/python.exe" CACHE FILEPATH "Python interpreter" FORCE)
+set(PYBIND11_FINDPYTHON NEW)
+
 add_subdirectory(third_party/pybind11)
 
 file(GLOB_RECURSE SOURCES 

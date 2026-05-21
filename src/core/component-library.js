@@ -3,7 +3,9 @@
  */
 
 // Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-import * as THREE from 'three';
+// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
+const THREE = await import('three');
+;
 
 export class ComponentInstance {
     constructor(id, definitionId, name, position, rotation = { x: 0, y: 0, z: 0 }, parameterOverrides = {}, materialOverride = null) {

@@ -421,6 +421,8 @@ export class VertexEditTool {
       ? this.voxelEngine._raycast(event)
       : null;
 
+    console.log('[VertexEdit] Hit:', hit);
+
     if (!hit || hit.isGround) {
       // Click empty space → deselect
       this.selectedVoxel = null;

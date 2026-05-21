@@ -12,6 +12,12 @@ const FILES = [
   'src/core/brick-adapter.js',
   'src/core/component-library.js',
   'src/core/sphere-system.js',
+  'src/model/VoxelModel.js',
+  'src/model/EditableMeshModel.js',
+  'src/model/HybridModel.js',
+  'src/geometry/converters/voxelToMesh.js',
+  'src/geometry/converters/meshToVoxel.js',
+  'src/geometry/primitives/index.js',
 ];
 
 const OLD = "import * as THREE from 'three'";
