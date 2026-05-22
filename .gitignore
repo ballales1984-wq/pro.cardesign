@@ -4,6 +4,7 @@ node_modules/
 .pnp.js
 
 # testing
+.coverage
 coverage/
 
 # production
@@ -34,11 +35,19 @@ __pycache__/
 .env
 venv/
 
-# Data files
+# Data files - exclude large generated files
 *.json
-*.stl
-!full_model.json
+!package.json
+!package-lock.json
+!geo_def.json
+!datasets/**/*.json
+!data/**/*.json
+
+# Test files
 !test_model.json
+
+# Exclude full_model.json (2.7MB) - too large for git
+full_model.json
 
 # Debug files — Electron js2c investigation
 check-electron-type.js
@@ -59,3 +68,10 @@ electron_test.txt
 
 # Temp test projects
 temp_electron_test/
+
+# Temp JS files (debug, generated)
+tmp-*.mjs
+tmp-*.js
+temp_debug.js
+temp*.js
+vite*.log
