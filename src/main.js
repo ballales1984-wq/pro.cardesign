@@ -2,7 +2,6 @@
  * VoxelCAD - Entry Point (Renderer Process)
  * Three.js-based voxel editor with physics & module system
  */
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelEngine } from './voxel-engine.js';
@@ -16,122 +15,144 @@ import { ComponentLibrary } from './core/component-library.js';
 import { STLImporter, QualityAnalyzer } from './core/stl-import.js';
 import { ProceduralEngine } from './core/procedural-engine.js';
 
-// Three.js Setup
+// ── Canvas / Scene ─────────────────────────────────────────────────────────
 const canvas = document.getElementById('gl-canvas');
+if (!canvas) {
+  console.error('Canvas #gl-canvas not found in DOM');
+  throw new Error('Canvas not found');
+}
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0f1923);
-scene.fog = new THREE.FogExp2(0x0f1923, 0.035);
+scene.fog = new THREE.FogExp2(0x0f1923, 0.015);
 
+// ── Camera ──────────────────────────────────────────────────────────────────
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(8, 10, 12);
 camera.lookAt(0, 0, 0);
 
-const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-renderer.setSize(window.innerWidth - 260, window.innerHeight - 48);
+// ── Renderer ────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-let controls = new OrbitControls(camera, canvas);
+// Initial size set immediately — before any render pass
+const initialW = Math.max(1, Math.floor(window.innerWidth - 260));
+const initialH = Math.max(1, Math.floor(window.innerHeight - 48));
+renderer.setSize(initialW, initialH, false);
+
+// ── OrbitControls ───────────────────────────────────────────────────────────
+const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI / 2.1;
 controls.mouseButtons = {
-  LEFT: false, // Left click is reserved for interacting with voxels
-  MIDDLE: THREE.MOUSE.PAN, // Middle click + drag to Pan
-  RIGHT: THREE.MOUSE.ROTATE // Right click + drag to Rotate
+  LEFT: false,
+  MIDDLE: THREE.MOUSE.PAN,
+  RIGHT: THREE.MOUSE.ROTATE,
 };
-// Ensure OrbitControls doesn't interfere
-controls.enabled = true;
 
-// Lights
-const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+// ── Lights ──────────────────────────────────────────────────────────────────
+const ambientLight = new THREE.AmbientLight(0x606080, 0.5);
 scene.add(ambientLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-dirLight.position.set(10, 20, 15);
+dirLight.position.set(15, 25, 20);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.set(2048, 2048);
 scene.add(dirLight);
 
-const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x362a10, 0.3);
+const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x362a10, 0.35);
 scene.add(hemiLight);
 
-// Grid — allineata alle coordinate intere dei voxel
-const gridHelper = new THREE.GridHelper(40, 40, 0x2a4a7c, 0x1a3050);
-gridHelper.position.set(0, 0, 0);
+// ── Grid — INSERITO PRIMA DI OGNI ALTRA COSA ─────────────────────────────────
+const gridHelper = new THREE.GridHelper(80, 80, 0x00d2ff, 0x00d2ff);
+gridHelper.position.y = 0;
+gridHelper.material.transparent = false;
+gridHelper.material.opacity = 1.0;
 scene.add(gridHelper);
 
-// Marker origine (pallino rosso al centro della scena)
-const originGeo = new THREE.SphereGeometry(0.2, 12, 12);
-const originMat = new THREE.MeshBasicMaterial({ color: 0xe94560 });
+// ── Origin marker ───────────────────────────────────────────────────────────
+const originGeo  = new THREE.SphereGeometry(0.2, 12, 12);
+const originMat  = new THREE.MeshBasicMaterial({ color: 0xe94560 });
 const originMarker = new THREE.Mesh(originGeo, originMat);
 scene.add(originMarker);
 
-// Assi principali X=Rosso, Y=Verde, Z=Blu, lunghezza 5 unità
-const axesHelper = new THREE.AxesHelper(5);
+// ── Axes ────────────────────────────────────────────────────────────────────
+const axesHelper = new THREE.AxesHelper(10);
 scene.add(axesHelper);
 
-// Brick Dimension Display (selected brick)
+// ── Brick dimensions HUD ─────────────────────────────────────────────────────
 const dimensionDiv = document.getElementById('brick-dimensions');
 
-// Core Systems
-const materialDB = new MaterialSystem();
-const moduleSystem = new ModuleSystem(materialDB);
-const physics = new PhysicsCalc(materialDB, moduleSystem);
-const meshExporter = new MeshExporter();
-const voxelEngine = new VoxelEngine(scene, materialDB, moduleSystem, camera, renderer, controls);
-const brickSystem = new BrickSystem(voxelEngine);
+// ── Core systems ─────────────────────────────────────────────────────────────
+const materialDB       = new MaterialSystem();
+const moduleSystem     = new ModuleSystem(materialDB);
+const physics          = new PhysicsCalc(materialDB, moduleSystem);
+const meshExporter     = new MeshExporter();
+const voxelEngine      = new VoxelEngine(scene, materialDB, moduleSystem, camera, renderer, controls);
+const brickSystem      = new BrickSystem(voxelEngine);
 const proceduralEngine = new ProceduralEngine(voxelEngine);
 
-// UI
+// ── UI ───────────────────────────────────────────────────────────────────────
 const ui = new UI({
   voxelEngine: voxelEngine,
-  materialDB: materialDB,
-  moduleSystem: moduleSystem,
-  physics: physics,
-  meshExporter: meshExporter,
-  proceduralEngine: proceduralEngine,
-  controls: controls,
-  camera: camera,
-  renderer: renderer,
-  scene: scene,
+  materialDB:  materialDB,
+  moduleSystem,
+  physics,
+  meshExporter,
+  proceduralEngine,
+  controls,
+  camera,
+  renderer,
+  scene,
 });
 
-// Resize
-window.addEventListener('resize', () => {
-  const w = window.innerWidth - 260;
-  const h = window.innerHeight - 48;
+// ── Resize handler ──────────────────────────────────────────────────────────
+function resizeRenderer() {
+  const w = Math.max(1, Math.floor(window.innerWidth - 260));
+  const h = Math.max(1, Math.floor(window.innerHeight - 48));
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
-});
+  renderer.setSize(w, h, false);
+}
 
-// Animation Loop
+window.addEventListener('resize', resizeRenderer);
+resizeRenderer();
+
+// ── Animation Loop ──────────────────────────────────────────────────────────
 let frameCount = 0;
-let fpsTimer = 0;
+let fpsTimer   = 0;
 
 function animate(time) {
-    requestAnimationFrame(animate);
-    controls.update();
+  requestAnimationFrame(animate);
+  controls.update();
 
-    if (brickSystem.selectedBrick) {
-        dimensionDiv.textContent = brickSystem.dimensionsText;
-        dimensionDiv.style.display = 'block';
-    } else {
-        dimensionDiv.style.display = 'none';
-    }
+  // Brick dimensions HUD
+  const sel = brickSystem.selectedBrick;
+  if (sel) {
+    dimensionDiv.textContent  = brickSystem.dimensionsText;
+    dimensionDiv.style.display = 'block';
+  } else {
+    dimensionDiv.style.display = 'none';
+  }
 
-    frameCount++;
-    if (time - fpsTimer >= 1000) {
-        document.getElementById('fps-counter').textContent = 'FPS: ' + frameCount;
-        frameCount = 0;
-        fpsTimer = time;
-    }
+  // FPS counter — throttled
+  frameCount++;
+  if (time - fpsTimer >= 1000) {
+    document.getElementById('fps-counter').textContent = 'FPS: ' + frameCount;
+    frameCount = 0;
+    fpsTimer   = time;
+  }
 
-    voxelEngine.update(time * 0.001);
-    renderer.render(scene, camera);
+  // Voxel hover ghost animation
+  voxelEngine.update(time * 0.001);
+
+  // Render
+  renderer.render(scene, camera);
 }
+
 requestAnimationFrame(animate);
 
 console.log('%c◆ VoxelCAD v0.1.0 loaded', 'color: #e94560; font-size: 14px; font-weight: bold');

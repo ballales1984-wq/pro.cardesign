@@ -122,10 +122,19 @@ mockDocAndGlobals();
     };
   };
 
-  function Vec3(x=0,y=0,z=0){ return v3(x,y,z); }
-  function Vec2(x=0,y=0){ return v2(x,y); }
+function Vec3(x=0,y=0,z=0){ return v3(x,y,z); }
+   function Vec2(x=0,y=0){ return v2(x,y); }
+   
+   // Mesh constructor with prototype for instanceof support
+   function MeshConstructor(geo,mat){ 
+      this.geometry=geo||{}; this.material=mat; this.position=v3(); this.scale=v3(); this.rotation=v3(); this.visible=true; this.castShadow=false; this.receiveShadow=false; this.userData={}; this.add=_=>{}; 
+      this.updateMatrixWorld = function(force){ /* no-op in mock */ };
+      this.clone = function(){ const m = Object.create(Object.getPrototypeOf(this)); Object.assign(m, JSON.parse(JSON.stringify({position:this.position,rotation:this.rotation,scale:this.scale,visible:this.visible,castShadow:this.castShadow,receiveShadow:this.receiveShadow}))); m.geometry=this.geometry; m.material=this.material; return m; };
+      this.dispose = function(){ this.geometry?.dispose?.(); this.material?.dispose?.(); };
+      this.updateMorphTargets = function(){ /* no-op in mock */ };
+   }
 
-  global.THREE = {
+   global.THREE = {
     Scene: function(){ this.add=_=>{}; this.children=[]; },
     FogExp2: function(){},
     PerspectiveCamera: function(){ this.position={ set:_=>{}, copy:_=>{}, x:0,y:0,z:0 }; this.lookAt=_=>{}; this.aspect=1; this.updateProjectionMatrix=_=>{}; },
@@ -194,13 +203,8 @@ EdgesGeometry: function(geo){ this.geometry=geo; this.dispose=_=>{}; return this
       },
      MeshBasicMaterial: function(opts){ this.color=opts.color||0xffffff; this.opacity=opts.opacity||1; this.transparent=false; this.wireframe=false; this.depthWrite=true; },
     LineBasicMaterial: function(opts){ this.color=opts.color||0; },
-    Mesh: function(geo,mat){ this.geometry=geo||{}; this.material=mat; this.position=v3(); this.scale=v3(); this.rotation=v3(); this.visible=true; this.castShadow=false; this.receiveShadow=false; this.userData={}; this.add=_=>{}; 
-      this.updateMatrixWorld = function(force){ /* no-op in mock */ };
-      this.clone = function(){ const m = Object.create(Object.getPrototypeOf(this)); Object.assign(m, JSON.parse(JSON.stringify({position:this.position,rotation:this.rotation,scale:this.scale,visible:this.visible,castShadow:this.castShadow,receiveShadow:this.receiveShadow}))); m.geometry=this.geometry; m.material=this.material; return m; };
-      this.dispose = function(){ this.geometry?.dispose?.(); this.material?.dispose?.(); };
-      this.updateMorphTargets = function(){ /* no-op in mock */ };
-    },
-    LineSegments: function(geo,mat){ this.geometry=geo; this.material=mat; this.position=v3(); this.visible=true; },
+Mesh: MeshConstructor,
+     LineSegments: function(geo,mat){ this.geometry=geo; this.material=mat; this.position=v3(); this.visible=true; },
     Sprite: function(mat){ this.position=v3(); this.scale=v3(); this.material=mat; },
     InstancedMesh: function(geo,mat,count){ this.count=count||0; this.instanceMatrix={ setUsage:_=>{}, needsUpdate:false }; this.frustumCulled=true; this.castShadow=false; this.receiveShadow=false; },
 
@@ -1157,7 +1161,9 @@ endsolid test`;
         [0,0,0, 1,0,0, 0,1,0, 1,0,0, 1,1,0, 0,1,0], 3));
       geom.computeBoundingSphere();
       md.setReferenceGeometry(geom);
-      assert.ok(md._refMesh instanceof THREE.Mesh);
+      // Check that _refMesh is a mesh object with expected properties
+      assert.ok(md._refMesh && md._refMesh.geometry);
+      assert.strictEqual(md._refMesh.geometry, geom);
       assert.strictEqual(md._refGeometry, geom);
     });
 

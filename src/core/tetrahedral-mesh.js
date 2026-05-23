@@ -2,9 +2,7 @@
  * TetrahedralMesh - Decomposes voxel grid into tetrahedra for FEM simulation
  * Each cube is decomposed into 5 tetrahedra (MacNeal's decomposition)
  */
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+import * as THREE from 'three';
 
 export class Tetrahedron {
   constructor(v0, v1, v2, v3, material) {

@@ -4,10 +4,10 @@
   "description": "A desktop voxel CAD application for the pro.cardesign design system",
   "main": "main.js",
   "scripts": {
-    "dev": "vite --port 5176 --host 0.0.0.0",
+    "dev": "npx vite --port 5176 --host 0.0.0.0",
     "start": "electron .",
-    "build": "vite build",
-    "preview": "vite preview",
+    "build": "npx vite build",
+    "preview": "npx vite preview",
     "package": "npm run build && electron-builder"
   },
   "build": {

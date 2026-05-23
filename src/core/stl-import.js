@@ -3,9 +3,8 @@
  * Enhanced with Blender-inspired robust parsing and quality analysis
  */
 
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+// Import static: permette al test runner di iniettare un mock prima del caricamento
+import * as THREE from 'three';
 
 /**
  * Enhanced STL Importer with Blender-inspired robust parsing

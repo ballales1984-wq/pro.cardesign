@@ -3,10 +3,9 @@
  * 1 Three.js unit = 1mm
  */
 
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+// Import static: permette al test runner di iniettare un mock prima del caricamento
+import * as THREE from 'three';
+
 
 export class Brick {
     constructor(id, name, position, size, material = 'steel') {

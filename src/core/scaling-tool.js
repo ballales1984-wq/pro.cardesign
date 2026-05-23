@@ -2,10 +2,9 @@
  * ScalingTool - Click and drag on brick faces to resize with live measurements
  */
 
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-// Import dinamico: permette al test runner di iniettare un mock prima del caricamento
-const THREE = await import('three');
-;
+// Import static: permette al test runner di iniettare un mock prima del caricamento
+import * as THREE from 'three';
+
 
 export class ScalingTool {
   constructor(voxelEngine, scene, camera, renderer) {

@@ -6,7 +6,7 @@
  *
  * This is the "source of truth" in voxel mode (HybridModel.mode === 'voxel').
  */
-const THREE = await import('three');
+import * as THREE from 'three';
 import { VoxelEngine } from '../voxel-engine.js';
 import { Chunk } from '../core/chunk-system.js';
 

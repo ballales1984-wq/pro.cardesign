@@ -13,12 +13,8 @@
  * Dependencies: THREE (three.js), STLImporter (opzionale per import file)
  */
 
-let THREE;
-if (typeof global !== 'undefined' && global.THREE) {
-  THREE = global.THREE;
-} else {
-  THREE = await import('three');
-}
+import * as THREE from 'three';
+import { STLImporter } from './stl-import.js';
 
 const DEFAULT_SAMPLE_DIST = 0.002;   // world units – triangle traversal step
 const MAX_RAY_STEPS   = 60;           // max ray-march iterations
@@ -135,20 +131,20 @@ export class MeshDeformer {
     return geom;
   }
 
-   /**
-    * Imposta direttamente una BufferGeometry come mesh di riferimento
-    * (utile quando la geometria proviene da STLImporter o MeshExporter).
-    */
-   setReferenceGeometry(geometry) {
-     this._removeRefMesh();
-     this._refGeometry = geometry;
-     // Ensure bounding box and sphere are computed
-     if (geometry) {
-       geometry.computeBoundingSphere();
-       geometry.computeBoundingBox();
-     }
-     this._refBoundingSphere = geometry?.boundingSphere ?? null;
-     this._refBBox = geometry?.boundingBox ?? null;
+/**
+     * Imposta direttamente una BufferGeometry come mesh di riferimento
+     * (utile quando la geometria proviene da STLImporter o MeshExporter).
+     */
+  setReferenceGeometry(geometry) {
+    this._removeRefMesh();
+    this._refGeometry = geometry;
+    // Ensure bounding box and sphere are computed
+    if (geometry) {
+      geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+    }
+    this._refBoundingSphere = geometry?.boundingSphere ?? null;
+    this._refBBox = geometry?.boundingBox ?? null;
 
     // Crea la visualizzazione semi-trasparente in scena
     const mat = new THREE.MeshStandardMaterial({
@@ -160,11 +156,11 @@ export class MeshDeformer {
       side: THREE.DoubleSide,
       depthWrite: false,
     });
-     const mesh = new THREE.Mesh(geometry, mat);
-     mesh.name = '_meshRef';
-     this.scene.add(mesh);
-     this._refMesh = mesh;
-   }
+    const mesh = new THREE.Mesh(geometry, mat);
+    mesh.name = '_meshRef';
+    this.scene.add(mesh);
+    this._refMesh = mesh;
+  }
 
   /**
    * Rimuove la mesh di riferimento dalla scena.
