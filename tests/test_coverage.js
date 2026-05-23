@@ -664,14 +664,121 @@ async function runAll() {
       assert.strictEqual(scale_arg.z, 1, 'Z component of updated scale');
     });
 
-    runTest('ScalingTool destroy removes live label', () => {
-      const engine = _buildScalingMockEngine(mockScene);
-      const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
-      const labelId = tool.liveLabel.id;
-      assert.ok(labelId.startsWith('scaling-live-label'));
-      tool.destroy();
-      assert.ok(tool.liveLabel.parentNode === null || tool.liveLabel.parentNode === undefined);
-    });
+runTest('ScalingTool destroy removes live label', () => {
+       const engine = _buildScalingMockEngine(mockScene);
+       const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+       const labelId = tool.liveLabel.id;
+       assert.ok(labelId.startsWith('scaling-live-label'));
+       tool.destroy();
+       assert.ok(tool.liveLabel.parentNode === null || tool.liveLabel.parentNode === undefined);
+     });
+
+    // ── 4.6. MoveTool ──────────────────────────────────────────────────────────────
+    try {
+      const { MoveTool } = await loadESM('src/core/move-tool.js');
+
+      runTest('MoveTool (import)', () => {
+        assert.strictEqual(typeof MoveTool, 'function');
+      });
+
+      runTest('MoveTool constructor sets isActive=false', () => {
+        const mockScene = { remove: () => {}, add: () => {} };
+        const mockRenderer = { domElement: { addEventListener: () => {}, removeEventListener: () => {}, getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+        const tool = new MoveTool(null, mockScene, {}, mockRenderer);
+        assert.strictEqual(tool.isActive, false);
+        assert.strictEqual(tool.isDragging, false);
+        assert.ok(tool.liveLabel !== null);
+        assert.ok(tool.ghostMesh !== null);
+      });
+
+      runTest('MoveTool activate / deactivate', () => {
+        const mockScene = { remove: () => {}, add: () => {} };
+        const mockRenderer = { domElement: { addEventListener: () => {}, removeEventListener: () => {}, getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+        const tool = new MoveTool(null, mockScene, {}, mockRenderer);
+        tool.activate();
+        assert.strictEqual(tool.isActive, true);
+        tool.deactivate();
+        assert.strictEqual(tool.isActive, false);
+        assert.strictEqual(tool.isDragging, false);
+      });
+
+      runTest('MoveTool _getMousePos returns normalized coords', () => {
+        const mockScene = { remove: () => {}, add: () => {} };
+        const mockRenderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+        const tool = new MoveTool(null, mockScene, {}, mockRenderer);
+        const ev = tool._getMousePos({clientX: 400, clientY: 300});
+        assert.strictEqual(Math.round(ev.x), 0);   // (400/800)*2-1 = 0
+        assert.strictEqual(Math.round(ev.y), 0);
+      });
+
+      runTest('MoveTool _resetState clears state', () => {
+        const mockScene = { remove: () => {}, add: () => {} };
+        const mockRenderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+        const tool = new MoveTool(null, mockScene, {}, mockRenderer);
+        tool.isDragging = true;
+        tool.selectedVoxel = { x: 5, y: 5, z: 5 };
+        tool.dragStartWorld = new THREE.Vector3(1, 2, 3);
+        tool._resetState();
+        assert.strictEqual(tool.isDragging, false);
+        assert.strictEqual(tool.selectedVoxel, null);
+        assert.strictEqual(tool.dragStartWorld, null);
+      });
+
+      runTest('MoveTool _createLiveLabel creates DOM element', () => {
+        const mockScene = { remove: () => {}, add: () => {} };
+        const mockRenderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+        const tool = new MoveTool(null, mockScene, {}, mockRenderer);
+        assert.strictEqual(tool.liveLabel.id, 'move-live-label');
+        assert.strictEqual(tool.liveLabel.style.display, 'none');
+      });
+
+      runTest('MoveTool _createGhostPreview creates mesh', () => {
+        const mockScene = { remove: () => {}, add: () => {} };
+        const mockRenderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+        const tool = new MoveTool(null, mockScene, {}, mockRenderer);
+        assert.ok(tool.ghostMesh);
+        assert.strictEqual(tool.ghostMesh.visible, false);
+      });
+
+      runTest('MoveTool _updateLabel shows deltas', () => {
+        const mockScene = { remove: () => {}, add: () => {} };
+        const mockRenderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+        const tool = new MoveTool(null, mockScene, {}, mockRenderer);
+        tool.selectedVoxel = { x: 0, y: 0, z: 0 };
+        tool._updateLabel({ x: 2, y: 3, z: 4 });
+        const html = tool.liveLabel.innerHTML;
+        assert.ok(html.includes('ΔX: +2'));
+        assert.ok(html.includes('ΔY: +3'));
+        assert.ok(html.includes('ΔZ: +4'));
+      });
+
+      runTest('MoveTool _setGhostAt positions ghost', () => {
+        const mockEngine = { _worldPos: (v) => new THREE.Vector3(v.x + 0.5, v.y + 0.5, v.z + 0.5) };
+        const mockScene = { remove: () => {}, add: () => {} };
+        const mockRenderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+        const tool = new MoveTool(mockEngine, mockScene, {}, mockRenderer);
+        tool.startVoxelData = { scale: [2, 3, 4] };
+        tool._setGhostAt({ x: 1, y: 2, z: 3 });
+        assert.strictEqual(tool.ghostMesh.visible, true);
+        assert.ok(tool.ghostMesh.scale.x > 0);
+      });
+
+    } catch(e) { failed++; console.log('  [FAIL] MoveTool import: ' + e.message); }
+
+    runTest('ScalingTool._onMouseDown with Z-face hit -> dragAxis z', () => {
+       const engine = _buildScalingMockEngine(mockScene);
+       const tool = new ScalingTool(engine, mockScene, mockCamera, mockRenderer);
+
+       tool.isDragging = true;
+       tool.selectedVoxel = { x: 1, y: 0, z: 0 };
+       tool.dragStartPoint = new THREE.Vector3(1.5, 0.5, 0.5);
+       tool.dragAxis = 'z';
+       tool.startScale = { x: 3, y: 3, z: 3 };
+
+       assert.strictEqual(tool.dragAxis, 'z');
+       assert.strictEqual(tool.selectedVoxel.x, 1);
+       assert.deepStrictEqual(tool.startScale, { x: 3, y: 3, z: 3 });
+     });
 
     global.THREE.Raycaster = _origRaycaster;
     global.window.addEventListener    = _origAdd;
