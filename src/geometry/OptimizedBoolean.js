@@ -37,7 +37,14 @@ export class OptimizedBoolean {
     // Applica transform...
     // Example: apply position, rotation, scale from params
     if (params.position) toolMesh.position.copy(params.position);
-    if (params.rotation) toolMesh.rotation.copy(params.rotation);
+    if (params.rotation) {
+      // Safely copy rotation - handle missing Euler order
+      if (params.rotation && params.rotation.isEuler) {
+        toolMesh.rotation.copy(params.rotation);
+      } else {
+        toolMesh.rotation.set(0, 0, 0);
+      }
+    }
     if (params.scale) toolMesh.scale.copy(params.scale);
     return toolMesh;
   }

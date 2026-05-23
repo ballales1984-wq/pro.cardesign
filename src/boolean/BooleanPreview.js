@@ -51,7 +51,11 @@ export class BooleanPreview {
     
     // Position tool mesh
     lowPolyTool.position.copy(toolMesh.position);
-    lowPolyTool.rotation.copy(toolMesh.rotation);
+    if (toolMesh.rotation && toolMesh.rotation.isEuler) {
+      lowPolyTool.rotation.copy(toolMesh.rotation);
+    } else {
+      lowPolyTool.rotation.set(0, 0, 0);
+    }
     lowPolyTool.scale.copy(toolMesh.scale);
     lowPolyTool.updateMatrixWorld(true);
     

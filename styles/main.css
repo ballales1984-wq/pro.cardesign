@@ -506,14 +506,25 @@ form#add-material-form {
   grid-column: 2;
   grid-row: 2;
   position: relative;
-  background: #000;
+  background: #0f1923;
   overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }
 
 #gl-canvas {
-  width:  100%;
-  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
+  z-index: 0;
+  outline: none;
+}
+
+#camera-controls,
+#viewport-info,
+#brick-dimensions {
+  z-index: 2;
 }
 
 #viewport-info {

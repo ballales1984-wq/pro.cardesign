@@ -4,7 +4,6 @@
  */
 
 import { ComponentLibrary } from './core/component-library.js';
-import { ScalingTool } from './core/scaling-tool.js';
 
 export class UI {
     constructor(opts) {
@@ -25,16 +24,24 @@ export class UI {
       this._setupKeyboard();
       this._subscribeEvents();
       
-      // Defer non-critical UI work
-       requestIdleCallback(() => {
-         this._setupPanels();
-        this._setupSculptPanelListeners();
-         this._setupProceduralPanel();
-        this._populateMaterials();
-        this._populateModules();
-        this._setupLibrary();
-        this._addDemoVoxels();
-      }, { timeout: 500 });
+      const runDeferred = window.requestIdleCallback
+        ? (cb) => window.requestIdleCallback(cb, { timeout: 500 })
+        : (cb) => setTimeout(cb, 0);
+
+      runDeferred(() => {
+        try {
+          this._setupPanels();
+          this._setupSculptPanelListeners();
+          this._setupProceduralPanel();
+          this._populateMaterials();
+          this._populateModules();
+          this._setupLibrary();
+          this._addDemoVoxels();
+        } catch (err) {
+          console.error('[UI] deferred setup failed:', err);
+          this._notify('Errore UI: ' + err.message, 'error');
+        }
+      });
     }
 
   // Notification helper
@@ -413,7 +420,9 @@ export class UI {
        var swatch = document.createElement('div');
        swatch.className = 'material-swatch' + (m.name === this.voxelEngine.activeMaterial ? ' active' : '');
        swatch.dataset.mat = m.name;
-       var colorHex = m.color.toString(16);
+       var colorNum = Number(m.color);
+       if (!Number.isFinite(colorNum)) colorNum = 0x888888;
+       var colorHex = colorNum.toString(16);
        while (colorHex.length < 6) colorHex = '0' + colorHex;
        swatch.appendChild(this._createSwatchColor('#' + colorHex));
        var nameSpan = document.createElement('span');

@@ -150,7 +150,11 @@ export class VoxelBooleanProcessor {
     
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.copy(position);
-    mesh.rotation.copy(rotation);
+    if (rotation && rotation.isEuler) {
+      mesh.rotation.copy(rotation);
+    } else {
+      mesh.rotation.set(0, 0, 0);
+    }
     mesh.scale.copy(scale);
     mesh.updateMatrixWorld(true);
     
@@ -236,7 +240,11 @@ export class VoxelBooleanProcessor {
     );
     
     lowPolyTool.position.copy(toolMesh.position);
-    lowPolyTool.rotation.copy(toolMesh.rotation);
+    if (toolMesh.rotation && toolMesh.rotation.isEuler) {
+      lowPolyTool.rotation.copy(toolMesh.rotation);
+    } else {
+      lowPolyTool.rotation.set(0, 0, 0);
+    }
     lowPolyTool.scale.copy(toolMesh.scale);
     lowPolyTool.updateMatrixWorld(true);
     

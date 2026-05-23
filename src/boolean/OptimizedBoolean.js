@@ -77,20 +77,24 @@ export class OptimizedBoolean {
     return this.brushCache.get(key);
   }
 
-  /**
-   * Performs boolean subtraction operation with caching
-   * @param {THREE.Mesh} targetMesh - Target mesh to subtract from
-   * @param {THREE.BufferGeometry} toolGeometry - Geometry to subtract
-   * @param {Object} toolParams - Position, rotation, scale for tool
-   * @returns {THREE.Mesh} Result of boolean operation
-   */
+/**
+    * Performs boolean subtraction operation with caching
+    * @param {THREE.Mesh} targetMesh - Target mesh to subtract from
+    * @param {THREE.BufferGeometry} toolGeometry - Geometry to subtract
+    * @param {Object} toolParams - Position, rotation, scale for tool
+    * @returns {THREE.Mesh} Result of boolean operation
+    */
   subtract(targetMesh, toolGeometry, toolParams = {}) {
     // Get or create prepared brush
     const brushMesh = this.getPreparedBrush(toolGeometry);
     
     // Apply transformations to brush
     brushMesh.position.copy(toolParams.position || new THREE.Vector3());
-    brushMesh.rotation.copy(toolParams.rotation || new THREE.Euler());
+    if (toolParams.rotation && toolParams.rotation.isEuler) {
+      brushMesh.rotation.copy(toolParams.rotation);
+    } else {
+      brushMesh.rotation.set(0, 0, 0);
+    }
     brushMesh.scale.copy(toolParams.scale || new THREE.Vector3(1, 1, 1));
     brushMesh.updateMatrixWorld(true);
     
@@ -119,20 +123,24 @@ export class OptimizedBoolean {
     return result;
   }
 
-  /**
-   * Performs boolean union operation with caching
-   * @param {THREE.Mesh} targetMesh - Target mesh to union with
-   * @param {THREE.BufferGeometry} toolGeometry - Geometry to union
-   * @param {Object} toolParams - Position, rotation, scale for tool
-   * @returns {THREE.Mesh} Result of boolean operation
-   */
+/**
+    * Performs boolean union operation with caching
+    * @param {THREE.Mesh} targetMesh - Target mesh to union with
+    * @param {THREE.BufferGeometry} toolGeometry - Geometry to union
+    * @param {Object} toolParams - Position, rotation, scale for tool
+    * @returns {THREE.Mesh} Result of boolean operation
+    */
   union(targetMesh, toolGeometry, toolParams = {}) {
     // Get or create prepared brush
     const brushMesh = this.getPreparedBrush(toolGeometry);
     
     // Apply transformations to brush
     brushMesh.position.copy(toolParams.position || new THREE.Vector3());
-    brushMesh.rotation.copy(toolParams.rotation || new THREE.Euler());
+    if (toolParams.rotation && toolParams.rotation.isEuler) {
+      brushMesh.rotation.copy(toolParams.rotation);
+    } else {
+      brushMesh.rotation.set(0, 0, 0);
+    }
     brushMesh.scale.copy(toolParams.scale || new THREE.Vector3(1, 1, 1));
     brushMesh.updateMatrixWorld(true);
     
@@ -161,20 +169,24 @@ export class OptimizedBoolean {
     return result;
   }
 
-  /**
-   * Performs boolean intersection operation with caching
-   * @param {THREE.Mesh} targetMesh - Target mesh to intersect
-   * @param {THREE.BufferGeometry} toolGeometry - Geometry to intersect with
-   * @param {Object} toolParams - Position, rotation, scale for tool
-   * @returns {THREE.Mesh} Result of boolean operation
-   */
+/**
+    * Performs boolean intersection operation with caching
+    * @param {THREE.Mesh} targetMesh - Target mesh to intersect
+    * @param {THREE.BufferGeometry} toolGeometry - Geometry to intersect with
+    * @param {Object} toolParams - Position, rotation, scale for tool
+    * @returns {THREE.Mesh} Result of boolean operation
+    */
   intersect(targetMesh, toolGeometry, toolParams = {}) {
     // Get or create prepared brush
     const brushMesh = this.getPreparedBrush(toolGeometry);
     
     // Apply transformations to brush
     brushMesh.position.copy(toolParams.position || new THREE.Vector3());
-    brushMesh.rotation.copy(toolParams.rotation || new THREE.Euler());
+    if (toolParams.rotation && toolParams.rotation.isEuler) {
+      brushMesh.rotation.copy(toolParams.rotation);
+    } else {
+      brushMesh.rotation.set(0, 0, 0);
+    }
     brushMesh.scale.copy(toolParams.scale || new THREE.Vector3(1, 1, 1));
     brushMesh.updateMatrixWorld(true);
     

@@ -31,14 +31,19 @@ export class BooleanOperations {
         src.markUpdated();
         return src;
       }
-      // Wrap into a proper Brush instance
-      const b = new Brush(src.geometry, src.material);
-      b.position.copy(src.position);
-      b.rotation.copy(src.rotation);
-      b.scale.copy(src.scale);
-      b.matrixWorld.copy(src.matrixWorld);
-      b.markUpdated();
-      return b;
+// Wrap into a proper Brush instance
+          const b = new Brush(src.geometry, src.material);
+          b.position.copy(src.position);
+          // Safely copy rotation - handle missing Euler order
+          if (src.rotation && src.rotation.isEuler) {
+            b.rotation.copy(src.rotation);
+          } else {
+            b.rotation.set(0, 0, 0);
+          }
+          b.scale.copy(src.scale);
+          b.matrixWorld.copy(src.matrixWorld);
+          b.markUpdated();
+          return b;
     }
 
     const a = asBrush(meshA);

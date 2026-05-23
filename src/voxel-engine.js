@@ -404,12 +404,17 @@ export class VoxelEngine {
               if (hit.instanceId !== undefined) {
                 const materialName = hit.object.material.name;
                 const key = this.instanceToKey.get(materialName)?.[hit.instanceId];
-                if (key) {
-                  const parts = key.split(',').map(Number);
-                  if (this.getVoxelAt(parts[0], parts[1], parts[2])) {
-                    return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal: hit.face.normal, isGround: false };
-                  }
-                }
+if (key) {
+                       const parts = key.split(',').map(Number);
+                       if (this.getVoxelAt(parts[0], parts[1], parts[2])) {
+                         // Extract face normal safely - InstancedMesh raycast may not provide it
+                         let faceNormal = new THREE.Vector3(0, 1, 0);
+                         if (hit.face && hit.face.normal) {
+                           faceNormal = hit.face.normal.clone();
+                         }
+                         return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal, isGround: false };
+                       }
+                     }
               }
             }
            }

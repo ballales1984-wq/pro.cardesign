@@ -40,6 +40,11 @@ export class GeometryDecimator {
     try {
       const simplified = this.simplifyModifier.modify(geo, targetCount);
 
+      if (!simplified || !simplified.attributes || !simplified.attributes.position) {
+        console.warn("Decimazione fallita (simplified geometry invalid), ritorno geometria originale");
+        return geometry;
+      }
+
       simplified.computeVertexNormals();
       simplified.computeBoundingBox();
       simplified.computeBoundingSphere();
