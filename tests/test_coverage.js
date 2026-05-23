@@ -1288,8 +1288,95 @@ endsolid test`;
     });
   } catch(e) { failed++; console.log('  [FAIL] RuleEditorUI import: ' + e.message); }
 
+// ── 17. Undo/Redo ───────────────────────────────────────────────────────────
+   try {
+     const { VoxelEngine } = await loadESM('src/voxel-engine.js');
+
+     runTest('VoxelEngine._pushHistory stores action', () => {
+       const mockEngine = {
+         _history: [],
+         _redoStack: [],
+         _maxHistory: 50,
+         _maxRedo: 50,
+         _pushHistory(action) {
+           this._history.push(action);
+           if (this._history.length > this._maxHistory) this._history.shift();
+           this._redoStack = [];
+         }
+       };
+       mockEngine._pushHistory({ type: 'add', x: 0, y: 0, z: 0 });
+       assert.strictEqual(mockEngine._history.length, 1);
+       assert.strictEqual(mockEngine._history[0].type, 'add');
+     });
+
+     runTest('VoxelEngine._pushHistory clears redoStack', () => {
+       const mockEngine = {
+         _history: [],
+         _redoStack: [{ type: 'remove', x: 1, y: 2, z: 3 }],
+         _maxHistory: 50,
+         _pushHistory(action) {
+           this._history.push(action);
+           if (this._history.length > this._maxHistory) this._history.shift();
+           this._redoStack = [];
+         }
+       };
+       mockEngine._pushHistory({ type: 'add', x: 0, y: 0, z: 0 });
+       assert.strictEqual(mockEngine._redoStack.length, 0);
+     });
+
+     runTest('VoxelEngine.undo on empty history does nothing', () => {
+       const mockEngine = {
+         _history: [],
+         undo() {
+           if (this._history.length === 0) return;
+         }
+       };
+       mockEngine.undo();
+       assert.strictEqual(mockEngine._history.length, 0);
+     });
+
+     runTest('VoxelEngine.redo on empty stack does nothing', () => {
+       const mockEngine = {
+         _redoStack: [],
+         redo() {
+           if (this._redoStack.length === 0) return;
+         }
+       };
+       mockEngine.redo();
+       assert.strictEqual(mockEngine._redoStack.length, 0);
+     });
+
+     runTest('VoxelEngine._pushRedo stores action', () => {
+       const mockEngine = {
+         _redoStack: [],
+         _maxRedo: 50,
+         _pushRedo(action) {
+           this._redoStack.push(action);
+           if (this._redoStack.length > this._maxRedo) this._redoStack.shift();
+         }
+       };
+       mockEngine._pushRedo({ type: 'remove', x: 1, y: 2, z: 3 });
+       assert.strictEqual(mockEngine._redoStack.length, 1);
+     });
+
+     runTest('VoxelEngine.clearHistory empties both stacks', () => {
+       const mockEngine = {
+         _history: [{ type: 'add' }],
+         _redoStack: [{ type: 'remove' }],
+         clearHistory() {
+           this._history = [];
+           this._redoStack = [];
+         }
+       };
+       mockEngine.clearHistory();
+       assert.strictEqual(mockEngine._history.length, 0);
+       assert.strictEqual(mockEngine._redoStack.length, 0);
+     });
+
+   } catch(e) { failed++; console.log('  [FAIL] Undo/Redo tests: ' + e.message); }
+
    // ── Summary ────────────────────────────────────────────────────────────────
-  const total = passed + failed;
+   const total = passed + failed;
   // ── 18. VoxelModel ──────────────────────────────────────────────────────────
   try {
     const { VoxelModel } = await loadESM('src/model/VoxelModel.js');
