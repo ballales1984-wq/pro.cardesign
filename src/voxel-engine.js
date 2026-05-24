@@ -10,6 +10,7 @@ import { Chunk } from './core/chunk-system.js';
 import { ScalingTool } from './core/scaling-tool.js';
 import { SculptTool } from './core/sculpt-tool.js';
 import { VertexEditTool } from './core/vertex-edit-tool.js';
+import { MoveTool } from './core/move-tool.js';
 
 export class VoxelEngine {
     constructor(scene, materialDB, moduleSystem, camera, renderer, controls) {
@@ -84,8 +85,11 @@ export class VoxelEngine {
          // Initialize SculptTool
          this.sculptTool = new SculptTool(this, this.scene, this.camera, this.renderer);
          
-         // Initialize VertexEditTool
-         this.vertexEditTool = new VertexEditTool(this, this.scene, this.camera, this.renderer);
+          // Initialize VertexEditTool
+          this.vertexEditTool = new VertexEditTool(this, this.scene, this.camera, this.renderer);
+
+          // Initialize MoveTool
+          this.moveTool = new MoveTool(this, this.scene, this.camera, this.renderer);
     }
 
     _setupEvents() {
@@ -485,13 +489,18 @@ if (key) {
             }
          }
 
-        _onPointerClick(event) {
-            if (event.button !== 0) return;
-            if (this.cameraNavigationMode) return;
-            const hit = this._raycast(event);
-            if (!hit) return;
+         _onPointerClick(event) {
+             if (event.button !== 0) return;
+             if (this.cameraNavigationMode) return;
+             const hit = this._raycast(event);
+             if (!hit) return;
 
-             // In scaling mode, let the scaling tool handle click-selection
+              // In move mode, let the move tool handle everything
+              if (this.activeTool === 'move') {
+                if (!this.moveTool.isDragging) return; // button release not handled by engine
+              }
+
+              // In scaling mode, let the scaling tool handle click-selection
              if (this.activeTool === 'scaling') {
                return; // Scaling tool handles click directly
              }
@@ -587,11 +596,13 @@ if (key) {
             this.setTool('vertexEdit');
          } else if (event.ctrlKey && key === 'x') {
            this.clearAll();
-         } else if (event.ctrlKey && key === 'z') {
-           this.undo();
-         } else if (event.ctrlKey && key === 'y') {
-           this.redo();
-         }
+           } else if (event.ctrlKey && key === 'z') {
+             this.undo();
+           } else if (event.ctrlKey && key === 'y') {
+             this.redo();
+           } else if (key === 'm') {
+             this.setTool('move');
+           }
        }
         // ── Voxel operations ─────────────────────────────────────────
 
@@ -801,10 +812,18 @@ const chunkKey = this._getChunkKey(pos);
                this.vertexEditTool.deactivate();
              }
            }
-           
-            const btns = document.querySelectorAll('.tool');
-            for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-            const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere' };
+            // Activate/deactivate move tool
+            if (this.moveTool) {
+              if (tool === 'move') {
+                this.moveTool.activate();
+              } else {
+                this.moveTool.deactivate();
+              }
+            }
+            
+             const btns = document.querySelectorAll('.tool');
+             for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+             const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere', move: 'tool-move' };
           const el = document.getElementById(btnMap[tool]);
           if (el) el.classList.add('active');
           window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));
@@ -860,47 +879,75 @@ const chunkKey = this._getChunkKey(pos);
                           this._worldPos({ x: action.x, y: action.y, z: action.z });
                       this._applyVoxelScaleToVoxel(voxel, action.oldScale[0], action.oldScale[1], action.oldScale[2], c);
                   }
-              } else if (action.type === 'vertexScale') {
-                  const voxel = this.getVoxelAt(action.x, action.y, action.z);
-                  if (voxel) {
-                      const c = action.oldCenter ?
-                          new THREE.Vector3(action.oldCenter.x, action.oldCenter.y, action.oldCenter.z) :
-                          this._worldPos({ x: action.x, y: action.y, z: action.z });
-                      this._applyVoxelScaleToVoxel(voxel, action.oldScale[0], action.oldScale[1], action.oldScale[2], c);
-                  }
-              }
-             this._onVoxelChanged();
-         }
-   
-         redo() {
-             if (this._redoStack.length === 0) return;
-             const action = this._redoStack.pop();
-             this._pushHistory(action);
-             if (action.type === 'add') {
-                 this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
-             } else if (action.type === 'remove') {
-                 this._removeVoxelSilently(action.x, action.y, action.z);
-              } else if (action.type === 'scale') {
-                  // Apply the new scale again
-                  const voxel = this.getVoxelAt(action.x, action.y, action.z);
-                  if (voxel) {
-                      const c = action.newCenter ?
-                          new THREE.Vector3(action.newCenter.x, action.newCenter.y, action.newCenter.z) :
-                          this._worldPos({ x: action.x, y: action.y, z: action.z });
-                      this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2], c);
-                  }
-              } else if (action.type === 'vertexScale') {
-                  const voxel = this.getVoxelAt(action.x, action.y, action.z);
-                  if (voxel) {
-                      const c = action.newCenter ?
-                          new THREE.Vector3(action.newCenter.x, action.newCenter.y, action.newCenter.z) :
-                          this._worldPos({ x: action.x, y: action.y, z: action.z });
-                      this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2], c);
-                  }
-              }
-             this._onVoxelChanged();
-         }
-   
+               } else if (action.type === 'vertexScale') {
+                   const voxel = this.getVoxelAt(action.x, action.y, action.z);
+                   if (voxel) {
+                       const c = action.oldCenter ?
+                           new THREE.Vector3(action.oldCenter.x, action.oldCenter.y, action.oldCenter.z) :
+                           this._worldPos({ x: action.x, y: action.y, z: action.z });
+                       this._applyVoxelScaleToVoxel(voxel, action.oldScale[0], action.oldScale[1], action.oldScale[2], c);
+                   }
+               } else if (action.type === 'move') {
+                   // Undo: remove from new pos, restore to old pos
+                   const moved = this.getVoxelAt(action.newX, action.newY, action.newZ);
+                   if (moved) this._removeVoxelSilently(action.newX, action.newY, action.newZ);
+                   this._addVoxelInternal(
+                     { x: action.oldX, y: action.oldY, z: action.oldZ },
+                     action.material, action.module
+                   );
+                   const restored = this.getVoxelAt(action.oldX, action.oldY, action.oldZ);
+                   if (restored && action.scale) {
+                       restored.scale = [...action.scale];
+                       this._applyVoxelScaleToVoxel(restored, action.scale[0], action.scale[1], action.scale[2],
+                         this._worldPos({ x: action.oldX, y: action.oldY, z: action.oldZ }));
+                   }
+               }
+              this._onVoxelChanged();
+          }
+
+          redo() {
+              if (this._redoStack.length === 0) return;
+              const action = this._redoStack.pop();
+              this._pushHistory(action);
+              if (action.type === 'add') {
+                  this._addVoxelInternal({ x: action.x, y: action.y, z: action.z }, action.material, action.module);
+              } else if (action.type === 'remove') {
+                  this._removeVoxelSilently(action.x, action.y, action.z);
+               } else if (action.type === 'scale') {
+                   // Apply the new scale again
+                   const voxel = this.getVoxelAt(action.x, action.y, action.z);
+                   if (voxel) {
+                       const c = action.newCenter ?
+                           new THREE.Vector3(action.newCenter.x, action.newCenter.y, action.newCenter.z) :
+                           this._worldPos({ x: action.x, y: action.y, z: action.z });
+                       this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2], c);
+                   }
+               } else if (action.type === 'vertexScale') {
+                   const voxel = this.getVoxelAt(action.x, action.y, action.z);
+                   if (voxel) {
+                       const c = action.newCenter ?
+                           new THREE.Vector3(action.newCenter.x, action.newCenter.y, action.newCenter.z) :
+                           this._worldPos({ x: action.x, y: action.y, z: action.z });
+                       this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2], c);
+                   }
+               } else if (action.type === 'move') {
+                   // Redo: remove from old pos, re-add at new pos
+                   const atOld = this.getVoxelAt(action.oldX, action.oldY, action.oldZ);
+                   if (atOld) this._removeVoxelSilently(action.oldX, action.oldY, action.oldZ);
+                   this._addVoxelInternal(
+                     { x: action.newX, y: action.newY, z: action.newZ },
+                     action.material, action.module
+                   );
+                   const restored = this.getVoxelAt(action.newX, action.newY, action.newZ);
+                   if (restored && action.scale) {
+                       restored.scale = [...action.scale];
+                       this._applyVoxelScaleToVoxel(restored, action.scale[0], action.scale[1], action.scale[2],
+                         this._worldPos({ x: action.newX, y: action.newY, z: action.newZ }));
+                   }
+               }
+              this._onVoxelChanged();
+          }
+
        clearHistory() {
          this._history = [];
          this._redoStack = [];
