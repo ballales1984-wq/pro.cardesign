@@ -261,7 +261,7 @@ PYBIND11_TEST:BOOL=OFF
 //Respect CMAKE_CROSSCOMPILING
 PYBIND11_USE_CROSSCOMPILING:BOOL=OFF
 
-//Python Interpreter
+//Python interpreter
 Python_EXECUTABLE:FILEPATH=C:/Python314/python.exe
 
 //Python Include Directory
@@ -466,7 +466,6 @@ _Python_DEVELOPMENT_EMBED_SIGNATURE:INTERNAL=60c644aa7bb23e925901ca1d7a5f93b1
 _Python_DEVELOPMENT_MODULE_SIGNATURE:INTERNAL=60c644aa7bb23e925901ca1d7a5f93b1
 //Development reason failure
 _Python_Development_REASON_FAILURE:INTERNAL=
-//Path to a program.
 _Python_EXECUTABLE:INTERNAL=C:/Python314/python.exe
 //Path to a program.
 _Python_EXECUTABLE_DEBUG:INTERNAL=_Python_EXECUTABLE_DEBUG-NOTFOUND

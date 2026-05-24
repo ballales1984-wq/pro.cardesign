@@ -88,12 +88,6 @@ function boot() {
   const gridHelper = new THREE.GridHelper(80, 80, 0x00d2ff, 0x334455);
   scene.add(gridHelper);
 
-  scene.add(
-    new THREE.Mesh(
-      new THREE.SphereGeometry(0.25, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xe94560 })
-    )
-  );
   scene.add(new THREE.AxesHelper(12));
 
   const dimensionDiv = document.getElementById('brick-dimensions');
@@ -147,7 +141,7 @@ function boot() {
 
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(w, h, false);
+    renderer.setSize(w, h, true);
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     return true;

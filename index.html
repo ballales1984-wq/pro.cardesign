@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VoxelCAD — Pro.Cardesign</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="./styles/main.css" />
 
 </head>
@@ -38,9 +39,25 @@
            Seleziona
          </button>
 
-         <!-- Tool: Aggiungi -->
-         <button
-           id="tool-add" class="tool"
+          <!-- Tool: Move -->
+          <button
+            id="tool-move" class="tool"
+            type="button"
+            title="Sposta (M)"
+            aria-label="Strumento Sposta brick, scorciatoia M"
+            aria-pressed="false">
+            <svg width="14" height="14" viewBox="0 0 16 16"
+                 fill="currentColor" stroke="none"
+                 aria-hidden="true">
+              <path d="M8 1L9 5L13 6L11 10L12 15L8 13L4 15L5 10L3 6L7 5Z"/>
+              <path d="M5 8L11 8" stroke="white" stroke-width="1"/>
+            </svg>
+            Sposta
+          </button>
+
+          <!-- Tool: Aggiungi -->
+          <button
+            id="tool-add" class="tool"
            type="button"
            title="Aggiungi Voxel (A)"
            aria-label="Strumento Aggiungi voxel, scorciatoia A"

@@ -111,7 +111,7 @@ events:
       The output was:
       0
       Versione di MSBuild 18.6.3+84d3e95b4 per .NET Framework
-      Compilazione avviata 16/05/2026 22:18:33.
+      Compilazione avviata 21/05/2026 07:48:29.
       
       Progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\4.2.0\\CompilerIdCXX\\CompilerIdCXX.vcxproj" sul nodo 1 (destinazioni predefinite).
       PrepareForBuild:
@@ -140,7 +140,7 @@ events:
           Avvisi: 0
           Errori: 0
       
-      Tempo trascorso 00:00:10.37
+      Tempo trascorso 00:00:23.39
       
       
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -1248,8 +1248,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-jymev8"
-      binary: "D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-jymev8"
+      source: "D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-fetdok"
+      binary: "D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-fetdok"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /GR /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -1259,39 +1259,39 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-jymev8'
+        Change Dir: 'D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-fetdok'
         
-        Run Build Command(s): C:/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_c4182.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
+        Run Build Command(s): C:/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_54dea.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
         Versione di MSBuild 18.6.3+84d3e95b4 per .NET Framework
-        Compilazione avviata 16/05/2026 22:18:49.
+        Compilazione avviata 21/05/2026 07:49:07.
         
-        Progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-jymev8\\cmTC_c4182.vcxproj" sul nodo 1 (destinazioni predefinite).
+        Progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-fetdok\\cmTC_54dea.vcxproj" sul nodo 1 (destinazioni predefinite).
         PrepareForBuild:
           L'output strutturato ├¿ abilitato. La formattazione della diagnostica del compilatore rifletter├á la gerarchia degli errori. Per altri dettagli, vedere https://aka.ms/cpp/structured-output.
-          Creazione directory "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-jymev8\\Debug\\".
-          Creazione directory "cmTC_c4182.dir\\Debug\\cmTC_c4182.tlog\\".
+          Creazione directory "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-fetdok\\Debug\\".
+          Creazione directory "cmTC_54dea.dir\\Debug\\cmTC_54dea.tlog\\".
         InitializeBuildStatus:
-          Creazione di "cmTC_c4182.dir\\Debug\\cmTC_c4182.tlog\\unsuccessfulbuild". ├ê stato specificato "AlwaysCreate".
-          Aggiornamento timestamp di "cmTC_c4182.dir\\Debug\\cmTC_c4182.tlog\\unsuccessfulbuild".
+          Creazione di "cmTC_54dea.dir\\Debug\\cmTC_54dea.tlog\\unsuccessfulbuild". ├ê stato specificato "AlwaysCreate".
+          Aggiornamento timestamp di "cmTC_54dea.dir\\Debug\\cmTC_54dea.tlog\\unsuccessfulbuild".
         ClCompile:
-          C:\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_c4182.dir\\Debug\\\\" /Fd"cmTC_c4182.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.2\\Modules\\CMakeCXXCompilerABI.cpp"
+          C:\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_54dea.dir\\Debug\\\\" /Fd"cmTC_54dea.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.2\\Modules\\CMakeCXXCompilerABI.cpp"
           Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36243 for x64
           Copyright (C) Microsoft Corporation. Tutti i diritti  sono riservati.
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_c4182.dir\\Debug\\\\" /Fd"cmTC_c4182.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.2\\Modules\\CMakeCXXCompilerABI.cpp"
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_54dea.dir\\Debug\\\\" /Fd"cmTC_54dea.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.2\\Modules\\CMakeCXXCompilerABI.cpp"
           CMakeCXXCompilerABI.cpp
         Link:
-          C:\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-jymev8\\Debug\\cmTC_c4182.exe" /INCREMENTAL /ILK:"cmTC_c4182.dir\\Debug\\cmTC_c4182.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-jymev8/Debug/cmTC_c4182.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-jymev8/Debug/cmTC_c4182.lib" /MACHINE:X64  /machine:x64 cmTC_c4182.dir\\Debug\\CMakeCXXCompilerABI.obj
-          cmTC_c4182.vcxproj -> D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-jymev8\\Debug\\cmTC_c4182.exe
+          C:\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-fetdok\\Debug\\cmTC_54dea.exe" /INCREMENTAL /ILK:"cmTC_54dea.dir\\Debug\\cmTC_54dea.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-fetdok/Debug/cmTC_54dea.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-fetdok/Debug/cmTC_54dea.lib" /MACHINE:X64  /machine:x64 cmTC_54dea.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_54dea.vcxproj -> D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-fetdok\\Debug\\cmTC_54dea.exe
         FinalizeBuildStatus:
-          Eliminazione del file "cmTC_c4182.dir\\Debug\\cmTC_c4182.tlog\\unsuccessfulbuild" in corso.
-          Aggiornamento timestamp di "cmTC_c4182.dir\\Debug\\cmTC_c4182.tlog\\cmTC_c4182.lastbuildstate".
-        Compilazione progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-jymev8\\cmTC_c4182.vcxproj" (destinazioni predefinite) completata.
+          Eliminazione del file "cmTC_54dea.dir\\Debug\\cmTC_54dea.tlog\\unsuccessfulbuild" in corso.
+          Aggiornamento timestamp di "cmTC_54dea.dir\\Debug\\cmTC_54dea.tlog\\cmTC_54dea.lastbuildstate".
+        Compilazione progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-fetdok\\cmTC_54dea.vcxproj" (destinazioni predefinite) completata.
         
         Compilazione completata.
             Avvisi: 0
             Errori: 0
         
-        Tempo trascorso 00:00:08.40
+        Tempo trascorso 00:00:04.21
         
       exitCode: 0
   -
@@ -1322,319 +1322,6 @@ events:
       Running the CXX compiler's linker: "C:/BuildTools/VC/Tools/MSVC/14.51.36231/bin/HostX64/x64/link.exe" "-v"
       Microsoft (R) Incremental Linker Version 14.51.36243.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
-  -
-    kind: "find-v1"
-    backtrace:
-      - "C:/Program Files/CMake/share/cmake-4.2/Modules/FindPython/Support.cmake:2060 (find_program)"
-      - "C:/Program Files/CMake/share/cmake-4.2/Modules/FindPython.cmake:700 (include)"
-      - "third_party/pybind11/tools/pybind11NewTools.cmake:54 (find_package)"
-      - "third_party/pybind11/tools/pybind11Common.cmake:215 (include)"
-      - "third_party/pybind11/CMakeLists.txt:299 (include)"
-    mode: "program"
-    variable: "_Python_EXECUTABLE"
-    description: "Path to a program."
-    settings:
-      SearchFramework: "NEVER"
-      SearchAppBundle: "NEVER"
-      CMAKE_FIND_USE_CMAKE_PATH: true
-      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
-      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: false
-      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: false
-      CMAKE_FIND_USE_INSTALL_PREFIX: true
-    names:
-      - "python3.15"
-      - "python3.14"
-      - "python3.13"
-      - "python3.12"
-      - "python3.11"
-      - "python3.10"
-      - "python3.9"
-      - "python3.8"
-      - "python3"
-      - "python"
-      - "pypy3"
-    candidate_directories:
-      - "/REGISTRY-NOTFOUND/bin/"
-      - "/REGISTRY-NOTFOUND/Scripts/"
-      - "/REGISTRY-NOTFOUND/"
-      - "C:/Python314/bin/"
-      - "C:/Python314/Scripts/"
-      - "C:/Python314/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python313/bin/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python313/Scripts/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python313/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python312/bin/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python312/Scripts/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python312/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python311/bin/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python311/Scripts/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python311/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python310/bin/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python310/Scripts/"
-      - "C:/Users/user/AppData/Local/Programs/Python/Python310/"
-    searched_directories:
-      - "/REGISTRY-NOTFOUND/bin/python3.15.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.15.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3.15"
-      - "/REGISTRY-NOTFOUND/bin/python3.14.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.14.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3.14"
-      - "/REGISTRY-NOTFOUND/bin/python3.13.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.13.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3.13"
-      - "/REGISTRY-NOTFOUND/bin/python3.12.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.12.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3.12"
-      - "/REGISTRY-NOTFOUND/bin/python3.11.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.11.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3.11"
-      - "/REGISTRY-NOTFOUND/bin/python3.10.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.10.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3.10"
-      - "/REGISTRY-NOTFOUND/bin/python3.9.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.9.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3.9"
-      - "/REGISTRY-NOTFOUND/bin/python3.8.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.8.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3.8"
-      - "/REGISTRY-NOTFOUND/bin/python3.com"
-      - "/REGISTRY-NOTFOUND/bin/python3.exe"
-      - "/REGISTRY-NOTFOUND/bin/python3"
-      - "/REGISTRY-NOTFOUND/bin/python.com"
-      - "/REGISTRY-NOTFOUND/bin/python.exe"
-      - "/REGISTRY-NOTFOUND/bin/python"
-      - "/REGISTRY-NOTFOUND/bin/pypy3.com"
-      - "/REGISTRY-NOTFOUND/bin/pypy3.exe"
-      - "/REGISTRY-NOTFOUND/bin/pypy3"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.15.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.15.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.15"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.14.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.14.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.14"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.13.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.13.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.13"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.12.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.12.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.12"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.11.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.11.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.11"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.10.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.10.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.10"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.9.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.9.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.9"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.8.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.8.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.8"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python3.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python3"
-      - "/REGISTRY-NOTFOUND/Scripts/python.com"
-      - "/REGISTRY-NOTFOUND/Scripts/python.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/python"
-      - "/REGISTRY-NOTFOUND/Scripts/pypy3.com"
-      - "/REGISTRY-NOTFOUND/Scripts/pypy3.exe"
-      - "/REGISTRY-NOTFOUND/Scripts/pypy3"
-      - "/REGISTRY-NOTFOUND/python3.15.com"
-      - "/REGISTRY-NOTFOUND/python3.15.exe"
-      - "/REGISTRY-NOTFOUND/python3.15"
-      - "/REGISTRY-NOTFOUND/python3.14.com"
-      - "/REGISTRY-NOTFOUND/python3.14.exe"
-      - "/REGISTRY-NOTFOUND/python3.14"
-      - "/REGISTRY-NOTFOUND/python3.13.com"
-      - "/REGISTRY-NOTFOUND/python3.13.exe"
-      - "/REGISTRY-NOTFOUND/python3.13"
-      - "/REGISTRY-NOTFOUND/python3.12.com"
-      - "/REGISTRY-NOTFOUND/python3.12.exe"
-      - "/REGISTRY-NOTFOUND/python3.12"
-      - "/REGISTRY-NOTFOUND/python3.11.com"
-      - "/REGISTRY-NOTFOUND/python3.11.exe"
-      - "/REGISTRY-NOTFOUND/python3.11"
-      - "/REGISTRY-NOTFOUND/python3.10.com"
-      - "/REGISTRY-NOTFOUND/python3.10.exe"
-      - "/REGISTRY-NOTFOUND/python3.10"
-      - "/REGISTRY-NOTFOUND/python3.9.com"
-      - "/REGISTRY-NOTFOUND/python3.9.exe"
-      - "/REGISTRY-NOTFOUND/python3.9"
-      - "/REGISTRY-NOTFOUND/python3.8.com"
-      - "/REGISTRY-NOTFOUND/python3.8.exe"
-      - "/REGISTRY-NOTFOUND/python3.8"
-      - "/REGISTRY-NOTFOUND/python3.com"
-      - "/REGISTRY-NOTFOUND/python3.exe"
-      - "/REGISTRY-NOTFOUND/python3"
-      - "/REGISTRY-NOTFOUND/python.com"
-      - "/REGISTRY-NOTFOUND/python.exe"
-      - "/REGISTRY-NOTFOUND/python"
-      - "/REGISTRY-NOTFOUND/pypy3.com"
-      - "/REGISTRY-NOTFOUND/pypy3.exe"
-      - "/REGISTRY-NOTFOUND/pypy3"
-      - "C:/Python314/bin/python3.15.com"
-      - "C:/Python314/bin/python3.15.exe"
-      - "C:/Python314/bin/python3.15"
-      - "C:/Python314/bin/python3.14.com"
-      - "C:/Python314/bin/python3.14.exe"
-      - "C:/Python314/bin/python3.14"
-      - "C:/Python314/bin/python3.13.com"
-      - "C:/Python314/bin/python3.13.exe"
-      - "C:/Python314/bin/python3.13"
-      - "C:/Python314/bin/python3.12.com"
-      - "C:/Python314/bin/python3.12.exe"
-      - "C:/Python314/bin/python3.12"
-      - "C:/Python314/bin/python3.11.com"
-      - "C:/Python314/bin/python3.11.exe"
-      - "C:/Python314/bin/python3.11"
-      - "C:/Python314/bin/python3.10.com"
-      - "C:/Python314/bin/python3.10.exe"
-      - "C:/Python314/bin/python3.10"
-      - "C:/Python314/bin/python3.9.com"
-      - "C:/Python314/bin/python3.9.exe"
-      - "C:/Python314/bin/python3.9"
-      - "C:/Python314/bin/python3.8.com"
-      - "C:/Python314/bin/python3.8.exe"
-      - "C:/Python314/bin/python3.8"
-      - "C:/Python314/bin/python3.com"
-      - "C:/Python314/bin/python3.exe"
-      - "C:/Python314/bin/python3"
-      - "C:/Python314/bin/python.com"
-      - "C:/Python314/bin/python.exe"
-      - "C:/Python314/bin/python"
-      - "C:/Python314/bin/pypy3.com"
-      - "C:/Python314/bin/pypy3.exe"
-      - "C:/Python314/bin/pypy3"
-      - "C:/Python314/Scripts/python3.15.com"
-      - "C:/Python314/Scripts/python3.15.exe"
-      - "C:/Python314/Scripts/python3.15"
-      - "C:/Python314/Scripts/python3.14.com"
-      - "C:/Python314/Scripts/python3.14.exe"
-      - "C:/Python314/Scripts/python3.14"
-      - "C:/Python314/Scripts/python3.13.com"
-      - "C:/Python314/Scripts/python3.13.exe"
-      - "C:/Python314/Scripts/python3.13"
-      - "C:/Python314/Scripts/python3.12.com"
-      - "C:/Python314/Scripts/python3.12.exe"
-      - "C:/Python314/Scripts/python3.12"
-      - "C:/Python314/Scripts/python3.11.com"
-      - "C:/Python314/Scripts/python3.11.exe"
-      - "C:/Python314/Scripts/python3.11"
-      - "C:/Python314/Scripts/python3.10.com"
-      - "C:/Python314/Scripts/python3.10.exe"
-      - "C:/Python314/Scripts/python3.10"
-      - "C:/Python314/Scripts/python3.9.com"
-      - "C:/Python314/Scripts/python3.9.exe"
-      - "C:/Python314/Scripts/python3.9"
-      - "C:/Python314/Scripts/python3.8.com"
-      - "C:/Python314/Scripts/python3.8.exe"
-      - "C:/Python314/Scripts/python3.8"
-      - "C:/Python314/Scripts/python3.com"
-      - "C:/Python314/Scripts/python3.exe"
-      - "C:/Python314/Scripts/python3"
-      - "C:/Python314/Scripts/python.com"
-      - "C:/Python314/Scripts/python.exe"
-      - "C:/Python314/Scripts/python"
-      - "C:/Python314/Scripts/pypy3.com"
-      - "C:/Python314/Scripts/pypy3.exe"
-      - "C:/Python314/Scripts/pypy3"
-      - "C:/Python314/python3.15.com"
-      - "C:/Python314/python3.15.exe"
-      - "C:/Python314/python3.15"
-      - "C:/Python314/python3.14.com"
-      - "C:/Python314/python3.14.exe"
-      - "C:/Python314/python3.14"
-      - "C:/Python314/python3.13.com"
-      - "C:/Python314/python3.13.exe"
-      - "C:/Python314/python3.13"
-      - "C:/Python314/python3.12.com"
-      - "C:/Python314/python3.12.exe"
-      - "C:/Python314/python3.12"
-      - "C:/Python314/python3.11.com"
-      - "C:/Python314/python3.11.exe"
-      - "C:/Python314/python3.11"
-      - "C:/Python314/python3.10.com"
-      - "C:/Python314/python3.10.exe"
-      - "C:/Python314/python3.10"
-      - "C:/Python314/python3.9.com"
-      - "C:/Python314/python3.9.exe"
-      - "C:/Python314/python3.9"
-      - "C:/Python314/python3.8.com"
-      - "C:/Python314/python3.8.exe"
-      - "C:/Python314/python3.8"
-      - "C:/Python314/python3.com"
-      - "C:/Python314/python3.exe"
-      - "C:/Python314/python3"
-      - "C:/Python314/python.com"
-    found: "C:/Python314/python.exe"
-    search_context:
-      ENV{PATH}:
-        - "C:\\Program Files\\PowerShell\\7"
-        - "C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\java8path"
-        - "C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\javapath"
-        - "C:\\Python314\\Scripts\\"
-        - "C:\\Python314\\"
-        - "C:\\Program Files\\Microsoft\\jdk-17.0.16.8-hotspot\\bin"
-        - "C:\\WINDOWS\\system32"
-        - "C:\\WINDOWS"
-        - "C:\\WINDOWS\\System32\\Wbem"
-        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
-        - "C:\\WINDOWS\\System32\\OpenSSH\\"
-        - "C:\\Program Files\\PyManager\\"
-        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
-        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
-        - "C:\\Program Files\\Git\\cmd"
-        - "C:\\Program Files\\Go\\bin"
-        - "C:\\Program Files\\cursor\\resources\\app\\bin"
-        - "C:\\ProgramData\\chocolatey\\bin"
-        - "C:\\Program Files\\dotnet\\"
-        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
-        - "C:\\Program Files\\CMake\\bin"
-        - "%NVM_HOME%"
-        - "%NVM_SYMLINK%"
-        - "C:\\Program Files\\GitHub CLI\\"
-        - "C:\\Program Files\\Memurai\\"
-        - "C:\\Program Files\\PowerShell\\7\\"
-        - "C:\\Program Files\\Docker\\Docker\\resources\\bin"
-        - "C:\\Users\\user\\.local\\bin"
-        - "C:\\ffmpeg\\ffmpeg-master-latest-win64-gpl\\bin"
-        - "C:\\Program Files\\PowerShell\\7"
-        - "C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\java8path"
-        - "C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\javapath"
-        - "C:\\Python314\\Scripts\\"
-        - "C:\\Python314\\"
-        - "C:\\Program Files\\Microsoft\\jdk-17.0.16.8-hotspot\\bin"
-        - "C:\\WINDOWS\\system32"
-        - "C:\\WINDOWS"
-        - "C:\\WINDOWS\\System32\\Wbem"
-        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
-        - "C:\\WINDOWS\\System32\\OpenSSH\\"
-        - "C:\\Program Files\\PyManager\\"
-        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
-        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
-        - "C:\\Program Files\\Git\\cmd"
-        - "C:\\Program Files\\Go\\bin"
-        - "C:\\Program Files\\cursor\\resources\\app\\bin"
-        - "C:\\ProgramData\\chocolatey\\bin"
-        - "C:\\Program Files\\dotnet\\"
-        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
-        - "C:\\Program Files\\CMake\\bin"
-        - "C:\\Users\\user\\AppData\\Local\\nvm"
-        - "C:\\nvm4w\\nodejs"
-        - "C:\\Program Files\\GitHub CLI\\"
-        - "C:\\Program Files\\Memurai\\"
-        - "C:\\Program Files\\PowerShell\\7\\"
-        - "C:\\Program Files\\Docker\\Docker\\resources\\bin"
-        - "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310\\Scripts\\"
-        - "C:\\U"
-        - "C:\\Users\\user\\AppData\\Local\\Programs\\Ollama"
-        - "C:\\Users\\user\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
-      CMAKE_INSTALL_PREFIX: "C:/Program Files (x86)/VoxelEngine"
-      CMAKE_SYSTEM_PREFIX_PATH:
-        - "C:/Program Files"
-        - "C:/Program Files (x86)"
-        - "C:/Program Files/CMake"
-        - "C:/Program Files (x86)/VoxelEngine"
   -
     kind: "find-v1"
     backtrace:
@@ -2241,8 +1928,8 @@ events:
     checks:
       - "Performing Test HAS_MSVC_GL_LTCG"
     directories:
-      source: "D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-lf17q3"
-      binary: "D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-lf17q3"
+      source: "D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-ronbir"
+      binary: "D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-ronbir"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /GR /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -2251,47 +1938,47 @@ events:
       variable: "HAS_MSVC_GL_LTCG"
       cached: true
       stdout: |
-        Change Dir: 'D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-lf17q3'
+        Change Dir: 'D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-ronbir'
         
-        Run Build Command(s): C:/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_c49a3.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
+        Run Build Command(s): C:/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_03f7e.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
         Versione di MSBuild 18.6.3+84d3e95b4 per .NET Framework
-        Compilazione avviata 16/05/2026 22:19:09.
+        Compilazione avviata 21/05/2026 07:49:21.
         
-        Progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\cmTC_c49a3.vcxproj" sul nodo 1 (destinazioni predefinite).
+        Progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\cmTC_03f7e.vcxproj" sul nodo 1 (destinazioni predefinite).
         PrepareForBuild:
           L'output strutturato ├¿ abilitato. La formattazione della diagnostica del compilatore rifletter├á la gerarchia degli errori. Per altri dettagli, vedere https://aka.ms/cpp/structured-output.
-          Creazione directory "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\Debug\\".
-          Creazione directory "cmTC_c49a3.dir\\Debug\\cmTC_c49a3.tlog\\".
+          Creazione directory "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\Debug\\".
+          Creazione directory "cmTC_03f7e.dir\\Debug\\cmTC_03f7e.tlog\\".
         InitializeBuildStatus:
-          Creazione di "cmTC_c49a3.dir\\Debug\\cmTC_c49a3.tlog\\unsuccessfulbuild". ├ê stato specificato "AlwaysCreate".
-          Aggiornamento timestamp di "cmTC_c49a3.dir\\Debug\\cmTC_c49a3.tlog\\unsuccessfulbuild".
+          Creazione di "cmTC_03f7e.dir\\Debug\\cmTC_03f7e.tlog\\unsuccessfulbuild". ├ê stato specificato "AlwaysCreate".
+          Aggiornamento timestamp di "cmTC_03f7e.dir\\Debug\\cmTC_03f7e.tlog\\unsuccessfulbuild".
         ClCompile:
-          C:\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /GL /D _MBCS /D WIN32 /D _WINDOWS /D HAS_MSVC_GL_LTCG /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"cmTC_c49a3.dir\\Debug\\\\" /Fd"cmTC_c49a3.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\src.cxx"
+          C:\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /GL /D _MBCS /D WIN32 /D _WINDOWS /D HAS_MSVC_GL_LTCG /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"cmTC_03f7e.dir\\Debug\\\\" /Fd"cmTC_03f7e.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\src.cxx"
           Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36243 for x64
           Copyright (C) Microsoft Corporation. Tutti i diritti  sono riservati.
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /GL /D _MBCS /D WIN32 /D _WINDOWS /D HAS_MSVC_GL_LTCG /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"cmTC_c49a3.dir\\Debug\\\\" /Fd"cmTC_c49a3.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\src.cxx"
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /GL /D _MBCS /D WIN32 /D _WINDOWS /D HAS_MSVC_GL_LTCG /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"cmTC_03f7e.dir\\Debug\\\\" /Fd"cmTC_03f7e.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\src.cxx"
           src.cxx
         Link:
-          C:\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\Debug\\cmTC_c49a3.exe" /INCREMENTAL /ILK:"cmTC_c49a3.dir\\Debug\\cmTC_c49a3.ilk" /NOLOGO "-LTCG" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-lf17q3/Debug/cmTC_c49a3.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-lf17q3/Debug/cmTC_c49a3.lib" /MACHINE:X64  /machine:x64 cmTC_c49a3.dir\\Debug\\src.obj
-        LINK : warning LNK4075: '/INCREMENTAL' ignorato a causa della specifica di '/LTCG' [D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\cmTC_c49a3.vcxproj]
+          C:\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\Debug\\cmTC_03f7e.exe" /INCREMENTAL /ILK:"cmTC_03f7e.dir\\Debug\\cmTC_03f7e.ilk" /NOLOGO "-LTCG" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-ronbir/Debug/cmTC_03f7e.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/pro.cardesign/build3/CMakeFiles/CMakeScratch/TryCompile-ronbir/Debug/cmTC_03f7e.lib" /MACHINE:X64  /machine:x64 cmTC_03f7e.dir\\Debug\\src.obj
+        LINK : warning LNK4075: '/INCREMENTAL' ignorato a causa della specifica di '/LTCG' [D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\cmTC_03f7e.vcxproj]
           Generazione codice in corso...
           Generazione codice terminata
-          cmTC_c49a3.vcxproj -> D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\Debug\\cmTC_c49a3.exe
+          cmTC_03f7e.vcxproj -> D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\Debug\\cmTC_03f7e.exe
         FinalizeBuildStatus:
-          Eliminazione del file "cmTC_c49a3.dir\\Debug\\cmTC_c49a3.tlog\\unsuccessfulbuild" in corso.
-          Aggiornamento timestamp di "cmTC_c49a3.dir\\Debug\\cmTC_c49a3.tlog\\cmTC_c49a3.lastbuildstate".
-        Compilazione progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\cmTC_c49a3.vcxproj" (destinazioni predefinite) completata.
+          Eliminazione del file "cmTC_03f7e.dir\\Debug\\cmTC_03f7e.tlog\\unsuccessfulbuild" in corso.
+          Aggiornamento timestamp di "cmTC_03f7e.dir\\Debug\\cmTC_03f7e.tlog\\cmTC_03f7e.lastbuildstate".
+        Compilazione progetto "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\cmTC_03f7e.vcxproj" (destinazioni predefinite) completata.
         
         Compilazione completata.
         
-        "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\cmTC_c49a3.vcxproj" (destinazione predefinita) (1) ->
+        "D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\cmTC_03f7e.vcxproj" (destinazione predefinita) (1) ->
         (destinazione: Link) -> 
-          LINK : warning LNK4075: '/INCREMENTAL' ignorato a causa della specifica di '/LTCG' [D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-lf17q3\\cmTC_c49a3.vcxproj]
+          LINK : warning LNK4075: '/INCREMENTAL' ignorato a causa della specifica di '/LTCG' [D:\\pro.cardesign\\build3\\CMakeFiles\\CMakeScratch\\TryCompile-ronbir\\cmTC_03f7e.vcxproj]
         
             Avvisi: 1
             Errori: 0
         
-        Tempo trascorso 00:00:03.30
+        Tempo trascorso 00:00:03.15
         
       exitCode: 0
 ...
