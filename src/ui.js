@@ -65,6 +65,7 @@ export class UI {
   _setupToolbar() {
       var self = this;
       document.getElementById('tool-select').addEventListener('click', function() { self.voxelEngine.setTool('select'); });
+      document.getElementById('tool-move').addEventListener('click', function() { self.voxelEngine.setTool('move'); });
       document.getElementById('tool-add').addEventListener('click', function() { self.voxelEngine.setTool('add'); });
       document.getElementById('tool-remove').addEventListener('click', function() { self.voxelEngine.setTool('remove'); });
       document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
@@ -112,7 +113,8 @@ export class UI {
         vertexEdit: 'Vertice (E)',
         cylinder: 'Cilindro (CY)',
         cone: 'Cono (CO)',
-        sphere: 'Sfera (SP)'
+        sphere: 'Sfera (SP)',
+        move: 'Sposta (M)'
       };
       window.addEventListener('tool-changed', function(e) {
           var hint = toolNames[e.detail] || e.detail;
@@ -850,7 +852,7 @@ export class UI {
         <div class="prop-row"><span class="prop-label">Vertici</span><span class="prop-value">${analysis.vertexCount}</span></div>
         <div class="prop-row"><span class="prop-label">Centroide</span><span class="prop-value">(${analysis.centroid.x}, ${analysis.centroid.y}, ${analysis.centroid.z}) mm</span></div>
         <div class="prop-row"><span class="prop-label">Raggio medio</span><span class="prop-value">${analysis.meanRadiusMm} mm</span></div>
-        <div class="prop-row"><span class="prop-label">Ovalità</span><span class="prop-value">${analysis.ovalityMm} mm</span></div>
+        <div class="prop-row"><span class="prop-label">Ovalità</span><span class="prop-value">${analysis.ovalMm} mm</span></div>
         <div class="prop-row"><span class="prop-label">Deviazione max</span><span class="prop-value">${analysis.maxDeviationMm} mm</span></div>
         <div class="prop-row"><span class="prop-label">Circolare</span><span class="prop-value">${analysis.isCircular ? 'Si' : 'No'}</span></div>
         <hr style="border-color:rgba(255,255,255,0.1); margin:8px 0;">
@@ -900,6 +902,7 @@ export class UI {
         if (e.key === 'c' || e.key === 'C') self.voxelEngine.setTool('cylinder');
         if (e.key === 'o' || e.key === 'O') self.voxelEngine.setTool('cone');
         if (e.key === 'p' || e.key === 'P') self.voxelEngine.setTool('sphere');
+        if (e.key === 'm' || e.key === 'M') self.voxelEngine.setTool('move');
       }
      });
    }
