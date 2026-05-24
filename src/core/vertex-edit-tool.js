@@ -108,7 +108,7 @@ export class VertexEditTool {
     // ── Visuals ──────────────────────────────────────────────────────────
     this.liveLabel     = null;
     this.activeHandles = [];
-    this._handleGeo    = null;
+    this._handleGeometry = null;
 
     this._createLiveLabel();
   }
@@ -245,7 +245,7 @@ export class VertexEditTool {
   //  GIZMO HANDLES
   // ═══════════════════════════════════════════════════════════════════════
 
-  _handleGeo() {
+  _getHandleGeometry() {
     if (!this._handleGeometry) this._handleGeometry = new THREE.OctahedronGeometry(0.06, 0);
     return this._handleGeometry;
   }
@@ -261,7 +261,7 @@ export class VertexEditTool {
     this._removeHandles();
     const positions = this._getVertexWorldPositions(voxel);
     this.activeHandles = positions.map(pos => {
-      const mesh = new THREE.Mesh(this._handleGeo(), this._makeHandleMat());
+      const mesh = new THREE.Mesh(this._getHandleGeometry(), this._makeHandleMat());
       mesh.position.copy(pos);
       this.scene.add(mesh);
       return mesh;
