@@ -39,6 +39,8 @@ export class MeshPointEditTool {
     this._label = null;
     this._previousVoxelGroupVisible = null;
     this._isCommitted = false;
+    this._onLabelClick = null;
+    this._onKeyDown = null;
 
     this._createLabel();
   }
@@ -62,7 +64,7 @@ export class MeshPointEditTool {
     this._unbindEvents();
     if (this._label) this._label.style.display = 'none';
     if (this.geometry) {
-      this.commitEdits();
+      this.finishEditing();
     } else {
       this._setVoxelLayerVisible(true);
     }
@@ -141,6 +143,22 @@ export class MeshPointEditTool {
     if (this.points) this.points.visible = false;
     this._setVoxelLayerVisible(false);
     this.voxelEngine?._notify?.('Nuova versione mesh confermata', 'success');
+    return true;
+  }
+
+  finishEditing() {
+    if (!this.commitEdits()) return false;
+    this.isActive = false;
+    this.isDragging = false;
+    this.selectedVertexIndex = null;
+    this.linkedVertexIndices = [];
+    this.dragPlane = null;
+    this.dragStartWorld = null;
+    this.dragStartVertex = null;
+    this.startPositions = null;
+    if (this._label) this._label.style.display = 'none';
+    this._unbindEvents();
+    document.body.style.cursor = '';
     return true;
   }
 
@@ -242,11 +260,13 @@ export class MeshPointEditTool {
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
+    this._onKeyDown = this._onKeyDownHandler.bind(this);
     this._boundCanvas = this.renderer.domElement;
     this._boundCanvas.addEventListener('pointerdown', this._onMouseDown);
     if (typeof window !== 'undefined' && window.addEventListener) {
       window.addEventListener('pointermove', this._onMouseMove);
       window.addEventListener('pointerup', this._onMouseUp);
+      window.addEventListener('keydown', this._onKeyDown);
     }
   }
 
@@ -255,6 +275,16 @@ export class MeshPointEditTool {
     if (typeof window !== 'undefined' && window.removeEventListener) {
       window.removeEventListener('pointermove', this._onMouseMove);
       window.removeEventListener('pointerup', this._onMouseUp);
+      window.removeEventListener('keydown', this._onKeyDown);
+    }
+  }
+
+  _onKeyDownHandler(event) {
+    if (!this.isActive) return;
+    if (event.key === 'Enter') {
+      this.finishEditing();
+      event.preventDefault?.();
+      event.stopPropagation?.();
     }
   }
 
@@ -383,7 +413,15 @@ export class MeshPointEditTool {
       'padding:12px 16px;border-radius:8px;' +
       'font-family:monospace;font-size:12px;' +
       'border:1px solid #34d399;display:none;' +
-      'z-index:10000;pointer-events:none;min-width:210px;';
+      'z-index:10000;pointer-events:auto;min-width:210px;';
+    this._onLabelClick = (event) => {
+      if (event.target?.id === 'mesh-point-finish') {
+        this.finishEditing();
+        event.preventDefault?.();
+        event.stopPropagation?.();
+      }
+    };
+    el.addEventListener('click', this._onLabelClick);
     document.body.appendChild(el);
     this._label = el;
   }
@@ -399,7 +437,11 @@ export class MeshPointEditTool {
       (selected
         ? `<div>Selezionato: #${this.selectedVertexIndex}</div>` +
           `<div>X:${selected.x.toFixed(2)} Y:${selected.y.toFixed(2)} Z:${selected.z.toFixed(2)}</div>`
-        : '<div>Seleziona un punto superficie</div>');
+        : '<div>Seleziona un punto superficie</div>') +
+      '<button id="mesh-point-finish" type="button" ' +
+      'style="margin-top:10px;width:100%;padding:7px;border:1px solid #34d399;' +
+      'background:#063b32;color:#d1fae5;border-radius:6px;cursor:pointer;">' +
+      'Fine modifica</button>';
   }
 }
 

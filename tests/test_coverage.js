@@ -1060,6 +1060,30 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(voxelGroup.visible, false);
     });
 
+    runTest('MeshPointEditTool finishEditing confirms final mesh version', () => {
+      const voxelGroup = { visible: true };
+      const engine = {
+        voxelSize: 1,
+        voxelGroup,
+        _notify(){},
+        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
+      };
+      const tool = new MeshPointEditTool(
+        engine,
+        { add(){}, remove(){} },
+        {},
+        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+      );
+
+      tool.activate();
+      assert.strictEqual(tool.finishEditing(), true);
+      assert.strictEqual(tool.isActive, false);
+      assert.strictEqual(tool.hasCommittedMesh(), true);
+      assert.strictEqual(tool.mesh.visible, true);
+      assert.strictEqual(tool.points.visible, false);
+      assert.strictEqual(voxelGroup.visible, false);
+    });
+
     runTest('MeshPointEditTool clearLayer restores voxel layer', () => {
       const voxelGroup = { visible: true };
       const engine = {
