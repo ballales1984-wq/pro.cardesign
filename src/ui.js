@@ -72,6 +72,7 @@ export class UI {
       document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
       document.getElementById('tool-sculpt').addEventListener('click', function() { self.voxelEngine.setTool('sculpt'); });
       document.getElementById('tool-vertex-edit').addEventListener('click', function() { self.voxelEngine.setTool('vertexEdit'); });
+      document.getElementById('tool-mesh-point-edit').addEventListener('click', function() { self.voxelEngine.setTool('meshPointEdit'); });
       document.getElementById('tool-cylinder').addEventListener('click', function() { self.voxelEngine.setTool('cylinder'); });
       document.getElementById('tool-cone').addEventListener('click', function() { self.voxelEngine.setTool('cone'); });
       document.getElementById('tool-sphere').addEventListener('click', function() { self.voxelEngine.setTool('sphere'); });
@@ -82,9 +83,10 @@ export class UI {
       document.getElementById('btn-clear').addEventListener('click', function() { self._confirmClear(); });
       document.getElementById('btn-undo').addEventListener('click', function() { self.voxelEngine.undo(); self._refreshProperties(); });
       document.getElementById('btn-redo').addEventListener('click', function() { self.voxelEngine.redo(); self._refreshProperties(); });
-      document.getElementById('btn-save').addEventListener('click', function() { self._saveProject(); });
-      document.getElementById('btn-load').addEventListener('click', function() { self._loadProject(); });
-      document.getElementById('btn-reset-cam').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
+       document.getElementById('btn-save').addEventListener('click', function() { self._saveProject(); });
+       document.getElementById('btn-load').addEventListener('click', function() { self._loadProject(); });
+       document.getElementById('btn-help').addEventListener('click', function() { self._openHelpModal(); });
+       document.getElementById('btn-reset-cam').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
       document.getElementById('cam-fit').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
       document.getElementById('cam-iso').addEventListener('click', function() { self.voxelEngine.setCameraView('iso'); });
       document.getElementById('cam-front').addEventListener('click', function() { self.voxelEngine.setCameraView('front'); });
@@ -111,6 +113,7 @@ export class UI {
         scaling: 'Scala (S)', 
         sculpt: 'Scultura (D)', 
         vertexEdit: 'Vertice (E)',
+        meshPointEdit: 'Mesh punti (P)',
         cylinder: 'Cilindro (CY)',
         cone: 'Cono (CO)',
         sphere: 'Sfera (SP)',
@@ -899,6 +902,7 @@ export class UI {
         if (e.key === 's' || e.key === 'S') self.voxelEngine.setTool('scaling');
         if (e.key === 'd' || e.key === 'D') self.voxelEngine.setTool('sculpt');
         if (e.key === 'e' || e.key === 'E') self.voxelEngine.setTool('vertexEdit');
+        if (e.key === 'p' || e.key === 'P') self.voxelEngine.setTool('meshPointEdit');
         if (e.key === 'c' || e.key === 'C') self.voxelEngine.setTool('cylinder');
         if (e.key === 'o' || e.key === 'O') self.voxelEngine.setTool('cone');
         if (e.key === 'p' || e.key === 'P') self.voxelEngine.setTool('sphere');

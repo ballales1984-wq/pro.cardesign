@@ -11,6 +11,7 @@ import { ScalingTool } from './core/scaling-tool.js';
 import { SculptTool } from './core/sculpt-tool.js';
 import { VertexEditTool } from './core/vertex-edit-tool.js';
 import { MoveTool } from './core/move-tool.js';
+import { MeshPointEditTool } from './core/mesh-point-edit-tool.js';
 
 export class VoxelEngine {
     constructor(scene, materialDB, moduleSystem, camera, renderer, controls) {
@@ -90,6 +91,9 @@ export class VoxelEngine {
 
           // Initialize MoveTool
           this.moveTool = new MoveTool(this, this.scene, this.camera, this.renderer);
+
+          // Initialize mesh point overlay editor
+          this.meshPointEditTool = new MeshPointEditTool(this, this.scene, this.camera, this.renderer);
     }
 
     _setupEvents() {
@@ -594,6 +598,8 @@ if (key) {
             this.setTool('sculpt');
           } else if (key === 'e') {
             this.setTool('vertexEdit');
+          } else if (key === 'p') {
+            this.setTool('meshPointEdit');
          } else if (event.ctrlKey && key === 'x') {
            this.clearAll();
            } else if (event.ctrlKey && key === 'z') {
@@ -812,6 +818,13 @@ const chunkKey = this._getChunkKey(pos);
                this.vertexEditTool.deactivate();
              }
            }
+           if (this.meshPointEditTool) {
+             if (tool === 'meshPointEdit') {
+               this.meshPointEditTool.activate();
+             } else {
+               this.meshPointEditTool.deactivate();
+             }
+           }
             // Activate/deactivate move tool
             if (this.moveTool) {
               if (tool === 'move') {
@@ -823,7 +836,7 @@ const chunkKey = this._getChunkKey(pos);
             
              const btns = document.querySelectorAll('.tool');
              for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-             const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere', move: 'tool-move' };
+             const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', meshPointEdit: 'tool-mesh-point-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere', move: 'tool-move' };
           const el = document.getElementById(btnMap[tool]);
           if (el) el.classList.add('active');
           window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));

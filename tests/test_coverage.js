@@ -1022,6 +1022,26 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(tool.restoreVertices(snap), true);
       assert.strictEqual(geo.getAttribute('position').getX(1), 1);
     });
+
+    runTest('MeshPointEditTool activate hides voxel layer and deactivate restores it', () => {
+      const voxelGroup = { visible: true };
+      const engine = {
+        voxelSize: 1,
+        voxelGroup,
+        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
+      };
+      const tool = new MeshPointEditTool(
+        engine,
+        { add(){}, remove(){} },
+        {},
+        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+      );
+
+      tool.activate();
+      assert.strictEqual(voxelGroup.visible, false);
+      tool.deactivate();
+      assert.strictEqual(voxelGroup.visible, true);
+    });
   } catch(e) { failed++; console.log('  [FAIL] MeshPointEditTool import: ' + e.message); }
 
   // ── 6. MeshExporter ────────────────────────────────────────────────────────
@@ -1598,6 +1618,47 @@ endsolid test`;
      });
 
    } catch(e) { failed++; console.log('  [FAIL] Undo/Redo tests: ' + e.message); }
+
+   // ── 31. LegoBars ──────────────────────────────────────────────────────────────
+   try {
+     const { LegoBarsLibrary, LegoBar } = await loadESM('src/core/lego-bars.js');
+     runTest('LegoBarsLibrary creation', () => {
+       const lib = new LegoBarsLibrary();
+       assert.ok(lib);
+       const bars = lib.getAll();
+       assert.ok(bars.length >= 30, 'Should have at least 30 bars (10 sizes x 3 axes)');
+     });
+
+     runTest('LegoBarsLibrary bar dimensions', () => {
+       const lib = new LegoBarsLibrary();
+       const bar2 = lib.get(1000);
+       assert.strictEqual(bar2.length, 2);
+       assert.strictEqual(bar2.thickness, 2);
+       const bar4 = lib.get(1002);
+       assert.strictEqual(bar4.length, 4);
+     });
+
+     runTest('LegoBar generateVoxels X-axis', () => {
+       const bar = new LegoBar(1, 'Test Bar', 4, 'x', 2, 0xff0000);
+       const voxels = bar.generateVoxels();
+       assert.strictEqual(voxels.length, 4 * 3 * 3, '4 length x 3 (thickness) x 3 (thickness)');
+     });
+
+     runTest('LegoBar generateVoxels Z-axis', () => {
+       const bar = new LegoBar(2, 'Z Bar', 3, 'z', 2, 0x00ff00);
+       const voxels = bar.generateVoxels();
+       assert.strictEqual(voxels.length, 3 * 3 * 3, '3 length x 3 x 3');
+     });
+
+     runTest('LegoBarsLibrary createInstance', () => {
+       const lib = new LegoBarsLibrary();
+       const bars = lib.getAll();
+       const def = bars[0];
+       const voxels = lib.createInstance(def, {x:10, y:0, z:0});
+       assert.ok(voxels.length > 0);
+       assert.strictEqual(voxels[0].color, def.color);
+     });
+   } catch(e) { failed++; console.log('  [FAIL] LegoBars import: ' + e.message); }
 
    // ── Summary ────────────────────────────────────────────────────────────────
    const total = passed + failed;
