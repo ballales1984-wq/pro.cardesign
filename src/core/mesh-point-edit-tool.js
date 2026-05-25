@@ -38,6 +38,7 @@ export class MeshPointEditTool {
     this._boundCanvas = null;
     this._label = null;
     this._previousVoxelGroupVisible = null;
+    this._isCommitted = false;
 
     this._createLabel();
   }
@@ -47,6 +48,7 @@ export class MeshPointEditTool {
     document.body.style.cursor = 'crosshair';
     if (!this.geometry) this.createLayerFromVoxels();
     this._setLayerVisible(true);
+    if (this.points) this.points.visible = true;
     this._setVoxelLayerVisible(false);
     this._bindEvents();
     this._updateLabel();
@@ -59,7 +61,11 @@ export class MeshPointEditTool {
     this.linkedVertexIndices = [];
     this._unbindEvents();
     if (this._label) this._label.style.display = 'none';
-    this._setVoxelLayerVisible(true);
+    if (this.geometry) {
+      this.commitEdits();
+    } else {
+      this._setVoxelLayerVisible(true);
+    }
     document.body.style.cursor = '';
   }
 
@@ -101,6 +107,7 @@ export class MeshPointEditTool {
     this.points = new THREE.Points(this.geometry, pointMaterial);
     this.points.name = '_meshPointEditPoints';
     this.scene.add(this.points);
+    this._isCommitted = false;
 
     return result;
   }
@@ -120,8 +127,25 @@ export class MeshPointEditTool {
       this.geometry.dispose?.();
       this.geometry = null;
     }
+    this._isCommitted = false;
+    this._setVoxelLayerVisible(true);
     this.selectedVertexIndex = null;
     this.linkedVertexIndices = [];
+  }
+
+  commitEdits() {
+    if (!this.geometry || !this.mesh) return false;
+    this._flagGeometryChanged(true);
+    this._isCommitted = true;
+    this.mesh.visible = true;
+    if (this.points) this.points.visible = false;
+    this._setVoxelLayerVisible(false);
+    this.voxelEngine?._notify?.('Nuova versione mesh confermata', 'success');
+    return true;
+  }
+
+  hasCommittedMesh() {
+    return this._isCommitted && !!this.geometry && !!this.mesh;
   }
 
   get vertexCount() {
@@ -189,6 +213,7 @@ export class MeshPointEditTool {
     const pos = this._positionAttr();
     return {
       vertexCount: this.vertexCount,
+      committed: this._isCommitted,
       positions: pos?.array ? Array.from(pos.array) : [],
     };
   }
@@ -199,6 +224,10 @@ export class MeshPointEditTool {
     const pos = this._positionAttr();
     if (!pos || data.positions.length !== pos.array.length) return false;
     pos.array.set(data.positions);
+    this._isCommitted = !!data.committed;
+    if (this.mesh) this.mesh.visible = true;
+    if (this.points) this.points.visible = !this._isCommitted;
+    if (this._isCommitted) this._setVoxelLayerVisible(false);
     this._flagGeometryChanged();
     return true;
   }

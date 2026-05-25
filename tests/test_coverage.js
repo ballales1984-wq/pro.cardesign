@@ -1036,11 +1036,12 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(geo.getAttribute('position').getX(1), 1);
     });
 
-    runTest('MeshPointEditTool activate hides voxel layer and deactivate restores it', () => {
+    runTest('MeshPointEditTool deactivate commits mesh and keeps voxel layer hidden', () => {
       const voxelGroup = { visible: true };
       const engine = {
         voxelSize: 1,
         voxelGroup,
+        _notify(){},
         voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
       };
       const tool = new MeshPointEditTool(
@@ -1053,6 +1054,30 @@ runTest('ScalingTool destroy removes live label', () => {
       tool.activate();
       assert.strictEqual(voxelGroup.visible, false);
       tool.deactivate();
+      assert.strictEqual(tool.hasCommittedMesh(), true);
+      assert.strictEqual(tool.mesh.visible, true);
+      assert.strictEqual(tool.points.visible, false);
+      assert.strictEqual(voxelGroup.visible, false);
+    });
+
+    runTest('MeshPointEditTool clearLayer restores voxel layer', () => {
+      const voxelGroup = { visible: true };
+      const engine = {
+        voxelSize: 1,
+        voxelGroup,
+        _notify(){},
+        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
+      };
+      const tool = new MeshPointEditTool(
+        engine,
+        { add(){}, remove(){} },
+        {},
+        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+      );
+
+      tool.activate();
+      tool.deactivate();
+      tool.clearLayer();
       assert.strictEqual(voxelGroup.visible, true);
     });
   } catch(e) { failed++; console.log('  [FAIL] MeshPointEditTool import: ' + e.message); }
