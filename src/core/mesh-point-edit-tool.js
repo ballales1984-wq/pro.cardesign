@@ -57,20 +57,20 @@ export class MeshPointEditTool {
     this._updateLabel();
   }
 
-  deactivate() {
-    this.isActive = false;
-    this.isDragging = false;
-    this.selectedVertexIndex = null;
-    this.linkedVertexIndices = [];
-    this._unbindEvents();
-    if (this._label) this._label.style.display = 'none';
-    if (this.geometry) {
-      this.finishEditing();
-    } else {
-      this._setVoxelLayerVisible(true);
+    deactivate() {
+        this.isActive = false;
+        this.isDragging = false;
+        this.selectedVertexIndex = null;
+        this.linkedVertexIndices = [];
+        this._unbindEvents();
+        if (this._label) this._label.style.display = 'none';
+        if (this.geometry) {
+            this.finishEditing();
+        } else {
+            this._setVoxelLayerVisible(true);
+        }
+        document.body.style.cursor = '';
     }
-    document.body.style.cursor = '';
-  }
 
   createLayerFromVoxels(options = {}) {
     this.clearLayer();
@@ -145,7 +145,7 @@ export class MeshPointEditTool {
     this._isCommitted = true;
     this.mesh.visible = true;
     if (this.points) this.points.visible = false;
-    this._setVoxelLayerVisible(false);
+    // Note: Do NOT hide voxel layer here - that's handled by activate/deactivate
     this.voxelEngine?._notify?.('Nuova versione mesh confermata', 'success');
     return true;
   }
@@ -292,6 +292,13 @@ export class MeshPointEditTool {
     if (!this.isActive) return;
     if (event.key === 'Enter') {
       this.finishEditing();
+      event.preventDefault?.();
+      event.stopPropagation?.();
+    } else if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (this.selectedVertexIndex !== null) {
+        this.deleteVertices([this.selectedVertexIndex], true);
+        this._updateLabel();
+      }
       event.preventDefault?.();
       event.stopPropagation?.();
     }
@@ -472,23 +479,24 @@ export class MeshPointEditTool {
     this._label = el;
   }
 
-  _updateLabel() {
-    if (!this._label || !this.isActive) return;
-    const selected = this.getSelectedVertex();
-    this._label.style.display = 'block';
-    this._label.innerHTML =
-      '<div style="font-weight:bold;margin-bottom:8px;">Mesh punti</div>' +
-      `<div>Vertici: ${this.vertexCount}</div>` +
-      `<div>Collegati: ${this.linkedVertexIndices.length || 0}</div>` +
-      (selected
-        ? `<div>Selezionato: #${this.selectedVertexIndex}</div>` +
-          `<div>X:${selected.x.toFixed(2)} Y:${selected.y.toFixed(2)} Z:${selected.z.toFixed(2)}</div>`
-        : '<div>Seleziona un punto superficie</div>') +
-      '<button id="mesh-point-finish" type="button" ' +
-      'style="margin-top:10px;width:100%;padding:7px;border:1px solid #34d399;' +
-      'background:#063b32;color:#d1fae5;border-radius:6px;cursor:pointer;">' +
-      'Fine modifica</button>';
-  }
+    _updateLabel() {
+        if (!this._label || !this.isActive) return;
+        const selected = this.getSelectedVertex();
+        this._label.style.display = 'block';
+        this._label.innerHTML =
+          '<div style="font-weight:bold;margin-bottom:8px;">Mesh punti</div>' +
+          `<div>Vertici: ${this.vertexCount}</div>` +
+          `<div>Collegati: ${this.linkedVertexIndices.length || 0}</div>` +
+          (selected
+            ? `<div>Selezionato: #${this.selectedVertexIndex}</div>` +
+              `<div>X:${selected.x.toFixed(2)} Y:${selected.y.toFixed(2)} Z:${selected.z.toFixed(2)}</div>`
+            : '<div>Seleziona un punto superficie</div>') +
+          '<div style="margin-top:8px;font-size:11px;color:#aaa;">Canc: Elimina punti selezionati</div>' +
+          '<button id="mesh-point-finish" type="button" ' +
+          'style="margin-top:10px;width:100%;padding:7px;border:1px solid #34d399;' +
+          'background:#063b32;color:#d1fae5;border-radius:6px;cursor:pointer;">' +
+          'Fine modifica</button>';
+      }
 }
 
 export default MeshPointEditTool;

@@ -11,6 +11,7 @@ import { MeshExporter } from './mesh-exporter.js';
 import { UI } from './ui.js';
 import { BrickSystem } from './core/brick-system.js';
 import { ProceduralEngine } from './core/procedural-engine.js';
+import { DepthEstimation, ObjectSegmentation } from './core/depth-estimation.js';
 
 function showFatalError(message) {
   const box = document.createElement('div');
@@ -107,6 +108,8 @@ function boot() {
   );
   const brickSystem = new BrickSystem(voxelEngine);
   const proceduralEngine = new ProceduralEngine(voxelEngine);
+    const depthEstimation = new DepthEstimation(voxelEngine);
+    const objectSegmentation = new ObjectSegmentation();
 
   try {
     new UI({
@@ -188,6 +191,48 @@ function boot() {
     resizeRenderer();
     animate(0);
   });
+
+  // Sidebar toggle functionality for mobile
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const sidebar = document.getElementById('sidebar');
+  const body = document.body;
+  
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', () => {
+      body.classList.toggle('sidebar-open');
+      
+      // Also adjust the app grid when sidebar opens/closes
+      const app = document.getElementById('app');
+      if (body.classList.contains('sidebar-open')) {
+        app.style.gridTemplateColumns = '260px 1fr';
+      } else {
+        // Check current viewport width to determine appropriate grid
+        if (window.innerWidth <= 480) {
+          app.style.gridTemplateColumns = '60px 1fr'; // collapsed width
+        } else if (window.innerWidth <= 768) {
+          app.style.gridTemplateColumns = '60px 1fr'; // collapsed width for tablets
+        } else {
+          app.style.gridTemplateColumns = '260px 1fr'; // full width for desktop
+        }
+      }
+    });
+    
+    // Handle window resize to update sidebar state
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 480) {
+        // On larger screens, ensure sidebar behaves correctly
+        if (!body.classList.contains('sidebar-open')) {
+          // Remove inline styles to let CSS handle it
+          const app = document.getElementById('app');
+          if (window.innerWidth <= 768) {
+            app.style.gridTemplateColumns = '60px 1fr';
+          } else {
+            app.style.gridTemplateColumns = '260px 1fr';
+          }
+        }
+      }
+    });
+  }
 
   console.log('VoxelCAD renderer OK', { w: lastW, h: lastH, webgl: renderer.capabilities.isWebGL2 });
 }

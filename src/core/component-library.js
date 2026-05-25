@@ -36,6 +36,7 @@ export class ComponentLibrary {
       frame: { label: 'Telaio', icon: '' },
       interior: { label: 'Interno', icon: '' },
       body: { label: 'Carrozzeria', icon: '' },
+      lego: { label: 'Barre Lego', icon: '' },
       misc: { label: 'Altro', icon: '' }
     };
 
@@ -125,21 +126,40 @@ export class ComponentLibrary {
        }
      });
 
-     // Seat Tube
-     this.components.push({
-       id: 12,
-       name: 'Seat Tube',
-       type: 'tube',
-       category: 'frame',
-       icon: '',
-       color: '#ccc',
-       description: 'Tubo reggisella',
-       parameters: {
-         length: { value: 450, min: 300, max: 600, unit: 'mm' },
-         diameter: { value: 31.6, min: 25, max: 45, unit: 'mm' },
-         wall_thickness: { value: 1.5, min: 0.5, max: 3, unit: 'mm' }
-       }
-     });
+// Seat Tube
+      this.components.push({
+        id: 12,
+        name: 'Seat Tube',
+        type: 'tube',
+        category: 'frame',
+        icon: '',
+        color: '#ccc',
+        description: 'Tubo reggisella',
+        parameters: {
+          length: { value: 450, min: 300, max: 600, unit: 'mm' },
+          diameter: { value: 31.6, min: 25, max: 45, unit: 'mm' },
+          wall_thickness: { value: 1.5, min: 0.5, max: 3, unit: 'mm' }
+        }
+      });
+
+      // Lego Bars
+      const legoBarSizes = [2, 3, 4, 5, 6, 7, 8, 10, 12, 16];
+      const legoColors = ['#ff0000', '#ffff00', '#0000ff', '#00ff00', '#000000'];
+      for (const size of legoBarSizes) {
+        this.components.push({
+          id: 200 + size,
+          name: `Lego Bar ${size}×2`,
+          type: 'lego_bar',
+          category: 'lego',
+          icon: '',
+          color: legoColors[size % legoColors.length],
+          description: `Barra Lego ${size} voxels lungo`,
+          parameters: {
+            length: { value: size, min: 1, max: 32, unit: 'voxels' },
+            thickness: { value: 2, min: 1, max: 8, unit: 'voxels' }
+          }
+        });
+      }
 
      console.log(`[ComponentLibrary] Loaded ${this.components.length} components`);
   }

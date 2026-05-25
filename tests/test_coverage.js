@@ -62,7 +62,7 @@ function mockDocAndGlobals() {
     createElementNS: () => canvas,
   };
   global.window = global;
-  global.navigator = global.document.navigator || {};
+  try { global.navigator = global.document.navigator || {}; } catch { /* ignore */ }
   global.HTMLCanvasElement = function(){};
   global.requestAnimationFrame = (cb) => setTimeout(cb, 16);
   global.setTimeout = setTimeout;
