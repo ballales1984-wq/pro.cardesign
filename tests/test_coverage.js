@@ -982,6 +982,19 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(scene.added.length, 2);
     });
 
+    runTest('MeshPointEditTool.createLayerFromVoxels uses dense face grid by default', () => {
+      const scene = { add(){}, remove(){} };
+      const engine = {
+        voxelSize: 1,
+        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
+      };
+      const renderer = { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } };
+      const tool = new MeshPointEditTool(engine, scene, {}, renderer);
+      tool.createLayerFromVoxels();
+
+      assert.strictEqual(tool.vertexCount, 6 * 4 * 4 * 6);
+    });
+
     runTest('MeshPointEditTool.moveVertex moves coincident linked vertices', () => {
       const scene = { add(){}, remove(){} };
       const engine = { voxelSize: 1, voxelsIterator: function* () {} };
@@ -2016,6 +2029,16 @@ endsolid test`;
       assert.ok(result.geometry.attributes.position);
       assert.strictEqual(result.metadata.voxelsConverted, 1);
       assert.strictEqual(result.metadata.voxelSize, 1);
+    });
+
+    runTest('voxelToMesh faceSubdivisions increases editable points', () => {
+      const voxels = [{ x: 0, y: 0, z: 0, scale: [1,1,1] }];
+      const coarse = voxelToMesh(voxels, { flatCubes: true, faceSubdivisions: 1 });
+      const dense = voxelToMesh(voxels, { flatCubes: true, faceSubdivisions: 3 });
+
+      assert.strictEqual(coarse.geometry.attributes.position.count, 6 * 1 * 1 * 6);
+      assert.strictEqual(dense.geometry.attributes.position.count, 6 * 3 * 3 * 6);
+      assert.ok(dense.geometry.attributes.position.count > coarse.geometry.attributes.position.count);
     });
 
     runTest('voxelToMesh flatCubes — adjacent voxels cull interior', () => {

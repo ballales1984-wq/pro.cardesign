@@ -69,6 +69,7 @@ export class MeshPointEditTool {
     const result = voxelToMesh(this.voxelEngine.voxelsIterator(), {
       voxelSize: this.voxelEngine.voxelSize || 1.0,
       flatCubes: options.flatCubes !== undefined ? options.flatCubes : true,
+      faceSubdivisions: options.faceSubdivisions || 4,
     });
 
     this.geometry = result.geometry;

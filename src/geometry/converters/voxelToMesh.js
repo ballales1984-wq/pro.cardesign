@@ -19,11 +19,13 @@ import * as THREE from 'three';
  * @param {Object} [opts]
  * @param {number} [opts.voxelSize=1]
  * @param {boolean} [opts.flatCubes=false]
+ * @param {number} [opts.faceSubdivisions=1] number of grid cells per emitted face
  * @returns {{ geometry, metadata }}
  */
 export function voxelToMesh(voxelDataSource, opts) {
   opts = opts || {};
   var voxelSize = opts.voxelSize !== undefined ? opts.voxelSize : 1;
+  var faceSubdivisions = Math.max(1, Math.floor(opts.faceSubdivisions || 1));
 
   var voxelList = [];
   var minX = Infinity, minY = Infinity, minZ = Infinity;
@@ -47,7 +49,9 @@ export function voxelToMesh(voxelDataSource, opts) {
     return { geometry: _makeGeo([], []), metadata: { voxelSize: voxelSize, bounds: { min: _bmin, max: _bmax }, voxelsConverted: 0 } };
   }
 
-  var geometry = opts.flatCubes ? _flatCubes(voxelList, voxelSize) : _surfaceCubes(voxelList, voxelSize);
+  var geometry = opts.flatCubes
+    ? _flatCubes(voxelList, voxelSize, faceSubdivisions)
+    : _surfaceCubes(voxelList, voxelSize, faceSubdivisions);
 
   return { geometry: geometry, metadata: { voxelSize: voxelSize, bounds: { min: _bmin, max: _bmax }, voxelsConverted: voxelList.length } };
 }
@@ -56,7 +60,7 @@ export function voxelToMesh(voxelDataSource, opts) {
 //  Flat-cubes path — per-voxel AABB cube with face-culling (scale-aware)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function _flatCubes(voxels, vs) {
+function _flatCubes(voxels, vs, faceSubdivisions) {
   var keySet = new Set();
   for (var i = 0; i < voxels.length; i++) {
     keySet.add(voxels[i].x + ',' + voxels[i].y + ',' + voxels[i].z);
@@ -87,7 +91,7 @@ function _flatCubes(voxels, vs) {
       var fd = faceDefs[fi];
       var nbx = v.x + fd.next[0], nby = v.y + fd.next[1], nbz = v.z + fd.next[2];
       if (keySet.has(nbx + ',' + nby + ',' + nbz)) continue;
-      _emitQuadTriangles(positions, normals, fd.verts, fd.n);
+      _emitQuadTriangles(positions, normals, fd.verts, fd.n, faceSubdivisions);
     }
   }
 
@@ -98,17 +102,45 @@ function _flatCubes(voxels, vs) {
 //  Surface-cubes path — wider AABB per voxel (better MC-like result)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function _surfaceCubes(voxels, vs) {
-  return _flatCubes(voxels, vs);
+function _surfaceCubes(voxels, vs, faceSubdivisions) {
+  return _flatCubes(voxels, vs, faceSubdivisions);
 }
 
-function _emitQuadTriangles(positions, normals, verts, normal) {
-  var order = [0, 1, 2, 0, 2, 3];
-  for (var i = 0; i < order.length; i++) {
-    var p = verts[order[i]];
-    positions.push(p[0], p[1], p[2]);
-    normals.push(normal[0], normal[1], normal[2]);
+function _emitQuadTriangles(positions, normals, verts, normal, subdivisions) {
+  subdivisions = Math.max(1, subdivisions || 1);
+  for (var iy = 0; iy < subdivisions; iy++) {
+    var v0 = iy / subdivisions;
+    var v1 = (iy + 1) / subdivisions;
+    for (var ix = 0; ix < subdivisions; ix++) {
+      var u0 = ix / subdivisions;
+      var u1 = (ix + 1) / subdivisions;
+      var cell = [
+        _quadPoint(verts, u0, v0),
+        _quadPoint(verts, u1, v0),
+        _quadPoint(verts, u1, v1),
+        _quadPoint(verts, u0, v1),
+      ];
+      var order = [0, 1, 2, 0, 2, 3];
+      for (var i = 0; i < order.length; i++) {
+        var p = cell[order[i]];
+        positions.push(p[0], p[1], p[2]);
+        normals.push(normal[0], normal[1], normal[2]);
+      }
+    }
   }
+}
+
+function _quadPoint(verts, u, v) {
+  var a = verts[0], b = verts[1], c = verts[2], d = verts[3];
+  var wA = (1 - u) * (1 - v);
+  var wB = u * (1 - v);
+  var wC = u * v;
+  var wD = (1 - u) * v;
+  return [
+    a[0] * wA + b[0] * wB + c[0] * wC + d[0] * wD,
+    a[1] * wA + b[1] * wB + c[1] * wC + d[1] * wD,
+    a[2] * wA + b[2] * wB + c[2] * wC + d[2] * wD,
+  ];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
