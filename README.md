@@ -4,7 +4,7 @@
 
 ## Current Status
 
-**v0.7.0** — Sculpt Tool + Vertex Edit Tool + Sculpt Tool UI Integration. Build: `npm run build` → **22 modules, 594.6 KB**.
+**v0.7.0** — Sculpt Tool + Vertex Edit Tool + Sculpt Tool UI Integration. Build: `npm run build` → **31 modules, ~702 KB**.
 
 ## Features
 
