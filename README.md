@@ -10,6 +10,7 @@
 
 - [x] **Brick System** — Bricks with real dimensions in mm (e.g. 200×20×20mm bars)
 - [x] **Scaling Tool** — Click & drag on faces to resize with live dimensions (pixel-sensitive)
+- [x] **Vertex Edit Tool** — Direct manipulation of vertices for precise shape editing
 - [x] **Material Database** — 8 materials with density, Young's modulus, cost (kg/m³)
 - [x] **Component Library** — 6 predefined parametric components (wheels, tubes, brick, saddle, handlebar)
 - [x] **Project Management** — Save/load JSON, export STL/OBJ
@@ -22,7 +23,7 @@
 pro.cardesign/
 ├── core/                    # Python core
 │   ├── brick.py            # Brick dataclass (mm, volume, overlap)
-│   ├── component.py        # ComponentDefinition/Instance
+│   ├── component.py        # ComponentDefinition/Instance/Library
 │   ├── __init__.py
 │   └── bike_demo.py        # Bike frame demo
 ├── src/                     # JavaScript frontend (ES modules)
@@ -31,13 +32,14 @@ pro.cardesign/
 │   ├── module-system.js    # Functional module hierarchy
 │   ├── physics-calc.js     # Mass, COM, inertia
 │   ├── mesh-exporter.js    # OBJ + STL export
-│   ├── ui.js               # Toolbar, panels, events
+│   ├── ui.js               # Toolbar, panels, DOM events
 │   ├── main.js             # Entry point Three.js
 │   └── core/               # Additional modules
-│       ├── brick-system.js     # Brick frontend with SCALE=0.01
+│       ├── brick-system.js     # Brick frontend with SCALE=1.0
 │       ├── component-library.js # UI component library
-│       ├── scaling-tool.js     # Interactive drag-to-scale
-│       └── stl-import.js       # STL parser + QualityAnalyzer
+│       ├── scaling-tool.js     # Interactive drag-to-scale tool
+│       ├── stl-import.js       # STL parser + QualityAnalyzer
+│       └── vertex-edit-tool.js # Vertex editing tool for precise mesh manipulation
 ├── voxel_editor.py         # Legacy Python voxel engine (analysis)
 ├── physics_engine.py       # Stress/thermal analysis Python
 ├── cli.py                  # Minimal CLI for testing
@@ -56,10 +58,12 @@ pro.cardesign/
 ## Installation
 
 ### Prerequisites
+
 - Node.js 14+ and npm
 - Python 3.8+ (optional, for server-side analysis)
 
 ### Quick Setup
+
 ```bash
 # 1. Install Node dependencies
 npm install
@@ -72,6 +76,7 @@ npm run dev
 ```
 
 ### Production Build
+
 ```bash
 npm run build   # Output in dist/
 ```
@@ -79,6 +84,7 @@ npm run build   # Output in dist/
 ## Usage
 
 ### From Command Line (Python)
+
 ```bash
 # Brick system info
 python cli.py info
@@ -94,6 +100,7 @@ python cli.py components
 ```
 
 ### Graphical Interface
+
 ```bash
 npm run dev   # Starts Vite + Electron
 ```
@@ -110,6 +117,7 @@ npm run dev   # Starts Vite + Electron
 | `Ctrl+Y` | Redo |
 
 ## Testing
+
 ```bash
 # Python — 43 tests
 python -m pytest tests/test_coverage.py -v
@@ -127,12 +135,14 @@ cat tests/COVERAGE_REPORT.md
 **Current status:** 43/43 Python ✅ | 4/4 JavaScript ✅
 
 ## Roadmap
+
 - [x] Phase 1: Brick System with real measurements
 - [x] Phase 2: Interactive Scaling Tool
 - [x] Phase 3: Component Library
 - [x] Phase 4: Project Management
 - [x] Phase 5: STL Import + Quality Check
-- [ ] Phase 6: Aerodynamics visualization
+- [x] Phase 6: Vertex Edit Tool
+- [ ] Phase 7: Aerodynamics visualization
 
 ## Technologies
 
@@ -146,46 +156,3 @@ cat tests/COVERAGE_REPORT.md
 ## License
 
 MIT — See `LICENSE`
-```bash
-npm install
-```
-
-### Development
-```bash
-npm run dev
-```
-
-This starts Vite dev server and Electron.
-
-## Project Structure
-
-```
-pro.cardesign/
-├── core/                    # Python core (future physics, analysis)
-│   └── brick.py            # Brick dataclass with mm measurements
-├── src/                     # JavaScript frontend
-│   ├── voxel-engine.js     # Core Three.js rendering
-│   ├── material-system.js  # Material database with properties
-│   ├── module-system.js    # Hierarchical module organization
-│   └── core/
-│       └── brick-system.js # Brick management with real dimensions
-├── voxel_editor.py         # Python voxel engine (legacy/analysis)
-└── index.html              # Main UI
-```
-
-## Usage
-
-1. Press `A` to add voxels/bricks
-2. Press `V` to select and inspect
-3. Press `R` to remove
-4. Use mouse to navigate (orbit), scroll to zoom
-5. Select materials from sidebar
-
-## Development Roadmap
-
-- [ ] Phase 1: Brick System with Real-World Measurements
-- [ ] Phase 2: Interactive Scaling Tool
-- [ ] Phase 3: Component Library (wheels, tubes)
-- [ ] Phase 4: Project Management
-- [ ] Phase 5: Import & Real Part Verification
-- [ ] Phase 6: Aerodynamics Visualization

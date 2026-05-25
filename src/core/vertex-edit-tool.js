@@ -91,10 +91,12 @@ export class VertexEditTool {
     // ── Selection state ──────────────────────────────────────────────────
     this.selectedHandleIdx  = null;   // 0-7 when a handle is highlighted
     this.selectedVoxel      = null;   // {x,y,z} when a brick is selected
+    this.originalScale      = null;   // [sx, sy, sz] original scale at drag start
 
     // ── Drag state ───────────────────────────────────────────────────────
     this.dragHandleIdx      = null;
     this.dragStartPositions = null;   // Array[8] of THREE.Vector3 at drag start
+    this.dragPreviewPositions = null; // Array[8] of THREE.Vector3 for current preview
     this.dragStartMouse     = null;   // pointer at drag-start (normalized dev coords)
     this._axesWorld         = null;   // cached world-axis vectors
     this._axesScreen        = null;   // cached screen-axis vectors
@@ -127,7 +129,7 @@ export class VertexEditTool {
     const half = new THREE.Vector3(
       (sc[0] || 1) * 0.5, (sc[1] || 1) * 0.5, (sc[2] || 1) * 0.5
     );
-    const VS   = this.voxelEngine.voxelSize || 1.0;
+    const VS   = this.voxelEngine?.voxelSize || 1.0;
     const hx = half.x * VS, hy = half.y * VS, hz = half.z * VS;
 
     return [
@@ -143,9 +145,9 @@ export class VertexEditTool {
   }
 
   /**
-   * From 8 vertices (one updated), compute new Brick size in voxels.
-   * Each dimension clamped to ≥ 1.
-   */
+    * From 8 vertices (one updated), compute new Brick size in voxels.
+    * Returns progressive delta from original scale when available.
+    */
   _computeBrickFromVertices(vertices, draggedIdx, vNew) {
     let minX=Infinity, minY=Infinity, minZ=Infinity;
     let maxX=-Infinity, maxY=-Infinity, maxZ=-Infinity;
@@ -199,6 +201,40 @@ export class VertexEditTool {
   /** World-space vertices indices that belong to the given face. */
   _faceVertexIndices(faceIdx) { return FACE_VERTICES[faceIdx]; }
 
+  _clonePositions(positions) {
+    return positions.map(p => p.clone());
+  }
+
+  _axisIndexForFace(faceIdx) {
+    const n = FACE_NORMALS[faceIdx];
+    if (Math.abs(n.x) > 0.5) return 0;
+    if (Math.abs(n.y) > 0.5) return 1;
+    return 2;
+  }
+
+  _screenDeltaAlongFaceNormal(dpScreen, faceIdx) {
+    const axisIdx = this._axisIndexForFace(faceIdx);
+    const screenAxis = this._axesScreen?.[axisIdx];
+    if (!screenAxis || screenAxis.lengthSq() <= 0.0001) {
+      return new THREE.Vector3();
+    }
+
+    const normal = this._extrudeDragNormal(faceIdx);
+    const scalar = dpScreen.dot(screenAxis) / screenAxis.lengthSq();
+    return normal.multiplyScalar(scalar);
+  }
+
+  _previewExtrudePositions(dpScreen) {
+    const preview = this._clonePositions(this.dragStartPositions || []);
+    if (!preview.length || this._extrudeFaceIdx === null) return preview;
+
+    const offset = this._screenDeltaAlongFaceNormal(dpScreen, this._extrudeFaceIdx);
+    for (const fv of this._faceVertexIndices(this._extrudeFaceIdx)) {
+      preview[fv].add(offset);
+    }
+    return preview;
+  }
+
   /**
    * For a dragged corner vertex at `worldPos`, figure out which face
    * the extrude is acting on and return the local drag direction (sign×normal).
@@ -245,10 +281,10 @@ export class VertexEditTool {
   //  GIZMO HANDLES
   // ═══════════════════════════════════════════════════════════════════════
 
-  _getHandleGeometry() {
-    if (!this._handleGeometry) this._handleGeometry = new THREE.OctahedronGeometry(0.06, 0);
-    return this._handleGeometry;
-  }
+   _getHandleGeometry() {
+     if (!this._handleGeometry) this._handleGeometry = new THREE.OctahedronGeometry(0.12, 0); // Increased from 0.06 to 0.12
+     return this._handleGeometry;
+   }
 
   _makeHandleMat() {
     return new THREE.MeshBasicMaterial({
@@ -344,19 +380,28 @@ export class VertexEditTool {
     this.liveLabel = el;
   }
 
-  _updateLiveLabel(axisName, newSize) {
-    if (!this.liveLabel) return;
-    const modeTag = this._extrudeMode
-      ? '<span style="color:#fbbf24">[ESTRUSIONE]</span>'
-      : '<span style="color:#00d2ff">[VERTICE]</span>';
-    this.liveLabel.innerHTML =
-      '<div style="font-weight:bold;margin-bottom:8px;">Vertex Edit</div>' +
-      modeTag +
-      `<div>Asse: ${axisName.toUpperCase()}</div>` +
-      `<div>W: ${newSize.sx.toFixed(1)} mm</div>` +
-      `<div>H: ${newSize.sy.toFixed(1)} mm</div>` +
-      `<div>D: ${newSize.sz.toFixed(1)} mm</div>`;
-  }
+   _updateLiveLabel(axisName, newSize) {
+     if (!this.liveLabel) return;
+     const modeTag = this._extrudeMode
+       ? '<span style="color:#fbbf24">[ESTRUSIONE]</span>'
+       : '<span style="color:#00d2ff">[VERTICE]</span>';
+     // Calculate progressive delta from original scale
+     let deltaText = '';
+     if (this.originalScale) {
+       const deltaX = (newSize.sx - this.originalScale[0]).toFixed(1);
+       const deltaY = (newSize.sy - this.originalScale[1]).toFixed(1);
+       const deltaZ = (newSize.sz - this.originalScale[2]).toFixed(1);
+       deltaText = `<div>ΔW: ${deltaX} | ΔH: ${deltaY} | ΔD: ${deltaZ}</div>`;
+     }
+     this.liveLabel.innerHTML =
+       '<div style="font-weight:bold;margin-bottom:8px;">Vertex Edit</div>' +
+       modeTag +
+       `<div>Asse: ${axisName.toUpperCase()}</div>` +
+       `<div>W: ${newSize.sx.toFixed(1)} mm</div>` +
+       `<div>H: ${newSize.sy.toFixed(1)} mm</div>` +
+       `<div>D: ${newSize.sz.toFixed(1)} mm</div>` +
+       deltaText;
+   }
 
   // ═══════════════════════════════════════════════════════════════════════
   //  ACTIVATE / DEACTIVATE
@@ -368,17 +413,18 @@ export class VertexEditTool {
     this._bindEvents();
   }
 
-  deactivate() {
-    this.isActive        = false;
-    this.isDragging      = false;
-    this._extruding      = false;
-    this._extrudeFaceIdx = null;
-    this.dragHandleIdx   = null;
-    this._removeHandles();
-    this.selectedVoxel   = null;
-    if (this.liveLabel) this.liveLabel.style.display = 'none';
-    this._unbindEvents();
-  }
+   deactivate() {
+     this.isActive        = false;
+     this.isDragging      = false;
+     this._extruding      = false;
+     this._extrudeFaceIdx = null;
+     this.dragHandleIdx   = null;
+     this._removeHandles();
+     this.selectedVoxel   = null;
+     this.originalScale   = null; // Reset original scale tracking
+     if (this.liveLabel) this.liveLabel.style.display = 'none';
+     this._unbindEvents();
+   }
 
   _bindEvents() {
     this._onMouseDown = this._onMouseDown.bind(this);
@@ -409,19 +455,17 @@ export class VertexEditTool {
   // ═══════════════════════════════════════════════════════════════════════
 
   _cornerAxisLabel(idx) {
-    return ['X−','X+','Y−','Y+','Z−','Z+','X−','X+'][idx] || '?';
+    return ['X','Y','Z'][idx] || '?';
   }
 
   _onMouseDown(event) {
-    if (!this.isActive || event.button !== 0) return;
+    if (!this.isActive || event.button !== 0 || this.voxelEngine.cameraNavigationMode) return;
     const mouse = this._getMousePos(event);
     this.raycaster.setFromCamera(mouse, this.camera);
 
     const hit = this.voxelEngine._raycast
       ? this.voxelEngine._raycast(event)
       : null;
-
-    console.log('[VertexEdit] Hit:', hit);
 
     if (!hit || hit.isGround) {
       // Click empty space → deselect
@@ -445,30 +489,32 @@ export class VertexEditTool {
       return;   // selection click — no drag
     }
 
-    // ── Already selected brick: click on a handle → start drag ───────
-    const handleIdx = this._findClosestHandleByRay(mouse);
-    if (handleIdx === null) return;
+     // ── Already selected brick: click on a handle → start drag ───────
+     const handleIdx = this._findClosestHandleByRay(mouse);
+     if (handleIdx === null) return;
 
-    this.isDragging   = true;
-    this._extruding   = false;          // reset extrude state
-    this.dragHandleIdx = handleIdx;
-    const positions   = this._getVertexWorldPositions(this.selectedVoxel);
-    this.dragStartPositions = positions.map(p => p.clone());
-    this.dragStartMouse     = mouse.clone();
-    this._axesWorld  = this._axisWorld();
-    this._axesScreen = this._axisScreen();
+     this.isDragging   = true;
+     this._extruding   = false;          // reset extrude state
+     this.dragHandleIdx = handleIdx;
+     const positions   = this._getVertexWorldPositions(voxel);
+     this.dragStartPositions = positions.map(p => p.clone());
+     this.dragPreviewPositions = positions.map(p => p.clone());
+     this.dragStartMouse     = mouse.clone();
+     this._axesWorld  = this._axisWorld();
+     this._axesScreen = this._axisScreen();
+     this.originalScale = voxel.scale ? [...voxel.scale] : [1, 1, 1];
 
-    const picked = this._handleAt(handleIdx);
-    if (picked) { picked.material.color.set(0xff6b6b); picked.material.opacity = 1.0; }
+     const picked = this._handleAt(handleIdx);
+     if (picked) { picked.material.color.set(0xff6b6b); picked.material.opacity = 1.0; }
 
-    if (this._extrudeMode) {
-      // ── EXTRUDE PATH ──────────────────────────────────────────────
-      const worldPos   = positions[handleIdx];
-      const faceIdx    = this._resolveExtrudeFaceAndDir(worldPos, voxel);
-      this._extruding        = true;
-      this._extrudeFaceIdx   = faceIdx;
-      this._faceDragAxisIdx  = null;   // determined on first mouse-move delta
-    }
+     if (this._extrudeMode) {
+       // ── EXTRUDE PATH ──────────────────────────────────────────────
+       const worldPos   = positions[handleIdx];
+       const faceIdx    = this._resolveExtrudeFaceAndDir(worldPos, voxel);
+       this._extruding        = true;
+       this._extrudeFaceIdx   = faceIdx;
+       this._faceDragAxisIdx  = null;   // determined on first mouse-move delta
+     }
 
     this.liveLabel.style.display = 'block';
   }
@@ -489,25 +535,18 @@ export class VertexEditTool {
         this._faceDragAxisIdx = this._dominantAxis(dp, this._axesScreen);
       }
 
-      // Move all 4 vertices of the extrude face together
-      const faceIdxs = this._faceVertexIndices(this._extrudeFaceIdx);
-      const wdp = this._screenDeltaToWorld(dp, this._axesWorld, this._axesScreen);
+      this.dragPreviewPositions = this._previewExtrudePositions(dp);
 
-      for (const fv of faceIdxs) {
-        this.dragStartPositions[fv].add(wdp);
-        const h = this._handleAt(fv);
-        if (h) h.position.copy(this.dragStartPositions[fv]);
+      for (let i = 0; i < this.dragPreviewPositions.length; i++) {
+        const h = this._handleAt(i);
+        if (h) h.position.copy(this.dragPreviewPositions[i]);
       }
 
-      // Live label shows vertex 0 as reference
-      const h = this._handleAt(this.dragHandleIdx);
-      if (h) h.position.copy(this.dragStartPositions[this.dragHandleIdx]);
-
       const newSize = this._computeBrickFromVertices(
-        this.dragStartPositions, this.dragHandleIdx,
-        this.dragStartPositions[this.dragHandleIdx]
+        this.dragPreviewPositions, this.dragHandleIdx,
+        this.dragPreviewPositions[this.dragHandleIdx]
       );
-      this._updateLiveLabel(this._cornerAxisLabel(this._faceDragAxisIdx), newSize);
+      this._updateLiveLabel(this._cornerAxisLabel(this._axisIndexForFace(this._extrudeFaceIdx)), newSize);
       return;
     }
 
@@ -520,6 +559,8 @@ export class VertexEditTool {
     // Preview: update handle mesh
     const h = this._handleAt(this.dragHandleIdx);
     if (h) h.position.copy(vNew);
+    this.dragPreviewPositions = this._clonePositions(this.dragStartPositions);
+    this.dragPreviewPositions[this.dragHandleIdx] = vNew.clone();
 
     // Preview label
     const newSize = this._computeBrickFromVertices(
@@ -544,27 +585,25 @@ export class VertexEditTool {
 
     // ── Determine the "updated" vertex for dimension computation ──────
     let vUpdated = null;
+    let finalPositions = this.dragStartPositions;
     if (this._extruding && this._extrudeFaceIdx !== null) {
-      // All 4 face vertices moved together: pick the dragged one as representative
-      vUpdated = this.dragStartPositions[this.dragHandleIdx];
+      finalPositions = this.dragPreviewPositions || this.dragStartPositions;
+      vUpdated = finalPositions[this.dragHandleIdx];
     } else {
       const h = this._handleAt(this.dragHandleIdx);
       vUpdated = h ? h.position.clone() : null;
+      finalPositions = this.dragPreviewPositions || this.dragStartPositions;
     }
 
     const brickDims = this._computeBrickFromVertices(
-      this.dragStartPositions, this.dragHandleIdx, vUpdated
+      finalPositions, this.dragHandleIdx, vUpdated
     );
 
-    // Reconstruct brick center from drag positions
-    const { center: newCenter, signs } = this._computeBrickCenterAndSigns(
-      this.dragStartPositions, this.dragHandleIdx, vUpdated
-    );
-
-    // Clamp & apply new scale
+    // Clamp & apply new scale (voxels stay at grid position, only scale changes)
     const oldScale  = voxel.scale ? [...voxel.scale] : [1, 1, 1];
     const newScale  = [brickDims.sx, brickDims.sy, brickDims.sz];
 
+    const changed = oldScale[0] !== newScale[0] || oldScale[1] !== newScale[1] || oldScale[2] !== newScale[2];
     voxel.scale = newScale;
 
     // Restore handle color
@@ -574,27 +613,31 @@ export class VertexEditTool {
     }
 
     // ── Update InstancedMesh ─────────────────────────────────────────
-    // Centre shifted after extrude: move InstancedMatrix position too
-    const oldCenter = this.voxelEngine._worldPos
-      ? this.voxelEngine._worldPos(this.selectedVoxel)
-      : new THREE.Vector3(this.selectedVoxel.x+0.5, this.selectedVoxel.y+0.5, this.selectedVoxel.z+0.5);
+    // Voxels stay fixed at grid position; only scale changes
+    const instanceKey = `${voxel.x},${voxel.y},${voxel.z}`;
+    const materialName = voxel.material || this.voxelEngine.activeMaterial || 'steel';
+    
+    const mesh = this.voxelEngine.instancedMeshes.get(materialName);
+    const instanceId = this.voxelEngine.keyToInstance.get(materialName)?.get(instanceKey);
+    if (mesh && instanceId !== undefined) {
+      this.voxelEngine._setInstanceMatrix(
+        mesh,
+        instanceId,
+        this.voxelEngine._worldPos(this.selectedVoxel),
+        new THREE.Vector3(newScale[0], newScale[1], newScale[2])
+      );
+    }
 
-    this.voxelEngine._setInstanceMatrix(
-      this.voxelEngine.instancedMeshes.get(voxel.material),
-      this.voxelEngine.keyToInstance.get(voxel.material)?.get(
-        `${voxel.x},${voxel.y},${voxel.z}`
-      ),
-      newCenter,
-      new THREE.Vector3(newScale[0], newScale[1], newScale[2])
-    );
+    if (changed) {
+      this.voxelEngine._pushHistory({
+        type: 'vertexScale',
+        x: voxel.x, y: voxel.y, z: voxel.z,
+        oldScale, newScale,
+      });
 
-    this.voxelEngine._pushHistory({
-      type: 'vertexScale',
-      x: voxel.x, y: voxel.y, z: voxel.z,
-      oldScale, newScale,
-    });
-
-    this.voxelEngine._onVoxelChanged();
+      this.voxelEngine._onVoxelChanged();
+    }
+    this._createHandles(voxel);
     this._resetDragState();
   }
 
@@ -605,10 +648,10 @@ export class VertexEditTool {
     }
     this.dragHandleIdx       = null;
     this.dragStartPositions  = null;
+    this.dragPreviewPositions = null;
     this._extruding          = false;
     this._extrudeFaceIdx     = null;
     this._faceDragAxisIdx    = null;
-    if (this.liveLabel) this.liveLabel.style.display = 'none';
   }
 
   // ═══════════════════════════════════════════════════════════════════════

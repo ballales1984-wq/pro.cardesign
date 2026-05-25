@@ -78,15 +78,16 @@ mockDocAndGlobals();
     return {
       x, y, z,
       set(){},
-      copy(){ return this; },
+      copy(v){ this.x=v.x; this.y=v.y; this.z=v.z; return this; },
       clone(){ return v3(this.x, this.y, this.z); },
-      add(){ return this; },
-      multiplyScalar(){ return this; },
-      sub(){ return this; },
+      add(v){ this.x+=v.x; this.y+=v.y; this.z+=v.z; return this; },
+      multiplyScalar(s){ this.x*=s; this.y*=s; this.z*=s; return this; },
+      sub(v){ this.x-=v.x; this.y-=v.y; this.z-=v.z; return this; },
       normalize(){ return this; },
       cross(){ return v3(); },
-      dot(){ return 0; },
+      dot(v){ return this.x*v.x + this.y*v.y + this.z*v.z; },
       length(){ return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z); },
+      lengthSq(){ return this.x*this.x + this.y*this.y + this.z*this.z; },
       distanceTo(v) {
         const dx = this.x - v.x;
         const dy = this.y - v.y;
@@ -102,15 +103,16 @@ mockDocAndGlobals();
     return {
       x, y,
       set(){},
-      copy(){ return this; },
+      copy(v){ this.x=v.x; this.y=v.y; return this; },
       clone(){ return v2(this.x, this.y); },
-      add(){ return this; },
-      multiplyScalar(){ return this; },
-      sub(){ return this; },
+      add(v){ this.x+=v.x; this.y+=v.y; return this; },
+      multiplyScalar(s){ this.x*=s; this.y*=s; return this; },
+      sub(v){ this.x-=v.x; this.y-=v.y; return this; },
       normalize(){ return this; },
       cross(){ return 0; },
-      dot(){ return 0; },
+      dot(v){ return this.x*v.x + this.y*v.y; },
       length(){ return Math.sqrt(this.x*this.x + this.y*this.y); },
+      lengthSq(){ return this.x*this.x + this.y*this.y; },
       distanceTo(v) {
         const dx = this.x - v.x;
         const dy = this.y - v.y;
@@ -132,6 +134,9 @@ function Vec3(x=0,y=0,z=0){ return v3(x,y,z); }
       this.clone = function(){ const m = Object.create(Object.getPrototypeOf(this)); Object.assign(m, JSON.parse(JSON.stringify({position:this.position,rotation:this.rotation,scale:this.scale,visible:this.visible,castShadow:this.castShadow,receiveShadow:this.receiveShadow}))); m.geometry=this.geometry; m.material=this.material; return m; };
       this.dispose = function(){ this.geometry?.dispose?.(); this.material?.dispose?.(); };
       this.updateMorphTargets = function(){ /* no-op in mock */ };
+   }
+   function PointsConstructor(geo,mat){
+      MeshConstructor.call(this, geo, mat);
    }
 
    global.THREE = {
@@ -201,9 +206,11 @@ EdgesGeometry: function(geo){ this.geometry=geo; this.dispose=_=>{}; return this
         this.side=opts.side;
         this.dispose = function(){};
       },
-     MeshBasicMaterial: function(opts){ this.color=opts.color||0xffffff; this.opacity=opts.opacity||1; this.transparent=false; this.wireframe=false; this.depthWrite=true; },
+     MeshBasicMaterial: function(opts){ this.color={ value:opts.color||0xffffff, set(c){ this.value=c; } }; this.opacity=opts.opacity||1; this.transparent=false; this.wireframe=false; this.depthWrite=true; this.dispose=function(){}; },
+     PointsMaterial: function(opts){ opts=opts||{}; this.color={ value:opts.color||0xffffff, set(c){ this.value=c; } }; this.size=opts.size||1; this.sizeAttenuation=opts.sizeAttenuation!==false; this.depthTest=opts.depthTest!==false; this.depthWrite=opts.depthWrite!==false; this.dispose=function(){}; },
     LineBasicMaterial: function(opts){ this.color=opts.color||0; },
 Mesh: MeshConstructor,
+Points: PointsConstructor,
      LineSegments: function(geo,mat){ this.geometry=geo; this.material=mat; this.position=v3(); this.visible=true; },
     Sprite: function(mat){ this.position=v3(); this.scale=v3(); this.material=mat; },
     InstancedMesh: function(geo,mat,count){ this.count=count||0; this.instanceMatrix={ setUsage:_=>{}, needsUpdate:false }; this.frustumCulled=true; this.castShadow=false; this.receiveShadow=false; },
@@ -303,6 +310,11 @@ this.setAttribute = (name, attr) => {
       function gy(i) { return i < self.array.length / self.itemSize ? self.array[i * self.itemSize + 1] : 0; }
       function gz(i) { return i < self.array.length / self.itemSize ? self.array[i * self.itemSize + 2] : 0; }
       this.getX = gx; this.getY = gy; this.getZ = gz;
+      this.setXYZ = function(i, x, y, z) {
+        self.array[i * self.itemSize] = x;
+        self.array[i * self.itemSize + 1] = y;
+        self.array[i * self.itemSize + 2] = z;
+      };
 
       return this;
     },
@@ -884,6 +896,45 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(dims.sz, 4);
     });
 
+    runTest('VertexEditTool._previewExtrudePositions is not cumulative', () => {
+      const mockEngine = { voxelSize: 1.0 };
+      const tool = new VertexEditTool(mockEngine, null, null, null);
+      tool.dragStartPositions = [
+        new THREE.Vector3(0,0,0), new THREE.Vector3(1,0,0),
+        new THREE.Vector3(0,1,0), new THREE.Vector3(1,1,0),
+        new THREE.Vector3(0,0,1), new THREE.Vector3(1,0,1),
+        new THREE.Vector3(0,1,1), new THREE.Vector3(1,1,1),
+      ];
+      tool._axesScreen = [
+        new THREE.Vector2(1,0),
+        new THREE.Vector2(0,1),
+        new THREE.Vector2(0.5,0.5),
+      ];
+      tool._extrudeFaceIdx = 0; // +X face
+
+      const first = tool._previewExtrudePositions(new THREE.Vector2(2, 0));
+      const second = tool._previewExtrudePositions(new THREE.Vector2(3, 0));
+
+      assert.strictEqual(first[1].x, 3);
+      assert.strictEqual(second[1].x, 4);
+      assert.strictEqual(tool.dragStartPositions[1].x, 1);
+    });
+
+    runTest('VertexEditTool._screenDeltaAlongFaceNormal respects face sign', () => {
+      const mockEngine = { voxelSize: 1.0 };
+      const tool = new VertexEditTool(mockEngine, null, null, null);
+      tool._axesScreen = [
+        new THREE.Vector2(1,0),
+        new THREE.Vector2(0,1),
+        new THREE.Vector2(0.5,0.5),
+      ];
+
+      const offset = tool._screenDeltaAlongFaceNormal(new THREE.Vector2(2, 0), 1); // -X face
+      assert.strictEqual(offset.x, -2);
+      assert.strictEqual(offset.y, 0);
+      assert.strictEqual(offset.z, 0);
+    });
+
     runTest('VertexEditTool.activate sets isActive', () => {
       const mockScene    = { remove: () => {}, add: () => {} };
       const mockRenderer = { domElement: { addEventListener: () => {}, removeEventListener: () => {} } };
@@ -906,6 +957,72 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(tool.activeHandles.length, 0);
     });
   } catch(e) { failed++; console.log('  [FAIL] VertexEditTool import: ' + e.message); }
+
+  // ── 5.6. MeshPointEditTool ────────────────────────────────────────────────
+  try {
+    const { MeshPointEditTool } = await loadESM('src/core/mesh-point-edit-tool.js');
+    runTest('MeshPointEditTool (import)', () => {
+      assert.ok(typeof MeshPointEditTool === 'function');
+    });
+
+    runTest('MeshPointEditTool.createLayerFromVoxels creates overlay mesh and points', () => {
+      const scene = { added: [], removed: [], add(o){ this.added.push(o); }, remove(o){ this.removed.push(o); } };
+      const engine = {
+        voxelSize: 1,
+        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
+      };
+      const renderer = { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } };
+      const tool = new MeshPointEditTool(engine, scene, {}, renderer);
+      const result = tool.createLayerFromVoxels();
+
+      assert.ok(result.geometry);
+      assert.ok(tool.mesh);
+      assert.ok(tool.points);
+      assert.ok(tool.vertexCount > 0);
+      assert.strictEqual(scene.added.length, 2);
+    });
+
+    runTest('MeshPointEditTool.moveVertex moves coincident linked vertices', () => {
+      const scene = { add(){}, remove(){} };
+      const engine = { voxelSize: 1, voxelsIterator: function* () {} };
+      const renderer = { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } };
+      const tool = new MeshPointEditTool(engine, scene, {}, renderer);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute([
+        0,0,0,
+        0,0,0,
+        1,0,0,
+      ], 3));
+      tool.geometry = geo;
+
+      const moved = tool.moveVertex(0, new THREE.Vector3(2, 3, 4), true);
+      const pos = geo.getAttribute('position');
+
+      assert.strictEqual(moved, true);
+      assert.strictEqual(pos.getX(0), 2);
+      assert.strictEqual(pos.getY(1), 3);
+      assert.strictEqual(pos.getZ(1), 4);
+      assert.strictEqual(pos.getX(2), 1);
+      assert.strictEqual(pos.needsUpdate, true);
+    });
+
+    runTest('MeshPointEditTool snapshot/restore roundtrip', () => {
+      const tool = new MeshPointEditTool(
+        { voxelSize: 1, voxelsIterator: function* () {} },
+        { add(){}, remove(){} },
+        {},
+        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+      );
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0, 1,0,0], 3));
+      tool.geometry = geo;
+      const snap = tool.snapshotVertices();
+      tool.moveVertex(1, new THREE.Vector3(9, 0, 0), false);
+      assert.strictEqual(geo.getAttribute('position').getX(1), 10);
+      assert.strictEqual(tool.restoreVertices(snap), true);
+      assert.strictEqual(geo.getAttribute('position').getX(1), 1);
+    });
+  } catch(e) { failed++; console.log('  [FAIL] MeshPointEditTool import: ' + e.message); }
 
   // ── 6. MeshExporter ────────────────────────────────────────────────────────
   try {
