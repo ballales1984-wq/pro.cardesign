@@ -1084,6 +1084,42 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(voxelGroup.visible, false);
     });
 
+    runTest('MeshPointEditTool finishEditing applies source voxel material', () => {
+      const voxelGroup = { visible: true };
+      const engine = {
+        voxelSize: 1,
+        voxelGroup,
+        activeMaterial: 'steel',
+        materialDB: {
+          get(name) {
+            return name === 'copper'
+              ? { color: 0xb87333, roughness: 0.1, metalness: 1.0 }
+              : null;
+          },
+        },
+        _notify(){},
+        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, material: 'copper', scale: [1, 1, 1] }; },
+      };
+      const tool = new MeshPointEditTool(
+        engine,
+        { add(){}, remove(){} },
+        {},
+        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+      );
+
+      tool.activate();
+      tool.finishEditing();
+
+      const actualColor = tool.mesh.material.color?.getHex
+        ? tool.mesh.material.color.getHex()
+        : (typeof tool.mesh.material.color === 'object'
+          ? tool.mesh.material.color.value
+          : tool.mesh.material.color);
+      assert.strictEqual(actualColor, 0xb87333);
+      assert.strictEqual(tool.mesh.material.roughness, 0.1);
+      assert.strictEqual(tool.mesh.material.metalness, 1.0);
+    });
+
     runTest('MeshPointEditTool clearLayer restores voxel layer', () => {
       const voxelGroup = { visible: true };
       const engine = {

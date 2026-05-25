@@ -41,6 +41,7 @@ export class MeshPointEditTool {
     this._isCommitted = false;
     this._onLabelClick = null;
     this._onKeyDown = null;
+    this._sourceMaterialName = null;
 
     this._createLabel();
   }
@@ -73,8 +74,10 @@ export class MeshPointEditTool {
 
   createLayerFromVoxels(options = {}) {
     this.clearLayer();
+    const sourceVoxels = Array.from(this.voxelEngine.voxelsIterator());
+    this._sourceMaterialName = this._resolveSourceMaterial(sourceVoxels);
 
-    const result = voxelToMesh(this.voxelEngine.voxelsIterator(), {
+    const result = voxelToMesh(sourceVoxels, {
       voxelSize: this.voxelEngine.voxelSize || 1.0,
       flatCubes: options.flatCubes !== undefined ? options.flatCubes : true,
       faceSubdivisions: options.faceSubdivisions || 4,
@@ -138,6 +141,7 @@ export class MeshPointEditTool {
   commitEdits() {
     if (!this.geometry || !this.mesh) return false;
     this._flagGeometryChanged(true);
+    this._applyFinalMaterial();
     this._isCommitted = true;
     this.mesh.visible = true;
     if (this.points) this.points.visible = false;
@@ -232,6 +236,7 @@ export class MeshPointEditTool {
     return {
       vertexCount: this.vertexCount,
       committed: this._isCommitted,
+      material: this._sourceMaterialName,
       positions: pos?.array ? Array.from(pos.array) : [],
     };
   }
@@ -243,9 +248,13 @@ export class MeshPointEditTool {
     if (!pos || data.positions.length !== pos.array.length) return false;
     pos.array.set(data.positions);
     this._isCommitted = !!data.committed;
+    this._sourceMaterialName = data.material || this._sourceMaterialName;
     if (this.mesh) this.mesh.visible = true;
     if (this.points) this.points.visible = !this._isCommitted;
-    if (this._isCommitted) this._setVoxelLayerVisible(false);
+    if (this._isCommitted) {
+      this._applyFinalMaterial();
+      this._setVoxelLayerVisible(false);
+    }
     this._flagGeometryChanged();
     return true;
   }
@@ -377,6 +386,43 @@ export class MeshPointEditTool {
     if (updateNormals) this.geometry.computeVertexNormals?.();
     this.geometry.computeBoundingBox?.();
     this.geometry.computeBoundingSphere?.();
+  }
+
+  _resolveSourceMaterial(voxels) {
+    if (voxels.length > 0 && voxels[0].material) return voxels[0].material;
+    return this.voxelEngine?.activeMaterial || 'steel';
+  }
+
+  _materialProps(materialName) {
+    const material = this.voxelEngine?.materialDB?.get?.(materialName) || null;
+    return {
+      color: material?.color ?? MESH_COLOR,
+      roughness: material?.roughness ?? 0.45,
+      metalness: material?.metalness ?? 0.2,
+      transparent: !!material?.transparent,
+      opacity: material?.opacity ?? 1.0,
+    };
+  }
+
+  _makeMaterialForSource(materialName) {
+    const props = this._materialProps(materialName);
+    return new THREE.MeshStandardMaterial({
+      color: props.color,
+      roughness: props.roughness,
+      metalness: props.metalness,
+      transparent: props.transparent,
+      opacity: props.opacity,
+      side: THREE.DoubleSide,
+      depthWrite: !props.transparent,
+      wireframe: false,
+    });
+  }
+
+  _applyFinalMaterial() {
+    if (!this.mesh) return;
+    const oldMaterial = this.mesh.material;
+    this.mesh.material = this._makeMaterialForSource(this._sourceMaterialName);
+    oldMaterial?.dispose?.();
   }
 
   _setLayerVisible(visible) {
