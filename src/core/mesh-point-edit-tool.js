@@ -138,15 +138,31 @@ export class MeshPointEditTool {
     this.linkedVertexIndices = [];
   }
 
-  commitEdits() {
+commitEdits() {
     if (!this.geometry || !this.mesh) return false;
     this._flagGeometryChanged(true);
     this._applyFinalMaterial();
     this._isCommitted = true;
-    this.mesh.visible = true;
-    if (this.points) this.points.visible = false;
-    // Note: Do NOT hide voxel layer here - that's handled by activate/deactivate
+    this.points.visible = false;
+    this.mesh.visible = false;
+    this._setVoxelLayerVisible(true);
     this.voxelEngine?._notify?.('Nuova versione mesh confermata', 'success');
+    return true;
+  }
+
+  finishEditing() {
+    if (!this.commitEdits()) return false;
+    this.isActive = false;
+    this.isDragging = false;
+    this.selectedVertexIndex = null;
+    this.linkedVertexIndices = [];
+    this.dragPlane = null;
+    this.dragStartWorld = null;
+    this.dragStartVertex = null;
+    this.startPositions = null;
+    if (this._label) this._label.style.display = 'none';
+    this._unbindEvents();
+    document.body.style.cursor = '';
     return true;
   }
 

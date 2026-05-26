@@ -1036,7 +1036,7 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(geo.getAttribute('position').getX(1), 1);
     });
 
-    runTest('MeshPointEditTool deactivate commits mesh and keeps voxel layer hidden', () => {
+    runTest('MeshPointEditTool deactivate cleans up and restores voxel layer', () => {
       const voxelGroup = { visible: true };
       const engine = {
         voxelSize: 1,
@@ -1055,9 +1055,8 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(voxelGroup.visible, false);
       tool.deactivate();
       assert.strictEqual(tool.hasCommittedMesh(), true);
-      assert.strictEqual(tool.mesh.visible, true);
       assert.strictEqual(tool.points.visible, false);
-      assert.strictEqual(voxelGroup.visible, false);
+      assert.strictEqual(voxelGroup.visible, true);
     });
 
     runTest('MeshPointEditTool finishEditing confirms final mesh version', () => {
@@ -1079,9 +1078,8 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(tool.finishEditing(), true);
       assert.strictEqual(tool.isActive, false);
       assert.strictEqual(tool.hasCommittedMesh(), true);
-      assert.strictEqual(tool.mesh.visible, true);
       assert.strictEqual(tool.points.visible, false);
-      assert.strictEqual(voxelGroup.visible, false);
+      assert.strictEqual(voxelGroup.visible, true);
     });
 
     runTest('MeshPointEditTool finishEditing applies source voxel material', () => {
