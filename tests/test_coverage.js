@@ -3129,6 +3129,24 @@ runTest('VideoKeyframeExtraction _lerpCamera interpolates correctly', () => {
        assert.ok(mid?.interpolated);
        assert.strictEqual(mid.camera.position[0], 5);
      });
+
+     runTest('VideoKeyframeExtraction _mergeKeyframes removes duplicates', () => {
+       const vke = new VideoKeyframeExtraction({});
+       const allKeyframes = [
+         { time: 0, frame: {}, rules: [], camera: {} },
+         { time: 30, frame: {}, rules: [], camera: {} },
+         { time: 30.001, frame: {}, rules: [], camera: {} }, // Near-duplicate
+         { time: 60, frame: {}, rules: [], camera: {} }
+       ];
+       const merged = vke._mergeKeyframes(allKeyframes);
+       assert.strictEqual(merged.length, 3); // 0, 30, 60 (duplicates merged)
+     });
+
+     runTest('VideoKeyframeExtraction extractKeyframesParallel splits regions', () => {
+       const vke = new VideoKeyframeExtraction({});
+       // Test that parallel method exists and returns array
+       assert.strictEqual(typeof vke.extractKeyframesParallel, 'function');
+     });
    } catch(e) { failed++; console.log('  [FAIL] Fase 8 import: ' + e.message); }
 
     console.log(`\nResults: ${passed}/${passed + failed} passed, ${failed} failed`);

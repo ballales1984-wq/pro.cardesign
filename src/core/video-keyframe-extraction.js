@@ -156,24 +156,92 @@ export class VideoKeyframeExtraction {
     return [...(r1 || []), ...(r2 || [])];
   }
 
-  /**
-   * Export timeline to JSON
+/**
+    * Export timeline to JSON
+    */
+   toJSON() {
+     return {
+       keyframes: Array.from(this.keyframes.entries()).map(([t, kf]) => ({
+         time: t,
+         ...kf
+       })),
+       duration: Math.max(...this.keyframes.keys()) || 0
+     };
+   }
+
+   /**
+    * Load timeline from JSON
+    */
+   fromJSON(data) {
+     this.keyframes = new Map(data.keyframes.map(kf => [kf.time, kf]));
+     return this;
+   }
+
+   /**
+   * Extract keyframes from multiple regions in parallel
+   * Splits video into chunks for concurrent processing
    */
-  toJSON() {
-    return {
-      keyframes: Array.from(this.keyframes.entries()).map(([t, kf]) => ({
-        time: t,
-        ...kf
-      })),
-      duration: Math.max(...this.keyframes.keys()) || 0
-    };
+  async extractKeyframesParallel(videoFile, options = {}) {
+    const interval = options.interval || 30;
+    const regions = options.regions || 4; // Number of parallel regions
+
+    const video = await this._loadVideo(videoFile);
+    const duration = video.duration || 0;
+
+    // Create time segments for parallel processing
+    const segmentDuration = duration / regions;
+    const promises = [];
+
+    for (let r = 0; r < regions; r++) {
+      const start = r * segmentDuration;
+      const end = (r + 1) * segmentDuration;
+      promises.push(this._extractSegment(video, start, end, interval));
+    }
+
+    const allKeyframes = await Promise.all(promises);
+    const mergedKeyframes = this._mergeKeyframes(allKeyframes.flat());
+
+    this.keyframes = new Map(mergedKeyframes.map(kf => [kf.time, kf]));
+    return mergedKeyframes;
   }
 
   /**
-   * Load timeline from JSON
+   * Extract keyframes from a video segment
    */
-  fromJSON(data) {
-    this.keyframes = new Map(data.keyframes.map(kf => [kf.time, kf]));
-    return this;
+  async _extractSegment(video, start, end, interval) {
+    const segmentKeyframes = [];
+    for (let t = start; t < end; t += interval) {
+      if (t >= end) break;
+      const frame = this._captureFrame(video, t, document.createElement('canvas'));
+      const rules = await this._frameToRules(frame);
+      const camera = this._estimateCameraTransform(frame);
+
+      segmentKeyframes.push({
+        time: Math.round(t * 1000) / 1000, // Round to avoid floating point issues
+        frame: { width: frame.width, height: frame.height },
+        rules,
+        camera,
+        region: Math.floor(start / (end - start))
+      });
+    }
+    return segmentKeyframes;
+  }
+
+  /**
+   * Merge keyframes, removing duplicates and sorting by time
+   */
+  _mergeKeyframes(allKeyframes) {
+    const seen = new Set();
+    const merged = [];
+
+    for (const kf of allKeyframes) {
+      const key = Math.round(kf.time);
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(kf);
+      }
+    }
+
+    return merged.sort((a, b) => a.time - b.time);
   }
 }

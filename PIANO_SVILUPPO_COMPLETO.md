@@ -511,10 +511,11 @@ FASE 7 ✅ Completata (base)
     AI: Segmentazione oggetti (SAM stub con fallback) ✅
     AI: Procedural Rule Generation integrata ✅
 
-FASE 8 ✅ — Base completata
+FASE 8 ✅ — Completata
      Video: keyframe extraction
      Video: trasformazioni interpolate
      Video: timeline playback
+     Video: parallel multi-region processing
 ```
 
 ---
@@ -541,8 +542,8 @@ FASE 8 ✅ — Base completata
 
 ### Prossimi step
 
-- [ ] Multi-region video processing (parallel keyframe extraction)
-- [ ] UI Timeline component per Fase 8
+- [ ] GPU Compute per grandi scene voxel
+- [ ] Editor regole procedurali avanzato (drag-drop UI)
 
 ---
 
