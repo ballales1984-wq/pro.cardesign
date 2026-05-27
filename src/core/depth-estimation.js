@@ -141,14 +141,20 @@ export class DepthEstimation {
 
 export class ObjectSegmentation {
   constructor() {
-    this.session = null;
+    this.encoderSession = null;
+    this.decoderSession = null;
     this.modelLoaded = false;
   }
 
   async loadModel() {
     if (this.modelLoaded) return true;
     try {
-      this.session = await ort.InferenceSession.create('/models/sam_vit_b.onnx', {
+      // Load quantized encoder + decoder (HuggingFace vietanhdev/segment-anything-onnx-models)
+      this.encoderSession = await ort.InferenceSession.create('/models/sam_vit_b/sam_vit_b_01ec64.encoder.quant.onnx', {
+        executionProviders: ['wasm'],
+        intraOpNumThreads: 1
+      });
+      this.decoderSession = await ort.InferenceSession.create('/models/sam_vit_b/sam_vit_b_01ec64.decoder.quant.onnx', {
         executionProviders: ['wasm'],
         intraOpNumThreads: 1
       });
@@ -156,45 +162,48 @@ export class ObjectSegmentation {
       return true;
     } catch (err) {
       console.warn('SAM model load failed:', err.message);
+      this.modelLoaded = false;
       return false;
     }
   }
 
   async segmentImage(img, points = null) {
-    const imageTensor = this._imageToTensor(img);
-    
-    if (this.session && await this.loadModel()) {
-      return this._runSAMModel(imageTensor, points);
+    if (await this.loadModel()) {
+      const embeddings = await this._runEncoder(img);
+      return this._runDecoder(embeddings, points, img);
     }
-    
     return this._fallbackSegmentation(img);
   }
 
-  _imageToTensor(img, targetSize = 256) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = targetSize;
-    canvas.height = targetSize;
-    ctx.drawImage(img, 0, 0, targetSize, targetSize);
-    
-    const imageData = ctx.getImageData(0, 0, targetSize, targetSize);
-    const data = new Float32Array(1 * 3 * targetSize * targetSize);
-    
-    for (let i = 0; i < targetSize * targetSize; i++) {
-      data[i] = imageData.data[i * 4] / 255;
-      data[targetSize * targetSize + i] = imageData.data[i * 4 + 1] / 255;
-      data[2 * targetSize * targetSize + i] = imageData.data[i * 4 + 2] / 255;
-    }
-    
-    return new ort.Tensor('float32', data, [1, 3, targetSize, targetSize]);
+  async _runEncoder(img) {
+    const imageTensor = this._imageToTensor(img, 1024);
+    const feeds = { 'images': imageTensor };
+    const results = await this.encoderSession.run(feeds);
+    return results.embeddings || results[Object.keys(results)[0]];
   }
 
-  async _runSAMModel(imageTensor, points) {
-    const feeds = { 'image': imageTensor, 'points': points || new ort.Tensor('float32', new Float32Array(0), [0, 2]) };
-    const results = await this.session.run(feeds);
-    const masks = results.masks ? Array.from(results.masks.data) : [];
+  async _runDecoder(embeddings, points, img) {
+    // Use automatic prompting: center point + background points
+    const height = img.height || img.naturalHeight || 256;
+    const width = img.width || img.naturalWidth || 256;
     
-    return this._masksToObjects(masks, imageTensor.dims[3], imageTensor.dims[2]);
+    const pointCoords = points?.coords || new ort.Tensor('float32', new Float32Array([width/2, height/2]), [1, 1, 2]);
+    const pointLabels = points?.labels || new ort.Tensor('float32', new Float32Array([1]), [1, 1]);
+    const maskInput = new ort.Tensor('float32', new Float32Array(0), [1, 0, 0, 0]);
+    const hasMaskInput = new ort.Tensor('float32', new Float32Array([0]), [1]);
+    const origImSize = new ort.Tensor('float32', new Float32Array([width, height]), [2]);
+
+    const feeds = {
+      'image_embeddings': embeddings,
+      'point_coords': pointCoords,
+      'point_labels': pointLabels,
+      'mask_input': maskInput,
+      'has_mask_input': hasMaskInput,
+      'orig_im_size': origImSize
+    };
+    const results = await this.decoderSession.run(feeds);
+    const masks = Array.from(results.masks?.data || results[0]?.data || []);
+    return this._masksToObjects(masks, width, height);
   }
 
   _masksToObjects(masks, width, height) {
