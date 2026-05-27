@@ -8,12 +8,13 @@ import * as THREE from 'three';
 
 
 export class Brick {
-    constructor(id, name, position, size, material = 'steel') {
+    constructor(id, name = "Brick", position, size, material = 'steel', module = null) {
         this.id = id;
         this.name = name;
         this.position = position; // {x, y, z} in mm
         this.size = size;         // {x, y, z} in mm
         this.material = material;
+        this.module = module;
         this.isVisible = true;
         this.isSelected = false;
         this.mesh = null;
@@ -91,49 +92,53 @@ export class BrickSystem {
             `Voxel_${voxel.x}_${voxel.y}_${voxel.z}`,
             { x: voxel.x, y: voxel.y, z: voxel.z },
             { x: 1, y: 1, z: 1 },
-            voxel.material
+            voxel.material,
+            voxel.module
         );
         this.bricks.set(brick.id, brick);
         this.updateBrickVisual(brick);
         return brick;
     }
 
-    createCylinder(id, name, radius, height, position = {x: 0, y: 0, z: 0}, material = 'steel') {
+    createCylinder(id, name, radius, height, position = {x: 0, y: 0, z: 0}, material = 'steel', module = null) {
         // Cylinder occupies a box of [2*radius, height, 2*radius]
         const brick = new Brick(
             id,
             name,
             position,
             { x: 2 * radius, y: height, z: 2 * radius },
-            material
+            material,
+            module
         );
         this.bricks.set(brick.id, brick);
         this.updateBrickVisual(brick);
         return brick;
     }
 
-    createCone(id, name, radius, height, position = {x: 0, y: 0, z: 0}, material = 'steel') {
+    createCone(id, name, radius, height, position = {x: 0, y: 0, z: 0}, material = 'steel', module = null) {
         // Cone occupies same bounding box as cylinder: [2*radius, height, 2*radius]
         const brick = new Brick(
             id,
             name,
             position,
             { x: 2 * radius, y: height, z: 2 * radius },
-            material
+            material,
+            module
         );
         this.bricks.set(brick.id, brick);
         this.updateBrickVisual(brick);
         return brick;
     }
 
-    createSphere(id, name, diameter, position = {x: 0, y: 0, z: 0}, material = 'steel') {
+    createSphere(id, name, diameter, position = {x: 0, y: 0, z: 0}, material = 'steel', module = null) {
         // Sphere occupies a cube: [diameter, diameter, diameter]
         const brick = new Brick(
             id,
             name,
             position,
             { x: diameter, y: diameter, z: diameter },
-            material
+            material,
+            module
         );
         this.bricks.set(brick.id, brick);
         this.updateBrickVisual(brick);

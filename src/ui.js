@@ -29,21 +29,22 @@ export class UI {
         ? (cb) => window.requestIdleCallback(cb, { timeout: 500 })
         : (cb) => setTimeout(cb, 0);
 
-      runDeferred(() => {
-        try {
-          this._setupPanels();
-          this._setupSculptPanelListeners();
-          this._setupProceduralPanel();
-          this._populateMaterials();
-          this._populateModules();
-          this._setupLibrary();
-          this._setupAIImportPanel();
-          this._addDemoVoxels();
-        } catch (err) {
-          console.error('[UI] deferred setup failed:', err);
-          this._notify('Errore UI: ' + err.message, 'error');
-        }
-      });
+runDeferred(() => {
+         try {
+           this._setupPanels();
+           this._setupSculptPanelListeners();
+           this._setupProceduralPanel();
+           this._populateMaterials();
+           this._populateModules();
+           this._setupLibrary();
+           this._setupAIImportPanel();
+           this._setupTimelinePanel();
+           this._addDemoVoxels();
+         } catch (err) {
+           console.error('[UI] deferred setup failed:', err);
+           this._notify('Errore UI: ' + err.message, 'error');
+         }
+       });
     }
 
   // Notification helper
@@ -1416,6 +1417,100 @@ document.getElementById('ex-ok').onclick = async () => {
     });
 
     this._populateComponentList('all');
+  }
+
+  // Timeline Panel
+  _setupTimelinePanel() {
+    const self = this;
+    this.keyframeExtraction = null;
+    this._timelinePlaying = false;
+    this._timelineCurrentTime = 0;
+
+    const videoInput = document.getElementById('video-input');
+    const extractBtn = document.getElementById('btn-extract-keyframes');
+    const playBtn = document.getElementById('btn-timeline-play');
+    const pauseBtn = document.getElementById('btn-timeline-pause');
+    const stopBtn = document.getElementById('btn-timeline-stop');
+    const timeEl = document.getElementById('timeline-time');
+    const progressEl = document.getElementById('timeline-progress');
+    const markersEl = document.getElementById('keyframe-markers');
+
+    if (!videoInput || !extractBtn) return;
+
+    extractBtn.addEventListener('click', async function() {
+      const file = videoInput.files && videoInput.files[0];
+      if (!file) {
+        self._notify('Seleziona un video prima', 'warn');
+        return;
+      }
+
+      self._notify('Estrazione keyframe...', 'info');
+      const { VideoKeyframeExtraction } = await import('./core/video-keyframe-extraction.js');
+      self.keyframeExtraction = new VideoKeyframeExtraction(self.voxelEngine, self.proceduralEngine);
+
+      const keyframes = await self.keyframeExtraction.extractKeyframes(file);
+      self._renderKeyframeMarkers(keyframes, markersEl);
+      timeEl.textContent = `0:00 / ${self._formatTime(keyframes[keyframes.length-1]?.time || 0)}`;
+      self._notify(`${keyframes.length} keyframe estratti`, 'success');
+    });
+
+    playBtn?.addEventListener('click', function() {
+      self._timelinePlaying = true;
+      self._playTimeline();
+    });
+
+    pauseBtn?.addEventListener('click', function() {
+      self._timelinePlaying = false;
+    });
+
+    stopBtn?.addEventListener('click', function() {
+      self._timelinePlaying = false;
+      self._timelineCurrentTime = 0;
+      progressEl.style.width = '0%';
+      timeEl.textContent = '0:00 / ' + timeEl.textContent.split(' / ')[1] || '0:00';
+    });
+  }
+
+  _renderKeyframeMarkers(keyframes, container) {
+    container.innerHTML = '';
+    keyframes.forEach((kf, i) => {
+      const marker = document.createElement('div');
+      marker.style.cssText = 'width:8px;height:20px;background:#ff9800;cursor:pointer;border-radius:2px;';
+      marker.title = `Keyframe ${i} (${this._formatTime(kf.time)})`;
+      marker.dataset.time = kf.time;
+      container.appendChild(marker);
+    });
+  }
+
+  _formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  async _playTimeline() {
+    if (!this.keyframeExtraction || !this._timelinePlaying) return;
+
+    const progressEl = document.getElementById('timeline-progress');
+    const timeEl = document.getElementById('timeline-time');
+
+    // Interpolate and apply
+    const state = this.keyframeExtraction.interpolate(this._timelineCurrentTime);
+    if (state) {
+      // Sync camera position
+      if (state.camera?.position) {
+        this.camera.position.set(...state.camera.position);
+      }
+      // Sync progress bar
+      const duration = this.keyframeExtraction.toJSON().duration;
+      progressEl.style.width = `${(this._timelineCurrentTime / (duration || 1)) * 100}%`;
+      timeEl.textContent = `${this._formatTime(this._timelineCurrentTime)} / ${this._formatTime(duration)}`;
+    }
+
+    this._timelineCurrentTime += 1;
+    if (this._timelinePlaying) {
+      requestAnimationFrame(() => this._playTimeline());
+    }
   }
 
    _populateComponentList(category) {

@@ -431,30 +431,59 @@
         <div class="panel-body" id="component-editor"></div>
       </div>
 
-    <!-- ── AI Image Import ── -->
-       <div class="panel" id="panel-ai-import">
-         <div
-           class="panel-header"
-           role="button"
-           tabindex="0"
-           aria-expanded="true"
-           aria-controls="ai-import-body">
-           🤖 AI Import
-           <span class="arrow" aria-hidden="true">▼</span>
-         </div>
-         <div class="panel-body" id="ai-import-body">
-           <div class="hint" style="margin-bottom:8px;">
-             Carica un'immagine 2D per generare voxel tramite depth estimation.
-           </div>
-           <div style="display:flex;gap:4px;align-items:center;">
-             <input type="file" id="ai-image-input" accept="image/*" style="flex:1;"/>
-             <button id="btn-ai-process" class="btn-primary" style="flex:0 0 auto;">Genera</button>
-           </div>
+<!-- ── AI Image Import ── -->
+        <div class="panel" id="panel-ai-import">
+          <div
+            class="panel-header"
+            role="button"
+            tabindex="0"
+            aria-expanded="true"
+            aria-controls="ai-import-body">
+            🤖 AI Import
+            <span class="arrow" aria-hidden="true">▼</span>
+          </div>
+          <div class="panel-body" id="ai-import-body">
+            <div class="hint" style="margin-bottom:8px;">
+              Carica un'immagine 2D per generare voxel tramite depth estimation.
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <input type="file" id="ai-image-input" accept="image/*" style="flex:1;"/>
+              <button id="btn-ai-process" class="btn-primary" style="flex:0 0 auto;">Genera</button>
+            </div>
 <div id="ai-status" style="font-size:11px;color:var(--text-dim);margin-top:6px;"></div>
           </div>
         </div>
 
-    </aside>
+       <!-- ── Video Timeline ── -->
+        <div class="panel" id="panel-timeline">
+          <div
+            class="panel-header"
+            role="button"
+            tabindex="0"
+            aria-expanded="true"
+            aria-controls="timeline-body">
+            🎞️ Timeline Video
+            <span class="arrow" aria-hidden="true">▼</span>
+          </div>
+          <div class="panel-body" id="timeline-body">
+            <div style="display:flex;gap:4px;margin-bottom:8px;align-items:center;">
+              <input type="file" id="video-input" accept="video/*" style="flex:1;"/>
+              <button id="btn-extract-keyframes" class="btn-primary" style="flex:0 0 auto;">Estrai</button>
+            </div>
+            <div id="timeline-container" style="height:60px;background:#1a1a2e;border:1px solid #334455;border-radius:4px;position:relative;overflow:hidden;">
+              <div id="timeline-progress" style="position:absolute;top:0;left:0;height:100%;width:0;background:#00d2ff;opacity:0.3;"></div>
+              <div id="keyframe-markers" style="position:relative;height:100%;display:flex;align-items:center;padding:0 8px;gap:4px;"></div>
+            </div>
+            <div style="display:flex;gap:4px;margin-top:8px;align-items:center;">
+              <button id="btn-timeline-play" class="btn-secondary" style="flex:0 0 auto;">▶ Play</button>
+              <button id="btn-timeline-pause" class="btn-secondary" style="flex:0 0 auto;">⏸ Pause</button>
+              <button id="btn-timeline-stop" class="btn-secondary" style="flex:0 0 auto;">⏹ Stop</button>
+              <span id="timeline-time" style="font-size:11px;color:var(--text-dim);margin-left:auto;">0:00 / 0:00</span>
+            </div>
+          </div>
+        </div>
+
+     </aside>
 
     <!-- ═══════════════════════════════════════════════════
          VIEWPORT 3D

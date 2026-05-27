@@ -3111,16 +3111,25 @@ runTest('ProceduralRuleGeneration _bboxToProfile creates profile points', () => 
         assert.strictEqual(vke.keyframes.size, 1);
       });
 
-      runTest('VideoKeyframeExtraction _lerpCamera interpolates correctly', () => {
-        const vke = new VideoKeyframeExtraction({});
-        const cam1 = { position: [0, 0, 50], rotation: [0, 0, 0], fov: 75 };
-        const cam2 = { position: [10, 10, 60], rotation: [0, 0, 0], fov: 60 };
-        const lerped = vke._lerpCamera(cam1, cam2, 0.5);
-        assert.strictEqual(lerped.position[0], 5);
-        assert.strictEqual(lerped.fov, 67.5);
-      });
+runTest('VideoKeyframeExtraction _lerpCamera interpolates correctly', () => {
+       const vke = new VideoKeyframeExtraction({});
+       const cam1 = { position: [0, 0, 50], rotation: [0, 0, 0], fov: 75 };
+       const cam2 = { position: [10, 10, 60], rotation: [0, 0, 0], fov: 60 };
+       const lerped = vke._lerpCamera(cam1, cam2, 0.5);
+       assert.strictEqual(lerped.position[0], 5);
+       assert.strictEqual(lerped.fov, 67.5);
+     });
 
-    } catch(e) { failed++; console.log('  [FAIL] Fase 8 import: ' + e.message); }
+     runTest('VideoKeyframeExtraction interpolate between keyframes', () => {
+       const vke = new VideoKeyframeExtraction({});
+       vke.keyframes.set(0, { rules: [], camera: { position: [0,0,50], rotation: [0,0,0], fov: 75 } });
+       vke.keyframes.set(30, { rules: [], camera: { position: [10,10,60], rotation: [0,0,0], fov: 60 } });
+
+       const mid = vke.interpolate(15);
+       assert.ok(mid?.interpolated);
+       assert.strictEqual(mid.camera.position[0], 5);
+     });
+   } catch(e) { failed++; console.log('  [FAIL] Fase 8 import: ' + e.message); }
 
     console.log(`\nResults: ${passed}/${passed + failed} passed, ${failed} failed`);
   console.log('─'.repeat(50));
