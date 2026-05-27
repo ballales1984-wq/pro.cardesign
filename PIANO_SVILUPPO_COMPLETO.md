@@ -418,7 +418,7 @@ const signature = {
 
 ---
 
-### ⏳ FASE 7 — Motore AI [DA INIZIARE]
+### ✅ FASE 7 — Motore AI [COMPLETATA AL 80%]
 
 #### 7.1 Depth Estimation da Immagini
 
@@ -537,10 +537,10 @@ FASE 6 ✅ Completata (base)
     Aerodinamica superficiale 🔲
     Firma fisica oggetto 🔲
 
-FASE 7 ⏳ — Da iniziare
-   AI: Depth estimation
-   AI: Segmentazione oggetti
-   AI: Procedural Rule Generation
+FASE 7 ✅ (base)
+    AI: Depth estimation con ONNX Runtime + fallback
+    AI: Segmentazione oggetti (SAM stub con fallback)
+    AI: Procedural Rule Generation integrata
 
 FASE 8 ⏳ — Da iniziare
    Video: keyframe extraction
@@ -567,17 +567,11 @@ FASE 8 ⏳ — Da iniziare
 
 ### Prossima settimana
 
-- [x] Fase 4: `ProceduralEngine.js` — regole CUBO/LINEA/SIMMETRY ✅
-- [x] Fase 5 estesa: metadati materiale ✅ (rugosità, attrito, porosità, coefficiente espansione)
-- [x] Fisica: stress analysis per voxel ✅
-
-### Future
-
 - [ ] Fase 6: FEM solver avanzato
-- [ ] Fase 7: MiDaS in browser via ONNX.js
+- [x] Fase 7: MiDaS in browser via ONNX.js + SAM + ProceduralRuleGeneration (implementato con fallback)
 - [ ] Fase 8: keyframe extraction da video
 
 ---
 
-*Ultimo aggiornamento: 2026-05-16*  
+*Ultimo aggiornamento: 2026-05-27*  
 *Repository: github.com/ballales1984-wq/pro.cardesign*
