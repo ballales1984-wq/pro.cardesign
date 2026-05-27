@@ -3,6 +3,22 @@
 // ══════════════════════════════════════════════════════════════════════════════
 require('./three-mock-provider.cjs');
 
+// Mock for onnxruntime-web (Fase 7)
+global.ort = {
+  InferenceSession: {
+    create: async () => {
+      throw new Error('ONNX model not available in test environment');
+    }
+  },
+  Tensor: class {
+    constructor(type, data, dims) {
+      this.type = type;
+      this.data = data;
+      this.dims = dims;
+    }
+  }
+};
+
 const assert = require('assert');
 const path   = require('path');
 const fs     = require('fs');
@@ -68,17 +84,20 @@ function mockDocAndGlobals() {
     getContext: () => ({
       fillText: () => {},
       fillRect: () => {},
-      getImageData: () => ({ data: new Uint8ClampedArray(4) }),
+      drawImage: () => {},
+      getImageData: () => ({ data: new Uint8ClampedArray(256 * 256 * 4) }),
     }),
   });
   const div = mockEl();
 
-  global.document = {
+global.document = {
     createElement: () => {
       const e = mockEl();
       e.getContext = () => ({
         font: '', fillStyle: '', textAlign: '', textBaseline: '',
         fillText: () => {}, fillRect: () => {},
+        drawImage: () => {},
+        getImageData: () => ({ data: new Uint8ClampedArray(256 * 256 * 4) }),
       });
       return e;
     },
@@ -2805,36 +2824,120 @@ endsolid test`;
       assert.strictEqual(result.isCircular,     true,  'zero-vertex geometry is trivially circular');
       assert.strictEqual(result.deformationScore, 0);
     });
-    runTest('QualityAnalyzer: oval shape reports non-zero ovality and isCircular=false', () => {
-      const analyzer = new QualityAnalyzer();
-      // 8 vertices: 4 at radius 10, 4 at radius 11 (all in XY plane)
-      const pts = [];
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2;
-        pts.push(Math.cos(a) * 10, Math.sin(a) * 10, 0);
-      }
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2;
-        pts.push(Math.cos(a) * 11, Math.sin(a) * 11, 0);
-      }
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(pts), 3));
-      geo.computeBoundingBox = function() {
-        this.boundingBox = new THREE.Box3(
-          {x:-11,y:-11,z:-1}, {x:11,y:11,z:1}
-        );
-      };
-      geo.computeBoundingSphere = function() {};
-      const result = analyzer.analyzeGeometry(geo);
-      const ovalNumeric = parseFloat(result.ovalMm);
-      assert.strictEqual(result.isCircular, false, 'oval shape must not be circular');
-      assert.ok(Number.isFinite(ovalNumeric),      'ovalty must be a valid number, got ' + result.ovalMm);
-      assert.ok(ovalNumeric >= 1,                  'ovalty must be ≥ 1 mm for 10/11 radius mismatch, got ' + ovalNumeric);
-      assert.ok(parseFloat(result.deformationScore) > 0, 'deformation score must be > 0 for oval shape');
-    });
-  } catch(e) { failed++; console.log('  [FAIL] QualityAnalyzer import: ' + e.message); }
+runTest('QualityAnalyzer: oval shape reports non-zero ovality and isCircular=false', () => {
+       const analyzer = new QualityAnalyzer();
+       // 8 vertices: 4 at radius 10, 4 at radius 11 (all in XY plane)
+       const pts = [];
+       for (let i = 0; i < 4; i++) {
+         const a = (i / 4) * Math.PI * 2;
+         pts.push(Math.cos(a) * 10, Math.sin(a) * 10, 0);
+       }
+       for (let i = 0; i < 4; i++) {
+         const a = (i / 4) * Math.PI * 2;
+         pts.push(Math.cos(a) * 11, Math.sin(a) * 11, 0);
+       }
+       const geo = new THREE.BufferGeometry();
+       geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(pts), 3));
+       geo.computeBoundingBox = function() {
+         this.boundingBox = new THREE.Box3(
+           {x:-11,y:-11,z:-1}, {x:11,y:11,z:1}
+         );
+       };
+       geo.computeBoundingSphere = function() {};
+       const result = analyzer.analyzeGeometry(geo);
+       const ovalNumeric = parseFloat(result.ovalMm);
+       assert.strictEqual(result.isCircular, false, 'oval shape must not be circular');
+       assert.ok(Number.isFinite(ovalNumeric),      'ovalty must be a valid number, got ' + result.ovalMm);
+       assert.ok(ovalNumeric >= 1,                  'ovalty must be ≥ 1 mm for 10/11 radius mismatch, got ' + ovalNumeric);
+       assert.ok(parseFloat(result.deformationScore) > 0, 'deformation score must be > 0 for oval shape');
+     });
+   } catch(e) { failed++; console.log('  [FAIL] QualityAnalyzer import: ' + e.message); }
 
-  console.log(`\nResults: ${passed}/${total} passed, ${failed} failed`);
+   // ── 31. Phase 7: DepthEstimation, ObjectSegmentation, ProceduralRuleGeneration ───
+   try {
+     const { DepthEstimation, ObjectSegmentation, ProceduralRuleGeneration } = await loadESM('src/core/depth-estimation.js');
+     
+     runTest('DepthEstimation (import)', () => {
+       assert.ok(typeof DepthEstimation === 'function');
+     });
+     
+     runTest('DepthEstimation constructor initializes defaults', () => {
+       const mockEngine = {};
+       const de = new DepthEstimation(mockEngine);
+       assert.strictEqual(de.modelLoaded, false);
+       assert.strictEqual(de.modelPath, '/models/midas_small.onnx');
+     });
+     
+     runTest('DepthEstimation _fallbackDepthEstimation returns depthMap', () => {
+       const mockEngine = {};
+       const de = new DepthEstimation(mockEngine);
+       // Mock minimal image
+       const mockImg = { width: 64, height: 64 };
+       const result = de._fallbackDepthEstimation(mockImg);
+       assert.ok(result.width > 0);
+       assert.ok(result.height > 0);
+       assert.ok(result.data instanceof Float32Array);
+     });
+     
+runTest('DepthEstimation depthToVoxels generates voxel array', () => {
+        const mockEngine = {};
+        const de = new DepthEstimation(mockEngine);
+        // Create a depth map with varied depths - front half brighter
+        const data = new Float32Array(100);
+        for (let i = 0; i < 100; i++) {
+          data[i] = i < 50 ? 80 : 20; // front half has higher depth values
+        }
+        const depthMap = {
+          width: 10,
+          height: 10,
+          data: data
+        };
+        const voxels = de.depthToVoxels(depthMap, 1);
+        assert.ok(Array.isArray(voxels));
+        assert.ok(voxels.length > 0);
+      });
+     
+     runTest('ObjectSegmentation (import)', () => {
+       assert.ok(typeof ObjectSegmentation === 'function');
+     });
+     
+     runTest('ObjectSegmentation constructor initializes defaults', () => {
+       const seg = new ObjectSegmentation();
+       assert.strictEqual(seg.modelLoaded, false);
+     });
+     
+     runTest('ObjectSegmentation _fallbackSegmentation returns objects', () => {
+       const seg = new ObjectSegmentation();
+       const mockImg = { width: 100, height: 100 };
+       const result = seg._fallbackSegmentation(mockImg);
+       assert.ok(Array.isArray(result));
+       assert.strictEqual(result[0].type, 'object');
+     });
+     
+     runTest('ProceduralRuleGeneration (import)', () => {
+       assert.ok(typeof ProceduralRuleGeneration === 'function');
+     });
+     
+     runTest('ProceduralRuleGeneration generateFromAnalysis creates rules', () => {
+       const prg = new ProceduralRuleGeneration({});
+       const analysis = {
+         objects: [{ id: 1, bbox: [0, 0, 100, 50], depth: 20 }]
+       };
+       const rules = prg.generateFromAnalysis(analysis);
+       assert.ok(Array.isArray(rules));
+       assert.strictEqual(rules[0].type, 'ESTRUSIONE');
+     });
+     
+     runTest('ProceduralRuleGeneration _bboxToProfile creates profile points', () => {
+       const prg = new ProceduralRuleGeneration({});
+       const profile = prg._bboxToProfile([0, 0, 4, 4]);
+       assert.ok(Array.isArray(profile));
+       assert.ok(profile.length > 0);
+     });
+     
+   } catch(e) { failed++; console.log('  [FAIL] Fase 7 import: ' + e.message); }
+
+   console.log(`\nResults: ${passed}/${passed + failed} passed, ${failed} failed`);
   console.log('─'.repeat(50));
 
   const slowest = [...timing].sort((a,b)=>b.ms-a.ms).slice(0,3);
