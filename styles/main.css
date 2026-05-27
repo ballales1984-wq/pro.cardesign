@@ -71,6 +71,7 @@ body {
   background: var(--border);
   gap: 0;
   transition: grid-template-columns 0.3s ease;
+  overflow: hidden;
 }
 
 /* Mobile-first responsive design */
