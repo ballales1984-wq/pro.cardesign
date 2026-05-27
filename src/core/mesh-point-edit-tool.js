@@ -46,76 +46,94 @@ export class MeshPointEditTool {
     this._createLabel();
   }
 
-  activate() {
-    this.isActive = true;
-    document.body.style.cursor = 'crosshair';
-    if (!this.geometry) this.createLayerFromVoxels();
-    this._setLayerVisible(true);
-    if (this.points) this.points.visible = true;
-    this._setVoxelLayerVisible(false);
-    this._bindEvents();
-    this._updateLabel();
-  }
+activate() {
+     this.isActive = true;
+     document.body.style.cursor = 'crosshair';
+     if (this._isCommitted && this.geometry && this.mesh && !this.points) {
+       this.points = new THREE.Points(this.geometry, new THREE.PointsMaterial({
+         color: POINT_COLOR,
+         size: 0.09,
+         sizeAttenuation: true,
+       }));
+       this.scene.add(this.points);
+     } else if (!this.geometry) {
+       this.createLayerFromVoxels();
+     } else {
+       this._setVoxelLayerVisible(false);
+     }
+     this._setLayerVisible(true);
+     if (this.points) this.points.visible = true;
+     this._bindEvents();
+     this._updateLabel();
+   }
 
-    deactivate() {
-        this.isActive = false;
-        this.isDragging = false;
-        this.selectedVertexIndex = null;
-        this.linkedVertexIndices = [];
-        this._unbindEvents();
-        if (this._label) this._label.style.display = 'none';
-        if (this.geometry) {
-            this.finishEditing();
-        } else {
-            this._setVoxelLayerVisible(true);
-        }
-        document.body.style.cursor = '';
-    }
+deactivate() {
+     this.isActive = false;
+     this.isDragging = false;
+     this.selectedVertexIndex = null;
+     this.linkedVertexIndices = [];
+     this._unbindEvents();
+     if (this._label) this._label.style.display = 'none';
+     if (this._isCommitted && this.mesh) {
+       this.mesh.visible = true;
+       this.points.visible = false;
+     } else if (this.geometry) {
+       this.finishEditing();
+     } else {
+       this._setVoxelLayerVisible(true);
+     }
+     document.body.style.cursor = '';
+   }
 
-  createLayerFromVoxels(options = {}) {
-    this.clearLayer();
-    const sourceVoxels = Array.from(this.voxelEngine.voxelsIterator());
-    this._sourceMaterialName = this._resolveSourceMaterial(sourceVoxels);
+createLayerFromVoxels(options = {}) {
+     if (!this._isCommitted) {
+       this.clearLayer();
+     }
+     if (this._isCommitted && this.geometry && this.mesh) {
+       return { geometry: this.geometry, metadata: { voxelSize: (this.voxelEngine?.voxelSize || 1.0) } };
+     }
+     const sourceVoxels = Array.from(this.voxelEngine.voxelsIterator());
+     this._sourceMaterialName = this._resolveSourceMaterial(sourceVoxels);
 
-    const result = voxelToMesh(sourceVoxels, {
-      voxelSize: this.voxelEngine.voxelSize || 1.0,
-      flatCubes: options.flatCubes !== undefined ? options.flatCubes : true,
-      faceSubdivisions: options.faceSubdivisions || 4,
-    });
+     const result = voxelToMesh(sourceVoxels, {
+       voxelSize: this.voxelEngine.voxelSize || 1.0,
+       flatCubes: options.flatCubes !== undefined ? options.flatCubes : true,
+       faceSubdivisions: options.faceSubdivisions || 4,
+     });
 
-    this.geometry = result.geometry;
-    this.geometry.computeVertexNormals?.();
-    this.geometry.computeBoundingBox?.();
-    this.geometry.computeBoundingSphere?.();
+     this.geometry = result.geometry;
+     this.geometry.computeVertexNormals?.();
+     this.geometry.computeBoundingBox?.();
+     this.geometry.computeBoundingSphere?.();
 
-    const meshMaterial = new THREE.MeshStandardMaterial({
-      color: MESH_COLOR,
-      transparent: true,
-      opacity: 0.72,
-      roughness: 0.65,
-      metalness: 0.05,
-      side: THREE.DoubleSide,
-      depthWrite: true,
-      wireframe: false,
-    });
-    this.mesh = new THREE.Mesh(this.geometry, meshMaterial);
-    this.mesh.name = '_meshPointEditLayer';
-    this.scene.add(this.mesh);
+     const meshMaterial = new THREE.MeshStandardMaterial({
+       color: MESH_COLOR,
+       transparent: true,
+       opacity: 0.72,
+       roughness: 0.65,
+       metalness: 0.05,
+       side: THREE.DoubleSide,
+       depthWrite: true,
+       wireframe: false,
+     });
+     this.mesh = new THREE.Mesh(this.geometry, meshMaterial);
+     this.mesh.name = '_meshPointEditLayer';
+     this.scene.add(this.mesh);
 
-    const pointMaterial = new THREE.PointsMaterial({
-      color: POINT_COLOR,
-      size: options.pointSize || 0.09,
-      sizeAttenuation: true,
-      depthTest: true,
-      depthWrite: false,
-    });
-    this.points = new THREE.Points(this.geometry, pointMaterial);
-    this.points.name = '_meshPointEditPoints';
-    this.scene.add(this.points);
-    this._isCommitted = false;
+     const pointMaterial = new THREE.PointsMaterial({
+       color: POINT_COLOR,
+       size: options.pointSize || 0.09,
+       sizeAttenuation: true,
+       depthTest: true,
+       depthWrite: false,
+     });
+     this.points = new THREE.Points(this.geometry, pointMaterial);
+     this.points.name = '_meshPointEditPoints';
+     this.scene.add(this.points);
+     this._isCommitted = false;
 
-    return result;
-  }
+     return result;
+   }
 
   clearLayer() {
     if (this.mesh) {
@@ -150,39 +168,31 @@ commitEdits() {
     return true;
   }
 
-  finishEditing() {
-    if (!this.commitEdits()) return false;
-    this.isActive = false;
-    this.isDragging = false;
-    this.selectedVertexIndex = null;
-    this.linkedVertexIndices = [];
-    this.dragPlane = null;
-    this.dragStartWorld = null;
-    this.dragStartVertex = null;
-    this.startPositions = null;
-    if (this._label) this._label.style.display = 'none';
-    this._unbindEvents();
-    document.body.style.cursor = '';
-    return true;
-  }
+finishEditing() {
+     if (!this.geometry || !this.mesh) return false;
+     this._flagGeometryChanged(true);
+     this._applyFinalMaterial();
+     this._isCommitted = true;
+     this.points.visible = false;
+     this.mesh.visible = true;
+     this._setVoxelLayerVisible(false);
+     this.isActive = false;
+     this.isDragging = false;
+     this.selectedVertexIndex = null;
+     this.linkedVertexIndices = [];
+     this.dragPlane = null;
+     this.dragStartWorld = null;
+     this.dragStartVertex = null;
+     this.startPositions = null;
+     if (this._label) this._label.style.display = 'none';
+     this._unbindEvents();
+     document.body.style.cursor = '';
+     this.voxelEngine?._notify?.('Mesh modificata salvata nella scena', 'success');
+     this.voxelEngine?.setTool('select');
+     return true;
+   }
 
-  finishEditing() {
-    if (!this.commitEdits()) return false;
-    this.isActive = false;
-    this.isDragging = false;
-    this.selectedVertexIndex = null;
-    this.linkedVertexIndices = [];
-    this.dragPlane = null;
-    this.dragStartWorld = null;
-    this.dragStartVertex = null;
-    this.startPositions = null;
-    if (this._label) this._label.style.display = 'none';
-    this._unbindEvents();
-    document.body.style.cursor = '';
-    return true;
-  }
-
-  hasCommittedMesh() {
+hasCommittedMesh() {
     return this._isCommitted && !!this.geometry && !!this.mesh;
   }
 
@@ -239,15 +249,50 @@ commitEdits() {
     return pos?.array ? Float32Array.from(pos.array) : new Float32Array(0);
   }
 
-  restoreVertices(snapshot) {
-    const pos = this._positionAttr();
-    if (!pos || !snapshot || snapshot.length !== pos.array.length) return false;
-    pos.array.set(snapshot);
-    this._flagGeometryChanged();
-    return true;
-  }
+restoreVertices(snapshot) {
+     const pos = this._positionAttr();
+     if (!pos || !snapshot || snapshot.length !== pos.array.length) return false;
+     pos.array.set(snapshot);
+     this._flagGeometryChanged();
+     return true;
+   }
 
-  toJSON() {
+   deleteVertices(indices, linked = true) {
+     if (!this.geometry) return false;
+     const pos = this._positionAttr();
+     if (!pos || !indices?.length) return false;
+     
+     const toDelete = new Set();
+     for (const idx of indices) {
+       if (linked && this.selectedVertexIndex !== null) {
+         const linkedVerts = this._linkedVerticesAt(idx);
+         for (const lv of linkedVerts) toDelete.add(lv);
+       } else {
+         toDelete.add(idx);
+       }
+     }
+     
+     if (toDelete.size === 0 || toDelete.size >= pos.count) {
+       this._flagGeometryChanged();
+       return false;
+     }
+     
+     const newPositions = [];
+     for (let i = 0; i < pos.count; i++) {
+       if (!toDelete.has(i)) {
+         newPositions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+       }
+     }
+     
+     this.geometry.setAttribute('position', 
+       new THREE.Float32BufferAttribute(newPositions, 3));
+     this._flagGeometryChanged(true);
+     this.selectedVertexIndex = null;
+     this.linkedVertexIndices = [];
+     return true;
+   }
+
+   toJSON() {
     const pos = this._positionAttr();
     return {
       vertexCount: this.vertexCount,
@@ -495,24 +540,62 @@ commitEdits() {
     this._label = el;
   }
 
-    _updateLabel() {
-        if (!this._label || !this.isActive) return;
-        const selected = this.getSelectedVertex();
-        this._label.style.display = 'block';
-        this._label.innerHTML =
-          '<div style="font-weight:bold;margin-bottom:8px;">Mesh punti</div>' +
-          `<div>Vertici: ${this.vertexCount}</div>` +
-          `<div>Collegati: ${this.linkedVertexIndices.length || 0}</div>` +
-          (selected
-            ? `<div>Selezionato: #${this.selectedVertexIndex}</div>` +
-              `<div>X:${selected.x.toFixed(2)} Y:${selected.y.toFixed(2)} Z:${selected.z.toFixed(2)}</div>`
-            : '<div>Seleziona un punto superficie</div>') +
-          '<div style="margin-top:8px;font-size:11px;color:#aaa;">Canc: Elimina punti selezionati</div>' +
-          '<button id="mesh-point-finish" type="button" ' +
-          'style="margin-top:10px;width:100%;padding:7px;border:1px solid #34d399;' +
-          'background:#063b32;color:#d1fae5;border-radius:6px;cursor:pointer;">' +
-          'Fine modifica</button>';
-      }
+     _updateLabel() {
+         if (!this._label || !this.isActive) return;
+         const selected = this.getSelectedVertex();
+         this._label.style.display = 'block';
+         // Clear existing content
+         this._label.textContent = '';
+         
+         const titleDiv = document.createElement('div');
+         titleDiv.style.fontWeight = 'bold';
+         titleDiv.style.marginBottom = '8px';
+         titleDiv.textContent = 'Mesh punti';
+         this._label.appendChild(titleDiv);
+         
+         const vertexDiv = document.createElement('div');
+         vertexDiv.textContent = `Vertici: ${this.vertexCount}`;
+         this._label.appendChild(vertexDiv);
+         
+         const linkedDiv = document.createElement('div');
+         linkedDiv.textContent = `Collegati: ${this.linkedVertexIndices.length || 0}`;
+         this._label.appendChild(linkedDiv);
+         
+         if (selected) {
+             const selectedDiv = document.createElement('div');
+             selectedDiv.textContent = `Selezionato: #${this.selectedVertexIndex}`;
+             this._label.appendChild(selectedDiv);
+             
+             const coordDiv = document.createElement('div');
+             coordDiv.textContent = `X:${selected.x.toFixed(2)} Y:${selected.y.toFixed(2)} Z:${selected.z.toFixed(2)}`;
+             this._label.appendChild(coordDiv);
+         } else {
+             const selectDiv = document.createElement('div');
+             selectDiv.textContent = 'Seleziona un punto superficie';
+             this._label.appendChild(selectDiv);
+         }
+         
+         const hintDiv = document.createElement('div');
+         hintDiv.style.marginTop = '8px';
+         hintDiv.style.fontSize = '11px';
+         hintDiv.style.color = '#aaa';
+         hintDiv.textContent = 'Canc: Elimina punti selezionati';
+         this._label.appendChild(hintDiv);
+         
+         const finishBtn = document.createElement('button');
+         finishBtn.id = 'mesh-point-finish';
+         finishBtn.type = 'button';
+         finishBtn.style.marginTop = '10px';
+         finishBtn.style.width = '100%';
+         finishBtn.style.padding = '7px';
+         finishBtn.style.border = '1px solid #34d399';
+         finishBtn.style.background = '#063b32';
+         finishBtn.style.color = '#d1fae5';
+         finishBtn.style.borderRadius = '6px';
+         finishBtn.style.cursor = 'pointer';
+         finishBtn.textContent = 'Fine modifica';
+         this._label.appendChild(finishBtn);
+     }
 }
 
 export default MeshPointEditTool;

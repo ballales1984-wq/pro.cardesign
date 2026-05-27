@@ -62,11 +62,22 @@ function createWindow() {
     },
   });
 
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+   mainWindow.once('ready-to-show', () => mainWindow.show());
 
-  const loadDev = !app.isPackaged;
+   const loadDev = !app.isPackaged;
 
-  (async () => {
+   // Set Content Security Policy
+   const ses = mainWindow.webContents.session;
+   ses.webRequest.onHeadersReceived((details, callback) => {
+     callback({
+       responseHeaders: {
+         ...details.responseHeaders,
+         'Content-Security-Policy': ["default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'"]
+       }
+     });
+   });
+
+   (async () => {
     try {
       if (loadDev) {
         const devUrl = await findDevUrl();

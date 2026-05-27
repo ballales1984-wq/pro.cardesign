@@ -271,11 +271,32 @@ export class ScalingTool {
     const sign = delta >= 0 ? '+' : '';
     const color = delta >= 0 ? '#4caf50' : '#f44336';
 
-    this.liveLabel.innerHTML =
-      '<div style="font-weight:bold;margin-bottom:8px;">Live Scaling</div>' +
-      '<div>Asse: ' + this.dragAxis.toUpperCase() + '</div>' +
-      '<div>Attuale: ' + (scale[axisIndex] || 1).toFixed(1) + ' mm</div>' +
-      '<div style="margin-top:4px;">Delta: <span style="color:' + color + '">' + sign + delta.toFixed(1) + ' mm</span></div>';
+     // Clear liveLabel
+     this.liveLabel.textContent = '';
+     
+     // Create live scaling content
+     const titleDiv = document.createElement('div');
+     titleDiv.style.fontWeight = 'bold';
+     titleDiv.style.marginBottom = '8px';
+     titleDiv.textContent = 'Live Scaling';
+     this.liveLabel.appendChild(titleDiv);
+     
+     const axisDiv = document.createElement('div');
+     axisDiv.textContent = 'Asse: ' + this.dragAxis.toUpperCase();
+     this.liveLabel.appendChild(axisDiv);
+     
+     const currentDiv = document.createElement('div');
+     currentDiv.textContent = 'Attuale: ' + (scale[axisIndex] || 1).toFixed(1) + ' mm';
+     this.liveLabel.appendChild(currentDiv);
+     
+     const deltaDiv = document.createElement('div');
+     deltaDiv.style.marginTop = '4px';
+     const deltaSpan = document.createElement('span');
+     deltaSpan.style.color = color;
+     deltaSpan.textContent = sign + delta.toFixed(1) + ' mm';
+     deltaDiv.textContent = 'Delta: ';
+     deltaDiv.appendChild(deltaSpan);
+     this.liveLabel.appendChild(deltaDiv);
   }
 
   destroy() {

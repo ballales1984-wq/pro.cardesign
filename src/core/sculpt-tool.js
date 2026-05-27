@@ -60,11 +60,42 @@ export class SculptTool {
         'border-radius:6px;font-family:sans-serif;font-size:13px;' +
         'z-index:10000;pointer-events:none;opacity:0.9;';
       document.body.appendChild(hint);
-    }
-    hint.innerHTML =
-      '<div style="font-weight:bold;margin-bottom:4px;">🗿 Sculpt Tool</div>' +
-      '<div style="font-size:12px;color:#aaa;">Drag: <span style="color:#4caf50">↑ Push</span> / <span style="color:#f44336">↓ Pull</span></div>' +
-      '<div style="font-size:11px;color:#888;margin-top:2px;">Hold <b>Shift</b> to invert</div>';
+     }
+     hint.textContent = '';
+     // Title
+     const titleDiv = document.createElement('div');
+     titleDiv.style.fontWeight = 'bold';
+     titleDiv.style.marginBottom = '4px';
+     titleDiv.textContent = '🗿 Sculpt Tool';
+     hint.appendChild(titleDiv);
+     
+     // Drag description
+     const dragDiv = document.createElement('div');
+     dragDiv.style.fontSize = '12px';
+     dragDiv.style.color = '#aaa';
+     const pushSpan = document.createElement('span');
+     pushSpan.style.color = '#4caf50';
+     pushSpan.textContent = '↑ Push';
+     const pullSpan = document.createElement('span');
+     pullSpan.style.color = '#f44336';
+     pullSpan.textContent = '↓ Pull';
+     dragDiv.textContent = 'Drag: ';
+     dragDiv.appendChild(pushSpan);
+     dragDiv.appendChild(document.createTextNode(' / '));
+     dragDiv.appendChild(pullSpan);
+     hint.appendChild(dragDiv);
+     
+     // Shift hint
+     const shiftDiv = document.createElement('div');
+     shiftDiv.style.fontSize = '11px';
+     shiftDiv.style.color = '#888';
+     shiftDiv.style.marginTop = '2px';
+     const shiftB = document.createElement('b');
+     shiftB.textContent = 'Shift';
+     shiftDiv.textContent = 'Hold ';
+     shiftDiv.appendChild(shiftB);
+     shiftDiv.appendChild(document.createTextNode(' to invert'));
+     hint.appendChild(shiftDiv);
   }
 
   _showHint() {
@@ -371,18 +402,41 @@ export class SculptTool {
     }
   }
 
-  _updateDeformationLabel(deformation, currentScale, mode) {
-    if (!this.liveLabel) return;
+   _updateDeformationLabel(deformation, currentScale, mode) {
+     if (!this.liveLabel) return;
 
-    const absDeformation = Math.abs(deformation);
-    const direction = deformation >= 0 ? '+' : '';
+     const absDeformation = Math.abs(deformation);
+     const direction = deformation >= 0 ? '+' : '-';
 
-    this.liveLabel.innerHTML =
-      `<div style="font-weight:bold;margin-bottom:8px;">Sculpting</div>` +
-      `<div>Mode: ${mode}</div>` +
-      `<div>Current scale: ${currentScale.toFixed(2)} mm</div>` +
-      `<div style="margin-top:4px;">Deformation: <span style="color:${deformation >= 0 ? '#4caf50' : '#f44336'}">${direction}${absDeformation.toFixed(2)} mm</span></div>`;
-  }
+     this.liveLabel.textContent = '';
+
+     // Title
+     const titleDiv = document.createElement('div');
+     titleDiv.style.fontWeight = 'bold';
+     titleDiv.style.marginBottom = '8px';
+     titleDiv.textContent = 'Sculpting';
+     this.liveLabel.appendChild(titleDiv);
+
+     // Mode
+     const modeDiv = document.createElement('div');
+     modeDiv.textContent = `Mode: ${mode}`;
+     this.liveLabel.appendChild(modeDiv);
+
+     // Current scale
+     const scaleDiv = document.createElement('div');
+     scaleDiv.textContent = `Current scale: ${currentScale.toFixed(2)} mm`;
+     this.liveLabel.appendChild(scaleDiv);
+
+     // Deformation
+     const defDiv = document.createElement('div');
+     defDiv.style.marginTop = '4px';
+     const defSpan = document.createElement('span');
+     defSpan.style.color = deformation >= 0 ? '#4caf50' : '#f44336';
+     defSpan.textContent = `${direction}${absDeformation.toFixed(2)} mm`;
+     defDiv.textContent = 'Deformation: ';
+     defDiv.appendChild(defSpan);
+     this.liveLabel.appendChild(defDiv);
+   }
 
   destroy() {
     this.deactivate();

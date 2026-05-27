@@ -16,6 +16,8 @@ const fs     = require('fs');
 // ── Full DOM & browser-API Mock (no JSDOM needed) ───────────────────────────
 function mockEl() {
   const handlers = {};
+  const children = [];
+  
   return {
     addEventListener: (t, cb) => { if (cb) handlers[t] = cb; },
     removeEventListener: (t, cb) => { if (handlers[t] === cb) delete handlers[t]; },
@@ -24,12 +26,37 @@ function mockEl() {
     getPropertyValue: () => '',
     setProperty: () => {},
     style: { display: 'none', opacity: '' },
-    textContent: '',
+    get textContent() {
+      // Compute textContent from children's textContent
+      return children.map(child => child.textContent).join('');
+    },
+    set textContent(value) {
+      // When setting textContent, remove all children and add a single text node
+      // For simplicity, we'll just clear children and store the value
+      // In a real implementation, we'd create a text node
+      children.length = 0;
+      // We'll store the value in a way that can be retrieved by the getter
+      // For now, let's just add a pseudo-text node
+      const textNode = {
+        textContent: value,
+        parentElement: this
+      };
+      children.push(textNode);
+    },
     value: '',
     href: '',
-    appendChild: () => {},
-    removeChild: () => {},
-    children: [],
+    appendChild: (child) => {
+      children.push(child);
+      child.parentElement = this;
+    },
+    removeChild: (child) => {
+      const index = children.indexOf(child);
+      if (index > -1) {
+        children.splice(index, 1);
+        child.parentElement = null;
+      }
+    },
+    children: children,
     parentElement: null,
     classList: { add: () => {}, remove: () => {} },
   };
@@ -417,14 +444,90 @@ async function runAll() {
       assert.strictEqual(b.contains_point({x:5,y:5,z:5}), true);
       assert.strictEqual(b.contains_point({x:15,y:5,z:5}), false);
     });
-    runTest('Brick overlaps', () => {
-      const b1 = new Brick(5, 'B1', {x:0,y:0,z:0}, {x:10,y:10,z:10});
-      const b2 = new Brick(6, 'B2', {x:5,y:0,z:0}, {x:10,y:10,z:10});
-      const b3 = new Brick(7, 'B3', {x:20,y:0,z:0}, {x:10,y:10,z:10});
-      assert.strictEqual(b1.overlaps(b2), true);
-      assert.strictEqual(b1.overlaps(b3), false);
-    });
-  } catch(e) { failed++; console.log('  [FAIL] Brick import: ' + e.message); }
+runTest('Brick overlaps', () => {
+       const b1 = new Brick(5, 'B1', {x:0,y:0,z:0}, {x:10,y:10,z:10});
+       const b2 = new Brick(6, 'B2', {x:5,y:0,z:0}, {x:10,y:10,z:10});
+       const b3 = new Brick(7, 'B3', {x:20,y:0,z:0}, {x:10,y:10,z:10});
+       assert.strictEqual(b1.overlaps(b2), true);
+       assert.strictEqual(b1.overlaps(b3), false);
+     });
+
+     // ── EDGE CASE: Touching on edges/corners (not overlap) ───────────────────────
+     runTest('Brick touching on X only - no overlap', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:10,y:10,z:10});
+       const b2 = new Brick(2, 'B', {x:10,y:20,z:20}, {x:10,y:10,z:10}); // touches at x=10
+       assert.strictEqual(b1.overlaps(b2), false);
+     });
+
+     runTest('Brick touching on Y only - no overlap', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:10,y:10,z:10});
+       const b2 = new Brick(2, 'B', {x:20,y:10,z:20}, {x:10,y:10,z:10}); // touches at y=10
+       assert.strictEqual(b1.overlaps(b2), false);
+     });
+
+     runTest('Brick touching on Z only - no overlap', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:10,y:10,z:10});
+       const b2 = new Brick(2, 'B', {x:20,y:20,z:10}, {x:10,y:10,z:10}); // touches at z=10
+       assert.strictEqual(b1.overlaps(b2), false);
+     });
+
+     runTest('Brick touching at corner (diagonal) - no overlap', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:10,y:10,z:10});
+       const b2 = new Brick(2, 'B', {x:10,y:10,z:10}, {x:10,y:10,z:10}); // corner at (10,10,10)
+       assert.strictEqual(b1.overlaps(b2), false);
+     });
+
+     // ── EDGE CASE: Partial overlaps and containment ──────────────────────────────
+     runTest('Brick containment - smaller inside larger', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:100,y:100,z:100});
+       const b2 = new Brick(2, 'B', {x:40,y:40,z:40}, {x:20,y:20,z:20}); // completely inside
+       assert.strictEqual(b1.overlaps(b2), true);
+     });
+
+     runTest('Brick identical (same pos/size) - is overlap', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:50,y:50,z:50});
+       const b2 = new Brick(2, 'B', {x:0,y:0,z:0}, {x:50,y:50,z:50});
+       assert.strictEqual(b1.overlaps(b2), true);
+     });
+
+     runTest('Brick partial overlap - X axis only separation would-be', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:50,y:20,z:10});
+       const b2 = new Brick(2, 'B', {x:25,y:100,z:100}, {x:50,y:20,z:10}); // Y/Z separate - no overlap
+       assert.strictEqual(b1.overlaps(b2), false);
+     });
+
+     // ── EDGE CASE: Rectangular bricks overlap verification ────────────────────────
+     runTest('Brick rectangular overlap - full 3D', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:50,y:50,z:50});
+       const b2 = new Brick(2, 'B', {x:25,y:25,z:25}, {x:50,y:50,z:50});
+       assert.strictEqual(b1.overlaps(b2), true);
+     });
+
+     runTest('Brick rectangular separated', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:200,y:50,z:30}); // long bar
+       const b2 = new Brick(2, 'B', {x:300,y:25,z:15}, {x:40,y:100,z:60}); // far away
+       assert.strictEqual(b1.overlaps(b2), false);
+     });
+
+     runTest('Brick intersecting (partial)', () => {
+       const b1 = new Brick(1, 'A', {x:0,y:0,z:0}, {x:100,y:100,z:100});
+       const b2 = new Brick(2, 'B', {x:75,y:75,z:75}, {x:50,y:50,z:50});
+       assert.strictEqual(b1.overlaps(b2), true);
+     });
+
+     // ── EDGE CASE: Negative coordinates ────────────────────────────────────────
+     runTest('Brick overlap with negative coordinates', () => {
+       const b1 = new Brick(1, 'A', {x:-100,y:-100,z:-100}, {x:50,y:50,z:50});
+       const b2 = new Brick(2, 'B', {x:-75,y:-75,z:-75}, {x:50,y:50,z:50});
+       assert.strictEqual(b1.overlaps(b2), true);
+     });
+
+     runTest('Brick no overlap with negative coordinates', () => {
+       const b1 = new Brick(1, 'A', {x:-100,y:-100,z:-100}, {x:50,y:50,z:50});
+       const b2 = new Brick(2, 'B', {x:0,y:0,z:0}, {x:50,y:50,z:50}); // separated
+       assert.strictEqual(b1.overlaps(b2), false);
+     });
+   } catch(e) { failed++; console.log('  [FAIL] Brick import: ' + e.message); }
 
   // ── 4. ComponentLibrary ────────────────────────────────────────────────────
   try {
@@ -752,17 +855,17 @@ runTest('ScalingTool destroy removes live label', () => {
         assert.strictEqual(tool.ghostMesh.visible, false);
       });
 
-      runTest('MoveTool _updateLabel shows deltas', () => {
-        const mockScene = { remove: () => {}, add: () => {} };
-        const mockRenderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
-        const tool = new MoveTool(null, mockScene, {}, mockRenderer);
-        tool.selectedVoxel = { x: 0, y: 0, z: 0 };
-        tool._updateLabel({ x: 2, y: 3, z: 4 });
-        const html = tool.liveLabel.innerHTML;
-        assert.ok(html.includes('ΔX: +2'));
-        assert.ok(html.includes('ΔY: +3'));
-        assert.ok(html.includes('ΔZ: +4'));
-      });
+       runTest('MoveTool _updateLabel shows deltas', () => {
+         const mockScene = { remove: () => {}, add: () => {} };
+         const mockRenderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,width:800,height:600}) } };
+         const tool = new MoveTool(null, mockScene, {}, mockRenderer);
+         tool.selectedVoxel = { x: 0, y: 0, z: 0 };
+         tool._updateLabel({ x: 2, y: 3, z: 4 });
+         const text = tool.liveLabel.textContent;
+         assert.ok(text.includes('ΔX: +2'));
+         assert.ok(text.includes('ΔY: +3'));
+         assert.ok(text.includes('ΔZ: +4'));
+       });
 
       runTest('MoveTool _setGhostAt positions ghost', () => {
         const mockEngine = { _worldPos: (v) => new THREE.Vector3(v.x + 0.5, v.y + 0.5, v.z + 0.5) };
@@ -1036,108 +1139,115 @@ runTest('ScalingTool destroy removes live label', () => {
       assert.strictEqual(geo.getAttribute('position').getX(1), 1);
     });
 
-    runTest('MeshPointEditTool deactivate cleans up and restores voxel layer', () => {
-      const voxelGroup = { visible: true };
-      const engine = {
-        voxelSize: 1,
-        voxelGroup,
-        _notify(){},
-        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
-      };
-      const tool = new MeshPointEditTool(
-        engine,
-        { add(){}, remove(){} },
-        {},
-        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
-      );
+runTest('MeshPointEditTool deactivate keeps mesh visible (committed)', () => {
+       const voxelGroup = { visible: true };
+       const engine = {
+         voxelSize: 1,
+         voxelGroup,
+         _notify(){},
+         setTool(){},
+         voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
+       };
+       const tool = new MeshPointEditTool(
+         engine,
+         { add(){}, remove(){} },
+         {},
+         { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+       );
 
-      tool.activate();
-      assert.strictEqual(voxelGroup.visible, false);
-      tool.deactivate();
-      assert.strictEqual(tool.hasCommittedMesh(), true);
-      assert.strictEqual(tool.points.visible, false);
-      assert.strictEqual(voxelGroup.visible, true);
-    });
+       tool.activate();
+       tool.finishEditing();
+       assert.strictEqual(voxelGroup.visible, false);
+       tool.deactivate();
+       assert.strictEqual(tool.hasCommittedMesh(), true);
+       assert.strictEqual(tool.points.visible, false);
+       assert.strictEqual(tool.mesh.visible, true);
+       assert.strictEqual(voxelGroup.visible, false);
+     });
 
-    runTest('MeshPointEditTool finishEditing confirms final mesh version', () => {
-      const voxelGroup = { visible: true };
-      const engine = {
-        voxelSize: 1,
-        voxelGroup,
-        _notify(){},
-        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
-      };
-      const tool = new MeshPointEditTool(
-        engine,
-        { add(){}, remove(){} },
-        {},
-        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
-      );
+runTest('MeshPointEditTool finishEditing confirms final mesh version', () => {
+       const voxelGroup = { visible: true };
+       const engine = {
+         voxelSize: 1,
+         voxelGroup,
+         _notify(){},
+         setTool(){},
+         voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
+       };
+       const tool = new MeshPointEditTool(
+         engine,
+         { add(){}, remove(){} },
+         {},
+         { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+       );
 
-      tool.activate();
-      assert.strictEqual(tool.finishEditing(), true);
-      assert.strictEqual(tool.isActive, false);
-      assert.strictEqual(tool.hasCommittedMesh(), true);
-      assert.strictEqual(tool.points.visible, false);
-      assert.strictEqual(voxelGroup.visible, true);
-    });
+       tool.activate();
+       assert.strictEqual(tool.finishEditing(), true);
+       assert.strictEqual(tool.isActive, false);
+       assert.strictEqual(tool.hasCommittedMesh(), true);
+       assert.strictEqual(tool.points.visible, false);
+       assert.strictEqual(tool.mesh.visible, true);
+       assert.strictEqual(voxelGroup.visible, false);
+     });
 
-    runTest('MeshPointEditTool finishEditing applies source voxel material', () => {
-      const voxelGroup = { visible: true };
-      const engine = {
-        voxelSize: 1,
-        voxelGroup,
-        activeMaterial: 'steel',
-        materialDB: {
-          get(name) {
-            return name === 'copper'
-              ? { color: 0xb87333, roughness: 0.1, metalness: 1.0 }
-              : null;
-          },
-        },
-        _notify(){},
-        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, material: 'copper', scale: [1, 1, 1] }; },
-      };
-      const tool = new MeshPointEditTool(
-        engine,
-        { add(){}, remove(){} },
-        {},
-        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
-      );
+runTest('MeshPointEditTool finishEditing applies source voxel material', () => {
+       const voxelGroup = { visible: true };
+       const engine = {
+         voxelSize: 1,
+         voxelGroup,
+         activeMaterial: 'steel',
+         materialDB: {
+           get(name) {
+             return name === 'copper'
+               ? { color: 0xb87333, roughness: 0.1, metalness: 1.0 }
+               : null;
+           },
+         },
+         _notify(){},
+         setTool(){},
+         voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, material: 'copper', scale: [1, 1, 1] }; },
+       };
+       const tool = new MeshPointEditTool(
+         engine,
+         { add(){}, remove(){} },
+         {},
+         { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+       );
 
-      tool.activate();
-      tool.finishEditing();
+       tool.activate();
+       tool.finishEditing();
 
-      const actualColor = tool.mesh.material.color?.getHex
-        ? tool.mesh.material.color.getHex()
-        : (typeof tool.mesh.material.color === 'object'
-          ? tool.mesh.material.color.value
-          : tool.mesh.material.color);
-      assert.strictEqual(actualColor, 0xb87333);
-      assert.strictEqual(tool.mesh.material.roughness, 0.1);
-      assert.strictEqual(tool.mesh.material.metalness, 1.0);
-    });
+       const actualColor = tool.mesh.material.color?.getHex
+         ? tool.mesh.material.color.getHex()
+         : (typeof tool.mesh.material.color === 'object'
+             ? tool.mesh.material.color.value
+             : tool.mesh.material.color);
+       assert.strictEqual(actualColor, 0xb87333);
+       assert.strictEqual(tool.mesh.material.roughness, 0.1);
+       assert.strictEqual(tool.mesh.material.metalness, 1.0);
+     });
 
-    runTest('MeshPointEditTool clearLayer restores voxel layer', () => {
-      const voxelGroup = { visible: true };
-      const engine = {
-        voxelSize: 1,
-        voxelGroup,
-        _notify(){},
-        voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
-      };
-      const tool = new MeshPointEditTool(
-        engine,
-        { add(){}, remove(){} },
-        {},
-        { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
-      );
+runTest('MeshPointEditTool clearLayer restores voxel layer', () => {
+       const voxelGroup = { visible: true };
+       const engine = {
+         voxelSize: 1,
+         voxelGroup,
+         _notify(){},
+         setTool(){},
+         voxelsIterator: function* () { yield { x: 0, y: 0, z: 0, scale: [1, 1, 1] }; },
+       };
+       const tool = new MeshPointEditTool(
+         engine,
+         { add(){}, remove(){} },
+         {},
+         { domElement: { addEventListener(){}, removeEventListener(){}, getBoundingClientRect(){ return { left:0, top:0, width:100, height:100 }; } } }
+       );
 
-      tool.activate();
-      tool.deactivate();
-      tool.clearLayer();
-      assert.strictEqual(voxelGroup.visible, true);
-    });
+       tool.activate();
+       tool.finishEditing();
+       tool.clearLayer();
+       assert.strictEqual(voxelGroup.visible, true);
+     });
   } catch(e) { failed++; console.log('  [FAIL] MeshPointEditTool import: ' + e.message); }
 
   // ── 6. MeshExporter ────────────────────────────────────────────────────────
@@ -1757,7 +1867,9 @@ endsolid test`;
    } catch(e) { failed++; console.log('  [FAIL] LegoBars import: ' + e.message); }
 
    // ── Summary ────────────────────────────────────────────────────────────────
-   const total = passed + failed;
+   this.passed = passed;
+  this.failed = failed;
+  const total = passed + failed;
   // ── 18. VoxelModel ──────────────────────────────────────────────────────────
   try {
     const { VoxelModel } = await loadESM('src/model/VoxelModel.js');

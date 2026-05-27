@@ -55,12 +55,15 @@ function boot() {
       alpha: false,
       powerPreference: 'high-performance',
     });
-  } catch (err) {
-    console.error('WebGLRenderer failed:', err);
-    viewportEl.innerHTML =
-      '<p style="color:#f44336;padding:24px;text-align:center;">WebGL non disponibile. Aggiorna i driver GPU.</p>';
-    return;
-  }
+   } catch (err) {
+     console.error('WebGLRenderer failed:', err);
+     viewportEl.textContent = '';
+     var errorMsg = document.createElement('p');
+     errorMsg.style.cssText = 'color:#f44336;padding:24px;text-align:center;';
+     errorMsg.textContent = 'WebGL non disponibile. Aggiorna i driver GPU.';
+     viewportEl.appendChild(errorMsg);
+     return;
+   }
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setClearColor(0x0f1923, 1);

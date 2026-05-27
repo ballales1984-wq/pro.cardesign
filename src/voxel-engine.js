@@ -968,84 +968,99 @@ const chunkKey = this._getChunkKey(pos);
    
        // ── Persistence ──────────────────────────────────────────────
    
-    toJSON() {
-      const voxels = [];
-      for (const chunk of this.chunks.values()) {
-        for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
-          voxels.push({
-            x: x,
-            y: y,
-            z: z,
-            material: voxelData.material,
-            module: voxelData.module,
-            scale: voxelData.scale || [1, 1, 1],
-            temperature: voxelData.temperature,
-            damage: voxelData.damage
-          });
-        }
-      }
-      return {
-        voxels,
-        modules: this.moduleSystem.toJSON(),
-        version: '0.3.0'
-      };
-    }
-   
-   fromJSON(data) {
-     this.clearAll();
-
-     if (!data || typeof data !== 'object') {
-       console.error('[VoxelEngine] Invalid JSON data');
-       return;
-     }
-
-     if (data.modules) this.moduleSystem.fromJSON(data.modules);
-     const voxels = data.voxels || [];
-     if (!Array.isArray(voxels)) {
-       console.error('[VoxelEngine] voxels must be an array');
-       return;
-     }
-
-     let loaded = 0;
-     for (let i = 0; i < voxels.length; i++) {
-       const v = voxels[i];
-       if (!v || typeof v.x !== 'number' || typeof v.y !== 'number' || typeof v.z !== 'number' || !v.material) {
-         console.warn('[VoxelEngine] Skipping invalid voxel at index', i);
-         continue;
-       }
-       const key = this._gridKey(v);
-       // Check if voxel already exists in chunk system
-       const existingVoxel = this.getVoxelAt(v.x, v.y, v.z);
-       if (existingVoxel) {
-         continue;
-       }
-
-       const voxelData = this._addVoxelInternal({ x: v.x, y: v.y, z: v.z }, v.material, v.module);
-       
-       // Restore scale if present
-       if (voxelData && v.scale) {
-         voxelData.scale = v.scale;
-         const materialName = voxelData.material;
-         const mesh = this.instancedMeshes.get(materialName);
-         if (mesh) {
-           const instMap = this.keyToInstance.get(materialName);
-           const instanceId = instMap?.get(key);
-           if (instanceId !== undefined) {
-             this._setInstanceMatrix(
-               mesh, 
-               instanceId, 
-               this._worldPos({ x: v.x, y: v.y, z: v.z }),
-               new THREE.Vector3(v.scale[0], v.scale[1], v.scale[2])
-             );
-           }
+toJSON() {
+       const voxels = [];
+       for (const chunk of this.chunks.values()) {
+         for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
+           voxels.push({
+             x: x,
+             y: y,
+             z: z,
+             material: voxelData.material,
+             module: voxelData.module,
+             scale: voxelData.scale || [1, 1, 1],
+             temperature: voxelData.temperature,
+             damage: voxelData.damage
+           });
          }
        }
-
-       loaded++;
+       
+       const meshData = this.meshPointEditTool?.hasCommittedMesh() 
+         ? this.meshPointEditTool.toJSON() 
+         : null;
+       
+       return {
+         voxels,
+         modules: this.moduleSystem.toJSON(),
+         meshEdit: meshData,
+         version: '0.4.0'
+       };
      }
-     this._onVoxelChanged();
-     console.log(`[VoxelEngine] Loaded ${loaded} voxels from JSON`);
-   }
+   
+fromJSON(data) {
+      this.clearAll();
+
+      if (!data || typeof data !== 'object') {
+        console.error('[VoxelEngine] Invalid JSON data');
+        return;
+      }
+
+      if (data.modules) this.moduleSystem.fromJSON(data.modules);
+      const voxels = data.voxels || [];
+      if (!Array.isArray(voxels)) {
+        console.error('[VoxelEngine] voxels must be an array');
+        return;
+      }
+
+      let loaded = 0;
+      for (let i = 0; i < voxels.length; i++) {
+        const v = voxels[i];
+        if (!v || typeof v.x !== 'number' || typeof v.y !== 'number' || typeof v.z !== 'number' || !v.material) {
+          console.warn('[VoxelEngine] Skipping invalid voxel at index', i);
+          continue;
+        }
+        const key = this._gridKey(v);
+        // Check if voxel already exists in chunk system
+        const existingVoxel = this.getVoxelAt(v.x, v.y, v.z);
+        if (existingVoxel) {
+          continue;
+        }
+
+        const voxelData = this._addVoxelInternal({ x: v.x, y: v.y, z: v.z }, v.material, v.module);
+        
+        // Restore scale if present
+        if (voxelData && v.scale) {
+          voxelData.scale = v.scale;
+          const materialName = voxelData.material;
+          const mesh = this.instancedMeshes.get(materialName);
+          if (mesh) {
+            const instMap = this.keyToInstance.get(materialName);
+            const instanceId = instMap?.get(key);
+            if (instanceId !== undefined) {
+              this._setInstanceMatrix(
+                mesh, 
+                instanceId, 
+                this._worldPos({ x: v.x, y: v.y, z: v.z }),
+                new THREE.Vector3(v.scale[0], v.scale[1], v.scale[2])
+              );
+            }
+          }
+        }
+
+        loaded++;
+      }
+      
+      // Restore mesh edit if present
+      if (data.meshEdit && this.meshPointEditTool) {
+        this.meshPointEditTool.fromJSON(data.meshEdit);
+        this.meshPointEditTool.mesh.visible = true;
+        const voxelGroup = this.voxelEngine?.voxelGroup || this.voxelGroup;
+        if (voxelGroup) voxelGroup.visible = false;
+      }
+      
+      this._onVoxelChanged();
+      console.log(`[VoxelEngine] Loaded ${loaded} voxels from JSON`);
+    }
    
        getVoxelBounds() {
          let minX = Infinity, minY = Infinity, minZ = Infinity;

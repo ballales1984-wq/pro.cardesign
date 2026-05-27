@@ -387,20 +387,46 @@ export class VertexEditTool {
        : '<span style="color:#00d2ff">[VERTICE]</span>';
      // Calculate progressive delta from original scale
      let deltaText = '';
-     if (this.originalScale) {
-       const deltaX = (newSize.sx - this.originalScale[0]).toFixed(1);
-       const deltaY = (newSize.sy - this.originalScale[1]).toFixed(1);
-       const deltaZ = (newSize.sz - this.originalScale[2]).toFixed(1);
-       deltaText = `<div>ΔW: ${deltaX} | ΔH: ${deltaY} | ΔD: ${deltaZ}</div>`;
-     }
-     this.liveLabel.innerHTML =
-       '<div style="font-weight:bold;margin-bottom:8px;">Vertex Edit</div>' +
-       modeTag +
-       `<div>Asse: ${axisName.toUpperCase()}</div>` +
-       `<div>W: ${newSize.sx.toFixed(1)} mm</div>` +
-       `<div>H: ${newSize.sy.toFixed(1)} mm</div>` +
-       `<div>D: ${newSize.sz.toFixed(1)} mm</div>` +
-       deltaText;
+      if (this.originalScale) {
+        const deltaX = (newSize.sx - this.originalScale[0]).toFixed(1);
+        const deltaY = (newSize.sy - this.originalScale[1]).toFixed(1);
+        const deltaZ = (newSize.sz - this.originalScale[2]).toFixed(1);
+        deltaText = document.createElement('div');
+        deltaText.textContent = `ΔW: ${deltaX} | ΔH: ${deltaY} | ΔD: ${deltaZ}`;
+      }
+      // Clear liveLabel
+       this.liveLabel.textContent = '';
+      
+      // Create vertex edit content
+      const titleDiv = document.createElement('div');
+      titleDiv.style.fontWeight = 'bold';
+      titleDiv.style.marginBottom = '8px';
+      titleDiv.textContent = 'Vertex Edit';
+      this.liveLabel.appendChild(titleDiv);
+      
+      if (modeTag) {
+        this.liveLabel.appendChild(modeTag);
+      }
+      
+      const axisDiv = document.createElement('div');
+      axisDiv.textContent = `Asse: ${axisName.toUpperCase()}`;
+      this.liveLabel.appendChild(axisDiv);
+      
+      const widthDiv = document.createElement('div');
+      widthDiv.textContent = `W: ${newSize.sx.toFixed(1)} mm`;
+      this.liveLabel.appendChild(widthDiv);
+      
+      const heightDiv = document.createElement('div');
+      heightDiv.textContent = `H: ${newSize.sy.toFixed(1)} mm`;
+      this.liveLabel.appendChild(heightDiv);
+      
+      const depthDiv = document.createElement('div');
+      depthDiv.textContent = `D: ${newSize.sz.toFixed(1)} mm`;
+      this.liveLabel.appendChild(depthDiv);
+      
+      if (deltaText) {
+        this.liveLabel.appendChild(deltaText);
+      }
    }
 
   // ═══════════════════════════════════════════════════════════════════════

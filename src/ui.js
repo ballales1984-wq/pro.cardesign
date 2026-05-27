@@ -36,6 +36,7 @@ export class UI {
           this._populateMaterials();
           this._populateModules();
           this._setupLibrary();
+          this._setupAIImportPanel();
           this._addDemoVoxels();
         } catch (err) {
           console.error('[UI] deferred setup failed:', err);
@@ -145,7 +146,7 @@ export class UI {
       if (id) {
         document.getElementById('new-module-name').value = '';
         self._refreshModules();
-        self._notify('Modulo "' + name + '" creato', 'success');
+         self._notify(`Modulo "${name}" creato`, 'success');
       }
     });
 
@@ -159,7 +160,7 @@ export class UI {
         self.voxelEngine.activeModule = null;
         self._refreshModules();
         self._showVoxelProperties(null);
-        self._notify('Modulo "' + mod.name + '" rimosso', 'success');
+         self._notify(`Modulo "${mod.name}" rimosso`, 'success');
       });
     });
 
@@ -185,7 +186,7 @@ export class UI {
       document.getElementById('custom-mat-strength').value = '';
       document.getElementById('custom-mat-cost').value = '';
       self._refreshMaterials();
-      self._notify('Materiale "' + name + '" aggiunto', 'success');
+         self._notify(`Materiale "${name}" aggiunto`, 'success');
     });
 
     // Remove material
@@ -196,7 +197,7 @@ export class UI {
         self.materialDB.remove(matName);
         self.voxelEngine.activeMaterial = self.materialDB.getAll()[0].name;
         self._refreshMaterials();
-        self._notify('Materiale "' + matName + '" rimosso', 'success');
+         self._notify(`Materiale "${matName}" rimosso`, 'success');
       });
     });
   }
@@ -234,24 +235,50 @@ export class UI {
 
       // ── Populate rules list (HTML only, no event binding) ──────
       function populateRulesList() {
-        rulesList.innerHTML = '';
+        rulesList.textContent = '';
         const rules = Array.from(self.proceduralEngine.rules.keys());
         if (rules.length === 0) {
-          rulesList.innerHTML = '<p class="hint">Nessuna regola definita</p>';
+          const hint = document.createElement('p');
+          hint.className = 'hint';
+          hint.textContent = 'Nessuna regola definita';
+          rulesList.appendChild(hint);
           return;
         }
 
-        rules.forEach(ruleName => {
-          const ruleDiv = document.createElement('div');
-          ruleDiv.className = 'procedural-rule-item';
-          ruleDiv.innerHTML = `
-            <span class="rule-name">${ruleName}</span>
-            <button id="rule-apply-${ruleName}" class="rule-apply-btn" data-rule="${ruleName}" title="Applica regola nella scena" style="background:var(--accent);color:#fff;border:none;border-radius:3px;padding:2px 7px;font-size:10px;cursor:pointer;">▶ Applica</button>
-            <button id="rule-edit-${ruleName}" class="rule-edit-btn" data-rule="${ruleName}">Modifica</button>
-            <button id="rule-delete-${ruleName}" class="rule-delete-btn" data-rule="${ruleName}">Elimina</button>
-          `;
-          rulesList.appendChild(ruleDiv);
-        });
+         rules.forEach(ruleName => {
+           const ruleDiv = document.createElement('div');
+           ruleDiv.className = 'procedural-rule-item';
+           
+           const ruleNameSpan = document.createElement('span');
+           ruleNameSpan.className = 'rule-name';
+           ruleNameSpan.textContent = ruleName;
+           ruleDiv.appendChild(ruleNameSpan);
+           
+           const applyBtn = document.createElement('button');
+           applyBtn.id = `rule-apply-${ruleName}`;
+           applyBtn.className = 'rule-apply-btn';
+           applyBtn.dataset.rule = ruleName;
+           applyBtn.title = 'Applica regola nella scena';
+           applyBtn.style.cssText = 'background:var(--accent);color:#fff;border:none;border-radius:3px;padding:2px 7px;font-size:10px;cursor:pointer;';
+           applyBtn.textContent = '▶ Applica';
+           ruleDiv.appendChild(applyBtn);
+           
+           const editBtn = document.createElement('button');
+           editBtn.id = `rule-edit-${ruleName}`;
+           editBtn.className = 'rule-edit-btn';
+           editBtn.dataset.rule = ruleName;
+           editBtn.textContent = 'Modifica';
+           ruleDiv.appendChild(editBtn);
+           
+           const deleteBtn = document.createElement('button');
+           deleteBtn.id = `rule-delete-${ruleName}`;
+           deleteBtn.className = 'rule-delete-btn';
+           deleteBtn.dataset.rule = ruleName;
+           deleteBtn.textContent = 'Elimina';
+           ruleDiv.appendChild(deleteBtn);
+           
+           rulesList.appendChild(ruleDiv);
+         });
       }
 
       // ── Bind rule-list buttons (called after every repopulate) ──
@@ -274,9 +301,9 @@ export class UI {
               } else {
                 self._notify(`Regola "${ruleName}" applicata: ${voxels.length} voxel`, 'success');
               }
-            } catch(e) {
-              self._notify(`Errore nell'applicare "${ruleName}": ` + e.message, 'error');
-            }
+             } catch(e) {
+               self._notify(`Errore nell'applicare "${ruleName}": ${e.message}`, 'error');
+             }
           });
         });
 
@@ -295,7 +322,7 @@ export class UI {
               self.proceduralEngine.rules.delete(ruleName);
               populateRulesList();
               bindRuleButtons();
-              self._notify('Regola "' + ruleName + '" eliminata', 'success');
+               self._notify(`Regola "${ruleName}" eliminata`, 'success');
             });
           });
         });
@@ -337,17 +364,46 @@ export class UI {
      const editorHeader = document.getElementById('rule-editor-header');
      const editorBody = document.getElementById('rule-editor-body');
 
-     editorHeader.textContent = `Modifica regola: ${ruleName}`;
-     editorBody.innerHTML = `
-       <div class="rule-editor-section">
-         <label for="rule-code">Funzione execute (params, context)</label>
-         <textarea id="rule-code" rows="10" class="rule-editor-textarea" spellcheck="false"></textarea>
-       </div>
-       <div class="rule-editor-actions">
-         <button id="save-rule-btn" class="btn-primary">Salva Regola</button>
-         <button id="cancel-rule-btn" class="btn-secondary">Annulla</button>
-       </div>
-     `;
+      editorHeader.textContent = `Modifica regola: ${ruleName}`;
+      
+      // Clear editor body
+      editorBody.textContent = '';
+      
+      // Create rule editor section
+      const ruleEditorSection = document.createElement('div');
+      ruleEditorSection.className = 'rule-editor-section';
+      
+      const ruleLabel = document.createElement('label');
+      ruleLabel.htmlFor = 'rule-code';
+      ruleLabel.textContent = 'Funzione execute (params, context)';
+      ruleEditorSection.appendChild(ruleLabel);
+      
+      const ruleCode = document.createElement('textarea');
+      ruleCode.id = 'rule-code';
+      ruleCode.rows = 10;
+      ruleCode.className = 'rule-editor-textarea';
+      ruleCode.spellcheck = false;
+      ruleEditorSection.appendChild(ruleCode);
+      
+      editorBody.appendChild(ruleEditorSection);
+      
+      // Create rule editor actions
+      const ruleEditorActions = document.createElement('div');
+      ruleEditorActions.className = 'rule-editor-actions';
+      
+      const saveRuleBtn = document.createElement('button');
+      saveRuleBtn.id = 'save-rule-btn';
+      saveRuleBtn.className = 'btn-primary';
+      saveRuleBtn.textContent = 'Salva Regola';
+      ruleEditorActions.appendChild(saveRuleBtn);
+      
+      const cancelRuleBtn = document.createElement('button');
+      cancelRuleBtn.id = 'cancel-rule-btn';
+      cancelRuleBtn.className = 'btn-secondary';
+      cancelRuleBtn.textContent = 'Annulla';
+      ruleEditorActions.appendChild(cancelRuleBtn);
+      
+      editorBody.appendChild(ruleEditorActions);
 
      // Query AFTER innerHTML assignment so elements exist
      const saveBtn = document.getElementById('save-rule-btn');
@@ -392,9 +448,9 @@ export class UI {
    }
 
    // Materials palette
-   _populateMaterials() {
-     var container = document.getElementById('materials-list');
-     var materials = this.materialDB.getAll();
+    _populateMaterials() {
+      var container = document.getElementById('materials-list');
+      var materials = this.materialDB.getAll();
 
       var sel = document.createElement('select');
       sel.id = 'material-select';
@@ -402,58 +458,59 @@ export class UI {
       sel.className = 'prop-input';
       sel.style.marginBottom = '8px';
       sel.style.width = '100%';
-     for (var i = 0; i < materials.length; i++) {
-       var mat = materials[i];
-       var opt = document.createElement('option');
-       opt.value = mat.name;
-       opt.textContent = mat.label + ' (' + mat.density + ')';
-       sel.appendChild(opt);
-     }
-     sel.value = this.voxelEngine.activeMaterial;
+      for (var i = 0; i < materials.length; i++) {
+        var mat = materials[i];
+        var opt = document.createElement('option');
+        opt.value = mat.name;
+        opt.textContent = mat.label + ' (' + mat.density + ')';
+        sel.appendChild(opt);
+      }
+      sel.value = this.voxelEngine.activeMaterial;
 
-     var self = this;
-     sel.addEventListener('change', function() {
-       self.voxelEngine.activeMaterial = sel.value;
-       self._syncMaterialSwatch();
-     });
+      var self = this;
+      sel.addEventListener('change', function() {
+        self.voxelEngine.activeMaterial = sel.value;
+        self._syncMaterialSwatch();
+      });
 
-     var matGroup = document.createElement('div');
-     matGroup.className = 'material-swatch-group';
+      var matGroup = document.createElement('div');
+      matGroup.className = 'material-swatch-group';
 
-     for (var j = 0; j < materials.length; j++) {
-       var m = materials[j];
-       var swatch = document.createElement('div');
-       swatch.className = 'material-swatch' + (m.name === this.voxelEngine.activeMaterial ? ' active' : '');
-       swatch.dataset.mat = m.name;
-       var colorNum = Number(m.color);
-       if (!Number.isFinite(colorNum)) colorNum = 0x888888;
-       var colorHex = colorNum.toString(16);
-       while (colorHex.length < 6) colorHex = '0' + colorHex;
-       swatch.appendChild(this._createSwatchColor('#' + colorHex));
-       var nameSpan = document.createElement('span');
-       nameSpan.textContent = m.label;
-       swatch.appendChild(nameSpan);
-       var densitySpan = document.createElement('span');
-       densitySpan.style.cssText = 'color: var(--text-dim); font-size: 10px; margin-left: auto;';
-       densitySpan.textContent = m.density + ' kg/m3';
-       swatch.appendChild(densitySpan);
-       swatch.title = m.label + '\nDensita: ' + m.density + ' kg/m3\nResistenza: ' + (m.tensileStrength / 1e6).toFixed(0) + ' MPa\nCosto: EUR ' + m.costPerKg + '/kg';
+      for (var j = 0; j < materials.length; j++) {
+        var m = materials[j];
+        var swatch = document.createElement('div');
+        swatch.className = 'material-swatch' + (m.name === this.voxelEngine.activeMaterial ? ' active' : '');
+        swatch.dataset.mat = m.name;
+        var colorNum = Number(m.color);
+        if (!Number.isFinite(colorNum)) colorNum = 0x888888;
+        var colorHex = colorNum.toString(16);
+        while (colorHex.length < 6) colorHex = '0' + colorHex;
+        swatch.appendChild(this._createSwatchColor('#' + colorHex));
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = m.label;
+        swatch.appendChild(nameSpan);
+        var densitySpan = document.createElement('span');
+        densitySpan.style.cssText = 'color: var(--text-dim); font-size: 10px; margin-left: auto;';
+        densitySpan.textContent = m.density + ' kg/m3';
+        swatch.appendChild(densitySpan);
+        swatch.title = m.label + '\nDensita: ' + m.density + ' kg/m3\nResistenza: ' + (m.tensileStrength / 1e6).toFixed(0) + ' MPa\nCosto: EUR ' + m.costPerKg + '/kg';
 
-       swatch.addEventListener('click', (function(matName) {
-         return function() {
-           self.voxelEngine.activeMaterial = matName;
-           sel.value = matName;
-           self._syncMaterialSwatch();
-         };
-       })(m.name));
+        swatch.addEventListener('click', (function(matName) {
+          return function() {
+            self.voxelEngine.activeMaterial = matName;
+            sel.value = matName;
+            self._syncMaterialSwatch();
+          };
+        })(m.name));
 
-       matGroup.appendChild(swatch);
-     }
+        matGroup.appendChild(swatch);
+      }
 
-     container.innerHTML = '';
-     container.appendChild(sel);
-     container.appendChild(matGroup);
-   }
+       // Clear container and append elements
+       container.textContent = '';
+       container.appendChild(sel);
+       container.appendChild(matGroup);
+    }
 
    _createSwatchColor(colorValue) {
      var div = document.createElement('div');
@@ -474,21 +531,35 @@ export class UI {
   // Modules tree
   _populateModules() { this._renderModuleTree(); }
 
-  _renderModuleTree() {
-    var container = document.getElementById('modules-tree');
-    container.innerHTML = '';
-    var tree = this.moduleSystem.getTree();
-    if (!tree) return;
-    this._renderModuleNode(container, tree, 0);
-  }
+   _renderModuleTree() {
+     var container = document.getElementById('modules-tree');
+     container.textContent = '';
+     var tree = this.moduleSystem.getTree();
+     if (!tree) return;
+     this._renderModuleNode(container, tree, 0);
+   }
 
   _renderModuleNode(parent, node, depth) {
     var self = this;
-    var row = document.createElement('div');
-    row.className = 'module-node' + (node.id === this.voxelEngine.activeModule ? ' selected' : '');
-    row.style.paddingLeft = (8 + depth * 16) + 'px';
-    row.innerHTML = '<span class="module-icon">' + (node.icon || '') + '</span> ' + node.name +
-      ' <small style="color: var(--text-dim); margin-left: auto;">(' + node.voxelCount + ')</small>';
+     var row = document.createElement('div');
+     row.className = 'module-node' + (node.id === this.voxelEngine.activeModule ? ' selected' : '');
+     row.style.paddingLeft = (8 + depth * 16) + 'px';
+     
+     // Create module icon span
+     const iconSpan = document.createElement('span');
+     iconSpan.className = 'module-icon';
+     iconSpan.textContent = node.icon || '';
+     row.appendChild(iconSpan);
+     
+     // Create module name text
+     const nameText = document.createTextNode(' ' + node.name);
+     row.appendChild(nameText);
+     
+     // Create voxel count small element
+     const voxelCountSmall = document.createElement('small');
+     voxelCountSmall.style.cssText = 'color: var(--text-dim); margin-left: auto;';
+     voxelCountSmall.textContent = '(' + node.voxelCount + ')';
+     row.appendChild(voxelCountSmall);
 
     row.addEventListener('click', function() {
       self.voxelEngine.activeModule = node.id;
@@ -506,42 +577,52 @@ export class UI {
     }
   }
 
-  // Properties Panel
-  _showVoxelProperties(voxel) {
-    var container = document.getElementById('properties-panel');
-    if (!voxel) {
-      container.innerHTML = '<p class="hint">Seleziona un voxel o un modulo</p>';
-      return;
-    }
+   // Properties Panel
+   _showVoxelProperties(voxel) {
+     var container = document.getElementById('properties-panel');
+     if (!voxel) {
+       container.textContent = '';
+       var hint = document.createElement('p');
+       hint.className = 'hint';
+       hint.textContent = 'Seleziona un voxel o un modulo';
+       container.appendChild(hint);
+       return;
+     }
 
-    var mat = this.materialDB.get(voxel.material);
-    var matInfo = '';
-    
-    // Dimension display — use real scale from voxel data
-    var sc = voxel.scale ? voxel.scale : [1,1,1];
-    var sx = Math.round(sc[0]*100)/100, sy = Math.round(sc[1]*100)/100, sz = Math.round(sc[2]*100)/100;
-    var vVol = Math.round(sx * sy * sz * 100)/100;
-    var dimsHtml = '<hr style="border-color: var(--border); margin: 8px 0;"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">Dimensioni (mm)</div>' +
-      '<div class="prop-row"><span class="prop-label">Posizione</span><span class="prop-value">' + voxel.x + ', ' + voxel.y + ', ' + voxel.z + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Scala voxel</span><span class="prop-value">' + sx.toFixed(1) + ' x ' + sy.toFixed(1) + ' x ' + sz.toFixed(1) + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Volume voxel</span><span class="prop-value">' + vVol.toFixed(1) + ' mm³</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Materiale</span><span class="prop-value">' + (mat ? mat.label : voxel.material) + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Densita</span><span class="prop-value">' + (mat ? mat.density : 'N/A') + ' kg/m3</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Massa voxel</span><span class="prop-value">' + this.physics.voxelMass(voxel).toFixed(4) + ' kg</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Peso</span><span class="prop-value">' + this.physics.voxelWeight(voxel).toFixed(4) + ' N</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Modulo</span><span class="prop-value">' + (voxel.module || 'Nessuno') + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Temperatura</span><span class="prop-value">' + ((voxel.temperature != null) ? voxel.temperature + ' K' : '300 K') + '</span></div>' +
-      '<div class="prop-row"><span class="prop-label">Danno</span><span class="prop-value">' + ((voxel.damage != null) ? (voxel.damage * 100).toFixed(1) + '%' : '0.0%') + '</span></div>';
-    if (mat) {
-      matInfo = '<div class="prop-row"><span class="prop-label">E (Young)</span><span class="prop-value">' + (mat.youngsModulus / 1e9).toFixed(1) + ' GPa</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Sigma max</span><span class="prop-value">' + (mat.tensileStrength / 1e6).toFixed(0) + ' MPa</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Lambda termica</span><span class="prop-value">' + mat.thermalConductivity + ' W/(m·K)</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Costo</span><span class="prop-value">EUR ' + mat.costPerKg + '/kg</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Riciclabile</span><span class="prop-value">' + (mat.recyclable ? 'Si' : 'No') + '</span></div>';
-    }
+     var mat = this.materialDB.get(voxel.material);
+     var matInfo = '';
+     
+     // Dimension display — use real scale from voxel data
+     var sc = voxel.scale ? voxel.scale : [1,1,1];
+     var sx = Math.round(sc[0]*100)/100, sy = Math.round(sc[1]*100)/100, sz = Math.round(sc[2]*100)/100;
+     var vVol = Math.round(sx * sy * sz * 100)/100;
+     var dimsHtml = '<hr style="border-color: var(--border); margin: 8px 0;"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">Dimensioni (mm)</div>' +
+       '<div class="prop-row"><span class="prop-label">Posizione</span><span class="prop-value">' + voxel.x + ', ' + voxel.y + ', ' + voxel.z + '</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Scala voxel</span><span class="prop-value">' + sx.toFixed(1) + ' x ' + sy.toFixed(1) + ' x ' + sz.toFixed(1) + '</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Volume voxel</span><span class="prop-value">' + vVol.toFixed(1) + ' mm³</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Materiale</span><span class="prop-value">' + (mat ? mat.label : voxel.material) + '</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Densita</span><span class="prop-value">' + (mat ? mat.density : 'N/A') + ' kg/m3</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Massa voxel</span><span class="prop-value">' + this.physics.voxelMass(voxel).toFixed(4) + ' kg</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Peso</span><span class="prop-value">' + this.physics.voxelWeight(voxel).toFixed(4) + ' N</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Modulo</span><span class="prop-value">' + (voxel.module || 'Nessuno') + '</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Temperatura</span><span class="prop-value">' + ((voxel.temperature != null) ? voxel.temperature + ' K' : '300 K') + '</span></div>' +
+       '<div class="prop-row"><span class="prop-label">Danno</span><span class="prop-value">' + ((voxel.damage != null) ? (voxel.damage * 100).toFixed(1) + '%' : '0.0%') + '</span></div>';
+     if (mat) {
+       matInfo = '<div class="prop-row"><span class="prop-label">E (Young)</span><span class="prop-value">' + (mat.youngsModulus / 1e9).toFixed(1) + ' GPa</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Sigma max</span><span class="prop-value">' + (mat.tensileStrength / 1e6).toFixed(0) + ' MPa</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Lambda termica</span><span class="prop-value">' + mat.thermalConductivity + ' W/(m·K)</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Costo</span><span class="prop-value">EUR ' + mat.costPerKg + '/kg</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Riciclabile</span><span class="prop-value">' + (mat.recyclable ? 'Si' : 'No') + '</span></div>';
+     }
 
-    container.innerHTML = dimsHtml + matInfo;
-  }
+     container.textContent = '';
+     // We need to parse the HTML string into elements. Since the string is complex, we'll use a temporary container.
+     var temp = document.createElement('div');
+     temp.innerHTML = dimsHtml + matInfo;
+     while (temp.firstChild) {
+       container.appendChild(temp.firstChild);
+     }
+   }
 
   _refreshProperties() {
     if (this.voxelEngine.selectedVoxel) {
@@ -559,11 +640,15 @@ export class UI {
     var physicsPanel = document.getElementById('physics-panel');
     var allVoxels = Array.from(this.voxelEngine.voxelsIterator());
 
-    if (allVoxels.length === 0) {
-      physicsPanel.innerHTML = '<p class="hint">Nessun voxel da simulare</p>';
-      this._notify('Nessun voxel da simulare', 'warn');
-      return;
-    }
+     if (allVoxels.length === 0) {
+       physicsPanel.textContent = '';
+       var hint = document.createElement('p');
+       hint.className = 'hint';
+       hint.textContent = 'Nessun voxel da simulare';
+       physicsPanel.appendChild(hint);
+       this._notify('Nessun voxel da simulare', 'warn');
+       return;
+     }
 
     var result = this.physics.calculateVehicle(this.voxelEngine);
     var html = '<div class="prop-row"><span class="prop-label">Voxel totali</span><span class="prop-value">' + result.voxelCount + '</span></div>' +
@@ -636,7 +721,12 @@ export class UI {
         '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">0.30</span></div>';
     } catch(e) { /* modulo non disponibile */ }
 
-    physicsPanel.innerHTML = html;
+     physicsPanel.textContent = '';
+     var temp = document.createElement('div');
+     temp.innerHTML = html;
+     while (temp.firstChild) {
+       physicsPanel.appendChild(temp.firstChild);
+     }
     this._notify('Simulazione completata', 'success');
     console.log('[%s] Simulazione completata: %d voxel, massa = %s kg',
       new Date().toLocaleTimeString(), result.voxelCount, result.totalMass.toFixed(4));
@@ -681,11 +771,19 @@ export class UI {
           self._refreshModules();
           self._refreshProperties();
           var physicsPanel = document.getElementById('physics-panel');
-          if (self.voxelEngine.getVoxelCount() > 0) {
-            physicsPanel.innerHTML = '<p class="hint">Clicca per calcolare</p>';
-          } else {
-            physicsPanel.innerHTML = '<p class="hint">Nessun voxel da simulare</p>';
-          }
+           if (self.voxelEngine.getVoxelCount() > 0) {
+             physicsPanel.textContent = '';
+             var hint = document.createElement('p');
+             hint.className = 'hint';
+             hint.textContent = 'Clicca per calcolare';
+             physicsPanel.appendChild(hint);
+           } else {
+             physicsPanel.textContent = '';
+             var hint = document.createElement('p');
+             hint.className = 'hint';
+             hint.textContent = 'Nessun voxel da simulare';
+             physicsPanel.appendChild(hint);
+           }
           self._notify('Progetto caricato con successo!', 'success');
         } catch (err) {
           self._notify('Errore nel caricamento: ' + err.message, 'error');
@@ -696,39 +794,71 @@ export class UI {
     input.click();
   }
 
-  // Modal confirmation helper (replaces native confirm)
-  _showConfirm(message, callback) {
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999;';
-    overlay.innerHTML = `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:320px;box-shadow:0 24px 64px rgba(0,0,0,.6);">
-        <p style="margin:0 0 18px;font-size:14px;color:var(--text);line-height:1.5;">${message}</p>
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button id="q-cancel" style="padding:8px 18px;background:var(--hover);color:var(--text);border:none;border-radius:6px;cursor:pointer;">Annulla</button>
-          <button id="q-ok" style="padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Conferma</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
+   // Modal confirmation helper (replaces native confirm)
+   _showConfirm(message, callback) {
+     const overlay = document.createElement('div');
+     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999;';
+     
+     const innerDiv = document.createElement('div');
+     innerDiv.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:320px;box-shadow:0 24px 64px rgba(0,0,0,.6);';
+     
+     const messageP = document.createElement('p');
+     messageP.style.cssText = 'margin:0 0 18px;font-size:14px;color:var(--text);line-height:1.5;';
+     messageP.textContent = message;
+     
+     const buttonDiv = document.createElement('div');
+     buttonDiv.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
+     
+     const cancelBtn = document.createElement('button');
+     cancelBtn.id = 'q-cancel';
+     cancelBtn.style.cssText = 'padding:8px 18px;background:var(--hover);color:var(--text);border:none;border-radius:6px;cursor:pointer;';
+     cancelBtn.textContent = 'Annulla';
+     
+     const okBtn = document.createElement('button');
+     okBtn.id = 'q-ok';
+     okBtn.style.cssText = 'padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;';
+     okBtn.textContent = 'Conferma';
+     
+     buttonDiv.appendChild(cancelBtn);
+     buttonDiv.appendChild(okBtn);
+     
+     innerDiv.appendChild(messageP);
+     innerDiv.appendChild(buttonDiv);
+     
+     overlay.appendChild(innerDiv);
+     document.body.appendChild(overlay);
+     
+     const close = () => overlay.remove();
+     const onCancel = () => { close(); overlay.removeEventListener('click', onBackdrop); };
+     const onBackdrop = (e) => { if (e.target === overlay) onCancel(); };
+     
+     cancelBtn.addEventListener('click', onCancel, { once: true });
+     okBtn.addEventListener('click', () => { close(); callback(); }, { once: true });
+     overlay.addEventListener('click', onBackdrop);
+   }
 
-    const close = () => overlay.remove();
-    const onCancel = () => { close(); overlay.removeEventListener('click', onBackdrop); };
-    const onBackdrop = (e) => { if (e.target === overlay) onCancel(); };
-
-    document.getElementById('q-cancel').addEventListener('click', onCancel, { once: true });
-    document.getElementById('q-ok').addEventListener('click', () => { close(); callback(); }, { once: true });
-    overlay.addEventListener('click', onBackdrop);
-  }
-
-  // Clear confirmation
-  _confirmClear() {
-    this._showConfirm('Eliminare tutti i voxel?', () => {
-      this.voxelEngine.clearAll();
-      document.getElementById('properties-panel').innerHTML = '<p class="hint">Seleziona un voxel o un modulo</p>';
-      document.getElementById('physics-panel').innerHTML = '<p class="hint">Clicca per calcolare</p>';
-      this._renderModuleTree();
-      this._notify('Tutto cancellato', 'info');
-    });
-  }
+   // Clear confirmation
+   _confirmClear() {
+     this._showConfirm('Eliminare tutti i voxel?', () => {
+       this.voxelEngine.clearAll();
+       var propertiesPanel = document.getElementById('properties-panel');
+       propertiesPanel.textContent = '';
+       var hint = document.createElement('p');
+       hint.className = 'hint';
+       hint.textContent = 'Seleziona un voxel o un modulo';
+       propertiesPanel.appendChild(hint);
+       
+       var physicsPanel = document.getElementById('physics-panel');
+       physicsPanel.textContent = '';
+       var hint2 = document.createElement('p');
+       hint2.className = 'hint';
+       hint2.textContent = 'Clicca per calcolare';
+       physicsPanel.appendChild(hint2);
+       
+       this._renderModuleTree();
+       this._notify('Tutto cancellato', 'info');
+     });
+   }
 
   // ── Export Mesh ───────────────────────────────────────────────
   _openExportModal() {
@@ -736,30 +866,92 @@ export class UI {
     const allVoxels = Array.from(this.voxelEngine.voxelsIterator());
     if (allVoxels.length === 0) { this._notify('Nessun voxel da esportare', 'warn'); return; }
 
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999;';
-    overlay.innerHTML = `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;min-width:360px;box-shadow:0 24px 64px rgba(0,0,0,.6);">
-        <h2 style="margin:0 0 18px;font-size:16px;">📦 Esporta Mesh</h2>
-        <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;">Formato</label>
-        <select id="ex-fmt" style="width:100%;padding:7px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;">
-          <option value="stl-ascii">STL ASCII (.stl)</option>
-          <option value="stl-binary">STL Binario (.stl)</option>
-          <option value="obj">OBJ Wavefront (.obj)</option>
-        </select>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px;font-size:12px;">
-          <input type="checkbox" id="ex-smooth"> Smooth surface (Marching Cubes)
-        </label>
-        <div style="padding:10px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--text-dim);margin-bottom:18px;">
-          Voxel: <strong style="color:var(--accent);">${allVoxels.length}</strong>
-          <div id="ex-info" style="margin-top:4px;"></div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button id="ex-cancel" style="padding:8px 18px;background:var(--hover);color:var(--text);border:none;border-radius:6px;cursor:pointer;">Annulla</button>
-          <button id="ex-ok" style="padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">⬇ Scarica</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
+     const overlay = document.createElement('div');
+     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999;';
+     
+     const innerDiv = document.createElement('div');
+     innerDiv.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;min-width:360px;box-shadow:0 24px 64px rgba(0,0,0,.6);';
+     
+     const title = document.createElement('h2');
+     title.style.cssText = 'margin:0 0 18px;font-size:16px;';
+     title.textContent = '📦 Esporta Mesh';
+     
+     const formatLabel = document.createElement('label');
+     formatLabel.style.cssText = 'font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;';
+     formatLabel.textContent = 'Formato';
+     
+     const formatSelect = document.createElement('select');
+     formatSelect.id = 'ex-fmt';
+     formatSelect.style.cssText = 'width:100%;padding:7px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;';
+     
+     const option1 = document.createElement('option');
+     option1.value = 'stl-ascii';
+     option1.textContent = 'STL ASCII (.stl)';
+     const option2 = document.createElement('option');
+     option2.value = 'stl-binary';
+     option2.textContent = 'STL Binario (.stl)';
+     const option3 = document.createElement('option');
+     option3.value = 'obj';
+     option3.textContent = 'OBJ Wavefront (.obj)';
+     
+     formatSelect.appendChild(option1);
+     formatSelect.appendChild(option2);
+     formatSelect.appendChild(option3);
+     
+     const smoothLabel = document.createElement('label');
+     smoothLabel.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px;font-size:12px;';
+     
+     const smoothCheckbox = document.createElement('input');
+     smoothCheckbox.type = 'checkbox';
+     smoothCheckbox.id = 'ex-smooth';
+     
+     const smoothSpan = document.createElement('span');
+     smoothSpan.textContent = ' Smooth surface (Marching Cubes)';
+     
+     smoothLabel.appendChild(smoothCheckbox);
+     smoothLabel.appendChild(smoothSpan);
+     
+     const infoDiv = document.createElement('div');
+     infoDiv.style.cssText = 'padding:10px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--text-dim);margin-bottom:18px;';
+     
+     const voxelStrong = document.createElement('strong');
+     voxelStrong.style.cssText = 'color:var(--accent);';
+     voxelStrong.textContent = allVoxels.length;
+     
+     const voxelText = document.createTextNode('Voxel: ');
+     infoDiv.appendChild(voxelText);
+     infoDiv.appendChild(voxelStrong);
+     
+     const exInfoDiv = document.createElement('div');
+     exInfoDiv.id = 'ex-info';
+     exInfoDiv.style.cssText = 'margin-top:4px;';
+     infoDiv.appendChild(exInfoDiv);
+     
+     const buttonDiv = document.createElement('div');
+     buttonDiv.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
+     
+     const cancelBtn = document.createElement('button');
+     cancelBtn.id = 'ex-cancel';
+     cancelBtn.style.cssText = 'padding:8px 18px;background:var(--hover);color:var(--text);border:none;border-radius:6px;cursor:pointer;';
+     cancelBtn.textContent = 'Annulla';
+     
+     const okBtn = document.createElement('button');
+     okBtn.id = 'ex-ok';
+     okBtn.style.cssText = 'padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;';
+     okBtn.textContent = '⬇ Scarica';
+     
+     buttonDiv.appendChild(cancelBtn);
+     buttonDiv.appendChild(okBtn);
+     
+     innerDiv.appendChild(title);
+     innerDiv.appendChild(formatLabel);
+     innerDiv.appendChild(formatSelect);
+     innerDiv.appendChild(smoothLabel);
+     innerDiv.appendChild(infoDiv);
+     innerDiv.appendChild(buttonDiv);
+     
+     overlay.appendChild(innerDiv);
+     document.body.appendChild(overlay);
 
     const upd = () => {
       const s = document.getElementById('ex-smooth').checked;
@@ -849,23 +1041,143 @@ export class UI {
     panel.className = 'app-notification notification-success';
     panel.style.zIndex = '10000';
     panel.style.maxWidth = '400px';
-    panel.innerHTML = `
-      <div style="padding: 16px;">
-        <h3 style="margin:0 0 12px;">Risultati Importazione</h3>
-        <div class="prop-row"><span class="prop-label">Vertici</span><span class="prop-value">${analysis.vertexCount}</span></div>
-        <div class="prop-row"><span class="prop-label">Centroide</span><span class="prop-value">(${analysis.centroid.x}, ${analysis.centroid.y}, ${analysis.centroid.z}) mm</span></div>
-        <div class="prop-row"><span class="prop-label">Raggio medio</span><span class="prop-value">${analysis.meanRadiusMm} mm</span></div>
-        <div class="prop-row"><span class="prop-label">Ovalità</span><span class="prop-value">${analysis.ovalMm} mm</span></div>
-        <div class="prop-row"><span class="prop-label">Deviazione max</span><span class="prop-value">${analysis.maxDeviationMm} mm</span></div>
-        <div class="prop-row"><span class="prop-label">Circolare</span><span class="prop-value">${analysis.isCircular ? 'Si' : 'No'}</span></div>
-        <hr style="border-color:rgba(255,255,255,0.1); margin:8px 0;">
-        <div class="prop-row"><span class="prop-label">Scala</span><span class="prop-value">${(importInfo.scaleFactor * 100).toFixed(1)}%</span></div>
-        <div class="prop-row"><span class="prop-label">Dim. Originali</span><span class="prop-value">${importInfo.originalSize.x.toFixed(1)} × ${importInfo.originalSize.y.toFixed(1)} × ${importInfo.originalSize.z.toFixed(1)}</span></div>
-        <div style="margin-top:12px; display:flex; gap:8px;">
-          <button id="import-close-btn" onclick="this.closest(&quot;.app-notification&quot;).remove()" style="flex:1;padding:6px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">Chiudi</button>
-        </div>
-      </div>
-    `;
+     var panel = document.createElement('div');
+     panel.className = 'app-notification notification-success';
+     panel.style.zIndex = '10000';
+     panel.style.maxWidth = '400px';
+     
+     const innerDiv = document.createElement('div');
+     innerDiv.style.padding = '16px';
+     
+     const h3 = document.createElement('h3');
+     h3.style.margin = '0 0 12px';
+     h3.textContent = 'Risultati Importazione';
+     
+     const vertexRow = document.createElement('div');
+     vertexRow.className = 'prop-row';
+     const vertexLabel = document.createElement('span');
+     vertexLabel.className = 'prop-label';
+     vertexLabel.textContent = 'Vertici';
+     const vertexValue = document.createElement('span');
+     vertexValue.className = 'prop-value';
+     vertexValue.textContent = analysis.vertexCount;
+     vertexRow.appendChild(vertexLabel);
+     vertexRow.appendChild(vertexValue);
+     
+     const centroidRow = document.createElement('div');
+     centroidRow.className = 'prop-row';
+     const centroidLabel = document.createElement('span');
+     centroidLabel.className = 'prop-label';
+     centroidLabel.textContent = 'Centroide';
+     const centroidValue = document.createElement('span');
+     centroidValue.className = 'prop-value';
+     centroidValue.textContent = `(${analysis.centroid.x}, ${analysis.centroid.y}, ${analysis.centroid.z}) mm`;
+     centroidRow.appendChild(centroidLabel);
+     centroidRow.appendChild(centroidValue);
+     
+     const meanRadiusRow = document.createElement('div');
+     meanRadiusRow.className = 'prop-row';
+     const meanRadiusLabel = document.createElement('span');
+     meanRadiusLabel.className = 'prop-label';
+     meanRadiusLabel.textContent = 'Raggio medio';
+     const meanRadiusValue = document.createElement('span');
+     meanRadiusValue.className = 'prop-value';
+     meanRadiusValue.textContent = `${analysis.meanRadiusMm} mm`;
+     meanRadiusRow.appendChild(meanRadiusLabel);
+     meanRadiusRow.appendChild(meanRadiusValue);
+     
+     const ovalityRow = document.createElement('div');
+     ovalityRow.className = 'prop-row';
+     const ovalityLabel = document.createElement('span');
+     ovalityLabel.className = 'prop-label';
+     ovalityLabel.textContent = 'Ovalità';
+     const ovalityValue = document.createElement('span');
+     ovalityValue.className = 'prop-value';
+     ovalityValue.textContent = `${analysis.ovalMm} mm`;
+     ovalityRow.appendChild(ovalityLabel);
+     ovalityRow.appendChild(ovalityValue);
+     
+     const maxDeviationRow = document.createElement('div');
+     maxDeviationRow.className = 'prop-row';
+     const maxDeviationLabel = document.createElement('span');
+     maxDeviationLabel.className = 'prop-label';
+     maxDeviationLabel.textContent = 'Deviazione max';
+     const maxDeviationValue = document.createElement('span');
+     maxDeviationValue.className = 'prop-value';
+     maxDeviationValue.textContent = `${analysis.maxDeviationMm} mm`;
+     maxDeviationRow.appendChild(maxDeviationLabel);
+     maxDeviationRow.appendChild(maxDeviationValue);
+     
+     const circularRow = document.createElement('div');
+     circularRow.className = 'prop-row';
+     const circularLabel = document.createElement('span');
+     circularLabel.className = 'prop-label';
+     circularLabel.textContent = 'Circolare';
+     const circularValue = document.createElement('span');
+     circularValue.className = 'prop-value';
+     circularValue.textContent = analysis.isCircular ? 'Si' : 'No';
+     circularRow.appendChild(circularLabel);
+     circularRow.appendChild(circularValue);
+     
+     const hr = document.createElement('hr');
+     hr.style.borderColor = 'rgba(255,255,255,0.1)';
+     hr.style.margin = '8px 0';
+     
+     const scaleRow = document.createElement('div');
+     scaleRow.className = 'prop-row';
+     const scaleLabel = document.createElement('span');
+     scaleLabel.className = 'prop-label';
+     scaleLabel.textContent = 'Scala';
+     const scaleValue = document.createElement('span');
+     scaleValue.className = 'prop-value';
+     scaleValue.textContent = `${(importInfo.scaleFactor * 100).toFixed(1)}%`;
+     scaleRow.appendChild(scaleLabel);
+     scaleRow.appendChild(scaleValue);
+     
+     const dimRow = document.createElement('div');
+     dimRow.className = 'prop-row';
+     const dimLabel = document.createElement('span');
+     dimLabel.className = 'prop-label';
+     dimLabel.textContent = 'Dim. Originali';
+     const dimValue = document.createElement('span');
+     dimValue.className = 'prop-value';
+     dimValue.textContent = `${importInfo.originalSize.x.toFixed(1)} × ${importInfo.originalSize.y.toFixed(1)} × ${importInfo.originalSize.z.toFixed(1)}`;
+     dimRow.appendChild(dimLabel);
+     dimRow.appendChild(dimValue);
+     
+     const btnDiv = document.createElement('div');
+     btnDiv.style.marginTop = '12px';
+     btnDiv.style.display = 'flex';
+     btnDiv.style.gap = '8px';
+     
+     const closeBtn = document.createElement('button');
+     closeBtn.id = 'import-close-btn';
+     closeBtn.onclick = function() { this.closest('.app-notification').remove(); };
+     closeBtn.style.flex = '1';
+     closeBtn.style.padding = '6px';
+     closeBtn.style.background = 'var(--accent)';
+     closeBtn.style.color = '#fff';
+     closeBtn.style.border = 'none';
+     closeBtn.style.borderRadius = '4px';
+     closeBtn.style.cursor = 'pointer';
+     closeBtn.textContent = 'Chiudi';
+     
+     btnDiv.appendChild(closeBtn);
+     
+     innerDiv.appendChild(h3);
+     innerDiv.appendChild(vertexRow);
+     innerDiv.appendChild(centroidRow);
+     innerDiv.appendChild(meanRadiusRow);
+     innerDiv.appendChild(ovalityRow);
+     innerDiv.appendChild(maxDeviationRow);
+     innerDiv.appendChild(circularRow);
+     innerDiv.appendChild(hr);
+     innerDiv.appendChild(scaleRow);
+     innerDiv.appendChild(dimRow);
+     innerDiv.appendChild(btnDiv);
+     
+     panel.appendChild(innerDiv);
+     document.body.appendChild(panel);
     document.body.appendChild(panel);
     
     // Auto-remove after 15 seconds
@@ -964,8 +1276,48 @@ export class UI {
     }
   }
 
-  // Random color
-  _randomColor() {
+// ── AI Import Panel ───────────────────────────────────────────────
+   async _setupAIImportPanel() {
+     const self = this;
+     const imageInput = document.getElementById('ai-image-input');
+     const processBtn = document.getElementById('btn-ai-process');
+     const statusEl = document.getElementById('ai-status');
+
+     if (!imageInput || !processBtn) return;
+
+     processBtn.addEventListener('click', async function() {
+       const file = imageInput.files && imageInput.files[0];
+       if (!file) {
+         self._notify('Seleziona un\'immagine prima', 'warn');
+         return;
+       }
+
+       statusEl.textContent = 'Elaborazione in corso...';
+       try {
+         const { DepthEstimation } = await import('./core/depth-estimation.js');
+         const depthEstimator = new DepthEstimation(self.voxelEngine);
+         const voxels = await depthEstimator.buildFromImage(file);
+
+         let added = 0;
+         for (const v of voxels) {
+           self.voxelEngine.addVoxel(v, v.material || 'steel', self.voxelEngine.activeModule);
+           added++;
+         }
+
+         self.voxelEngine._onVoxelChanged();
+         self.voxelEngine.setTool('remove');
+         self.voxelEngine.resetCamera();
+         statusEl.textContent = `Generati ${voxels.length} voxel`;
+         self._notify(`AI Import completato: ${added} voxel da ${file.name}`, 'success');
+       } catch (err) {
+         statusEl.textContent = '';
+         self._notify('Errore AI Import: ' + err.message, 'error');
+       }
+     });
+   }
+
+   // Random color
+   _randomColor() {
     var colors = [0xe94560, 0x00d2ff, 0x4caf50, 0xff9800, 0x9c27b0, 0x00bcd4, 0xff5722, 0x8bc34a, 0x3f51b5, 0xf44336];
     return colors[Math.floor(Math.random() * colors.length)];
   }
@@ -1286,3 +1638,4 @@ export class UI {
 }
 
 export default UI;
+

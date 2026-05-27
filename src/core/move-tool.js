@@ -254,18 +254,32 @@ export class MoveTool {
 
   // ── Live label ──────────────────────────────────────────────────────────
 
-  _updateLabel(gridPos) {
-    if (!this.liveLabel) return;
-    const old = this.selectedVoxel;
-    const dx  = old ? (gridPos.x - old.x) : 0;
-    const dy  = old ? (gridPos.y - old.y) : 0;
-    const dz  = old ? (gridPos.z - old.z) : 0;
-    const sign = (n) => n >= 0 ? '+' : '';
-    this.liveLabel.innerHTML =
-      '<div style="font-weight:bold;margin-bottom:8px;">Move</div>' +
-      `<div>Posizione: (${gridPos.x}, ${gridPos.y}, ${gridPos.z})</div>` +
-      `<div>ΔX: ${sign(dx)}${dx}  ΔY: ${sign(dy)}${dy}  ΔZ: ${sign(dz)}${dz}</div>`;
-  }
+   _updateLabel(gridPos) {
+     if (!this.liveLabel) return;
+     const old = this.selectedVoxel;
+     const dx  = old ? (gridPos.x - old.x) : 0;
+     const dy  = old ? (gridPos.y - old.y) : 0;
+     const dz  = old ? (gridPos.z - old.z) : 0;
+     const sign = (n) => n >= 0 ? '+' : '';
+     
+     // Clear liveLabel
+     this.liveLabel.textContent = '';
+     
+     // Create move content
+     const titleDiv = document.createElement('div');
+     titleDiv.style.fontWeight = 'bold';
+     titleDiv.style.marginBottom = '8px';
+     titleDiv.textContent = 'Move';
+     this.liveLabel.appendChild(titleDiv);
+     
+     const positionDiv = document.createElement('div');
+     positionDiv.textContent = `Posizione: (${gridPos.x}, ${gridPos.y}, ${gridPos.z})`;
+     this.liveLabel.appendChild(positionDiv);
+     
+     const deltaDiv = document.createElement('div');
+     deltaDiv.textContent = `ΔX: ${sign(dx)}${dx}  ΔY: ${sign(dy)}${dy}  ΔZ: ${sign(dz)}${dz}`;
+     this.liveLabel.appendChild(deltaDiv);
+   }
 
   // ── Ghost preview ───────────────────────────────────────────────────────
 

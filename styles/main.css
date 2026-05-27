@@ -65,9 +65,9 @@ body {
 
 #app {
   display: grid;
-  grid-template-rows: 48px 1fr;
+  grid-template-rows: auto 1fr;
   grid-template-columns: 260px 1fr;
-  height: 100vh;
+  min-height: 100vh;
   background: var(--border);
   gap: 0;
   transition: grid-template-columns 0.3s ease;
@@ -276,8 +276,8 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   TOOLBAR
-   -------------------------------------------------------------------------- */
+    TOOLBAR
+    -------------------------------------------------------------------------- */
 
 #toolbar {
   grid-column: 1 / -1;
@@ -285,14 +285,43 @@ body {
   display: flex;
   align-items: center;
   gap: var(--gutter-sm);
-  padding: 0 var(--gutter-md);
+  padding: 4px var(--gutter-md);
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
-  min-width: 0;                 /* allow flex children to shrink */
-  overflow-x: auto;             /* scroll buttons on narrow screen */
-  scrollbar-width: none;        /* Firefox */
+  min-width: 0;
+  flex-wrap: wrap;
+  height: auto;
 }
+
 #toolbar::-webkit-scrollbar { display: none; } /* Chrome */
+
+/* Medium screens - wrap toolbar buttons */
+@media (max-width: 1024px) {
+  .tools,
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .tool,
+  .actions button {
+    flex: 1 0 auto;
+    min-width: 40px;
+    text-align: center;
+    padding: 4px 6px;
+    font-size: 9px;
+  }
+
+  .tool span,
+  .actions button span {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  /* Hide version badge on medium screens */
+  .version {
+    display: none;
+  }
+}
 
 .brand {
   display: flex;
@@ -330,6 +359,7 @@ body {
   gap: 2px;
   align-items: center;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .tool {
@@ -411,12 +441,9 @@ body {
   margin-left: auto;
   display: flex;
   gap: var(--gutter-xs);
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   flex-shrink: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
-.actions::-webkit-scrollbar { display: none; }
 
 .actions button {
   padding: 4px 9px;

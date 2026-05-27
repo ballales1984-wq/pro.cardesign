@@ -10,14 +10,19 @@ export class RuleEditorUI {
     this.selectedRule = null;
   }
 
-  /**
-   * Initialize the rule editor UI
-   */
-  init() {
-    this.container.innerHTML = this._getTemplate();
-    this._attachEventListeners();
-    this._renderRuleList();
-  }
+   /**
+    * Initialize the rule editor UI
+    */
+   init() {
+     this.container.textContent = '';
+     const temp = document.createElement('div');
+     temp.innerHTML = this._getTemplate();
+     while (temp.firstChild) {
+       this.container.appendChild(temp.firstChild);
+     }
+     this._attachEventListeners();
+     this._renderRuleList();
+   }
 
   _getTemplate() {
     return `
@@ -63,17 +68,41 @@ export class RuleEditorUI {
     });
   }
 
-  _renderRuleList() {
-    const listEl = this.container.querySelector('#rule-list');
-    listEl.innerHTML = this.rules.map(rule => `
-      <li class="rule-item" data-rule-id="${rule.id}">
-        <span class="rule-name">${rule.name}</span>
-        <span class="rule-type">${rule.type}</span>
-        <button class="btn-small edit-rule" data-rule-id="${rule.id}">Edit</button>
-        <button class="btn-small delete-rule" data-rule-id="${rule.id}">Del</button>
-      </li>
-    `).join('');
-  }
+   _renderRuleList() {
+     const listEl = this.container.querySelector('#rule-list');
+     listEl.textContent = '';
+     const fragment = document.createDocumentFragment();
+     this.rules.forEach(rule => {
+       const li = document.createElement('li');
+       li.className = 'rule-item';
+       li.dataset.ruleId = rule.id;
+       
+       const ruleNameSpan = document.createElement('span');
+       ruleNameSpan.className = 'rule-name';
+       ruleNameSpan.textContent = rule.name;
+       li.appendChild(ruleNameSpan);
+       
+       const ruleTypeSpan = document.createElement('span');
+       ruleTypeSpan.className = 'rule-type';
+       ruleTypeSpan.textContent = rule.type;
+       li.appendChild(ruleTypeSpan);
+       
+       const editBtn = document.createElement('button');
+       editBtn.className = 'btn-small edit-rule';
+       editBtn.dataset.ruleId = rule.id;
+       editBtn.textContent = 'Edit';
+       li.appendChild(editBtn);
+       
+       const delBtn = document.createElement('button');
+       delBtn.className = 'btn-small delete-rule';
+       delBtn.dataset.ruleId = rule.id;
+       delBtn.textContent = 'Del';
+       li.appendChild(delBtn);
+       
+       fragment.appendChild(li);
+     });
+     listEl.appendChild(fragment);
+   }
 
   _createNewRule() {
     const ruleName = prompt('Rule name:', 'new_rule');
