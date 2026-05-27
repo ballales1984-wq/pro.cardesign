@@ -2688,26 +2688,58 @@ runTest('voxelToMesh MC path (default)', () => {
       assert.ok(result.attributes.position);
       assert.strictEqual(result.attributes.position.count, 3);
     });
-    runTest('STLImporter.meshToVoxels returns non-empty voxel list', () => {
-      const importer  = new STLImporter(null, null, null);
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(
-        [0,0,0, 1,0,0, 0,0,1,  1,1,0, 1,0,1, 0,1,1], 3
-      ));
-      geo.computeBoundingBox = function() {
-        this.boundingBox = new THREE.Box3({x:0,y:0,z:0}, {x:1,y:1,z:1});
-      };
-      geo.computeBoundingSphere = function() {};
-      const voxels = importer.meshToVoxels(geo, 1.0);
-      assert.ok(Array.isArray(voxels),                'meshToVoxels must return an array');
-      assert.ok(voxels.length > 0,                    'voxellist must not be empty');
-      assert.ok(voxels[0].x !== undefined,            'voxel entry must have an x field');
-      assert.ok(voxels[0].y !== undefined,            'voxel entry must have a y field');
-      assert.ok(voxels[0].z !== undefined,            'voxel entry must have a z field');
-      assert.ok(voxels[0].material !== undefined,     'voxel entry must have a material field');
-      assert.ok(Array.isArray(voxels[0].scale),       'voxel entry must have a scale array');
-    });
-  } catch(e) { failed++; console.log('  [FAIL] STLImporter import: ' + e.message); }
+runTest('STLImporter.meshToVoxels returns non-empty voxel list', () => {
+       const importer  = new STLImporter(null, null, null);
+       const geo = new THREE.BufferGeometry();
+       geo.setAttribute('position', new THREE.Float32BufferAttribute(
+         [0,0,0, 1,0,0, 0,0,1,  1,1,0, 1,0,1, 0,1,1], 3
+       ));
+       geo.computeBoundingBox = function() {
+         this.boundingBox = new THREE.Box3({x:0,y:0,z:0}, {x:1,y:1,z:1});
+       };
+       geo.computeBoundingSphere = function() {};
+       const voxels = importer.meshToVoxels(geo, 1.0);
+       assert.ok(Array.isArray(voxels),                'meshToVoxels must return an array');
+       assert.ok(voxels.length > 0,                    'voxellist must not be empty');
+       assert.ok(voxels[0].x !== undefined,            'voxel entry must have an x field');
+       assert.ok(voxels[0].y !== undefined,            'voxel entry must have a y field');
+       assert.ok(voxels[0].z !== undefined,            'voxel entry must have a z field');
+       assert.ok(voxels[0].material !== undefined,     'voxel entry must have a material field');
+       assert.ok(Array.isArray(voxels[0].scale),       'voxel entry must have a scale array');
+     });
+
+    runTest('STLImporter.analyzeQuality returns warnings', () => {
+       const importer = new STLImporter(null, null, null);
+       const geo = new THREE.BufferGeometry();
+       geo.setAttribute('position', new THREE.Float32BufferAttribute(
+         [0,0,0, 100,0,0, 0,100,0, 100,100,0, 0,0,100], 3
+       ));
+       geo.computeBoundingBox = function() {
+         this.boundingBox = new THREE.Box3({x:0,y:0,z:0}, {x:100,y:100,z:100});
+       };
+       geo.computeBoundingSphere = function() {
+         this.boundingSphere = { radius: 100 };
+       };
+       const { analysis, warnings } = importer.analyzeQuality(geo, 100);
+       assert.ok(analysis);
+       assert.ok(Array.isArray(warnings));
+       assert.ok(analysis.vertexCount > 0);
+     });
+
+    runTest('STLImporter.analyzeQuality detects manifold issues', () => {
+       const importer = new STLImporter(null, null, null);
+       const geo = new THREE.BufferGeometry();
+       geo.setAttribute('position', new THREE.Float32BufferAttribute(
+         [0,0,0, 1,0,0, 0,1,0], 3
+       ));
+       geo.computeBoundingBox = function() {
+         this.boundingBox = new THREE.Box3({x:0,y:0,z:0}, {x:1,y:1,z:0});
+       };
+       geo.computeBoundingSphere = function() {};
+       const { warnings } = importer.analyzeQuality(geo);
+       assert.ok(Array.isArray(warnings));
+     });
+   } catch(e) { failed++; console.log('  [FAIL] STLImporter import: ' + e.message); }
 
   // ── 30. QualityAnalyzer ──────────────────────────────────────────────────────
   try {

@@ -1,7 +1,7 @@
 {
   "name": "pro.cardesign-desktop",
   "version": "1.0.0",
-  "description": "A desktop voxel CAD application for the pro.cardesign design system",
+  "description": "Hybrid 3D voxel CAD for vehicle design with real-world physics (mm scale, material properties, stress analysis)",
   "main": "electron-main.js",
   "scripts": {
     "dev": "npx vite --port 5176 --host 0.0.0.0",

@@ -1,12 +1,19 @@
-# Pro.Cardesign - Voxel CAD for Vehicle Design
+# Pro.Cardesign - VoxelCAD ⚡
 
-> Voxel design system with real measurements (mm) for bicycle frames, lightweight vehicles, and volumetric structures.
+> **Hybrid 3D modeling software** for vehicle design using voxel-based engineering with real-world physics (mm scale, material properties, stress analysis).
 
-## Current Status
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ballales1984-wq/pro.cardesign)
+[![Tests](https://img.shields.io/badge/tests-47/47%20passing-success)](https://github.com/ballales1984-wq/pro.cardesign)
+[![Version](https://img.shields.io/badge/v0.7.0-blue)](https://github.com/ballales1984-wq/pro.cardesign)
 
-**v0.7.0** — Sculpt Tool + Vertex Edit Tool + Sculpt Tool UI Integration. Build: `npm run build` → **31 modules, ~702 KB**.
+## 🎯 Quick Start
 
-## Features
+```bash
+npm install && npm run dev
+# → http://localhost:5176
+```
+
+## ✨ Features
 
 - [x] **Brick System** — Bricks with real dimensions in mm (e.g. 200×20×20mm bars)
 - [x] **Scaling Tool** — Click & drag on faces to resize with live dimensions (pixel-sensitive)
@@ -17,42 +24,27 @@
 - [x] **STL/OBJ Import + Quality Check** — Import scanned parts, analyze ovality/deformations with proper normal handling
 - [ ] Aerodynamics (in development)
 
-## Project Structure
+## 📊 Architecture
 
 ```
-pro.cardesign/
-├── core/                    # Python core
-│   ├── brick.py            # Brick dataclass (mm, volume, overlap)
-│   ├── component.py        # ComponentDefinition/Instance/Library
-│   ├── __init__.py
-│   └── bike_demo.py        # Bike frame demo
-├── src/                     # JavaScript frontend (ES modules)
-│   ├── voxel-engine.js     # Core rendering: InstancedMesh, raycasting
-│   ├── material-system.js  # Database of 8 materials
-│   ├── module-system.js    # Functional module hierarchy
-│   ├── physics-calc.js     # Mass, COM, inertia
-│   ├── mesh-exporter.js    # OBJ + STL export
-│   ├── ui.js               # Toolbar, panels, DOM events
-│   ├── main.js             # Entry point Three.js
-│   └── core/               # Additional modules
-│       ├── brick-system.js     # Brick frontend with SCALE=1.0
-│       ├── component-library.js # UI component library
-│       ├── scaling-tool.js     # Interactive drag-to-scale tool
-│       ├── stl-import.js       # STL parser + QualityAnalyzer
-│       └── vertex-edit-tool.js # Vertex editing tool for precise mesh manipulation
-├── voxel_editor.py         # Legacy Python voxel engine (analysis)
-├── physics_engine.py       # Stress/thermal analysis Python
-├── cli.py                  # Minimal CLI for testing
-├── tests/
-│   ├── test_coverage.py    # 43 Python tests
-│   ├── test_coverage.js    # 4 JS tests
-│   └── COVERAGE_REPORT.md  # Coverage report
-├── data/                   # Saved projects, custom components
-├── dist/                   # Production build
-├── index.html              # Main UI
-├── requirements.txt        # Python dependencies
-├── package.json            # Node.js dependencies
-└── README.md
+src/ - JavaScript (Three.js)
+├── main.js                    # Entry point
+├── voxel-engine.js           # Core engine (InstancedMesh, raycasting)
+├── material-system.js        # 8 materials with physical properties
+├── module-system.js          # Functional module hierarchy
+├── physics-calc.js           # Mass, COM, inertia calculations
+├── mesh-exporter.js          # OBJ, STL export
+├── ui.js                     # Toolbar, panels, DOM events
+└── core/
+    ├── brick-system.js     # Brick frontend
+    ├── component-library.js # Parametric components
+    ├── scaling-tool.js     # Drag-to-scale tool
+    ├── stl-import.js       # STL parser + QualityAnalyzer
+    └── vertex-edit-tool.js # Vertex editing
+
+core/ - Python
+├── brick.py          # Brick dataclass (mm, volume, overlap)
+└── component.py      # ComponentDefinition/Instance/Library
 ```
 
 ## Installation

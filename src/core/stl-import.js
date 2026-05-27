@@ -542,6 +542,30 @@ export class STLImporter {
       return { x, y, z, material: 'steel', scale: [1, 1, 1] };
     });
   }
+
+  /**
+   * Analyze mesh quality and return warnings for UI display
+   */
+  analyzeQuality(geometry, expectedDiameterMm = 600) {
+    const analyzer = new QualityAnalyzer();
+    const analysis = analyzer.analyzeGeometry(geometry, expectedDiameterMm);
+
+    const warnings = [];
+    if (analysis.deformationScore > 10) {
+      warnings.push(`Deformation detected: ${analysis.deformationScore.toFixed(1)}mm deviation`);
+    }
+    if (!analysis.isCircular && analysis.ovalMm > 5) {
+      warnings.push(`Ovality: ${analysis.ovalMm}mm difference from circular`);
+    }
+    if (analysis.meanDeviationMm > 2) {
+      warnings.push(`Mean deviation high: ${analysis.meanDeviationMm}mm`);
+    }
+    if (Math.abs(analysis.eulerCharacteristic) > 2) {
+      warnings.push(`Non-manifold geometry detected (χ=${analysis.eulerCharacteristic})`);
+    }
+
+    return { analysis, warnings };
+  }
 }
 
 /**

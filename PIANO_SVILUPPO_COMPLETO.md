@@ -536,6 +536,7 @@ FASE 8 ✅ — Base completata
 - [x] Fase 8: VideoKeyframeExtraction integrato
 - [x] Test aerodinamica oggetti complessi
 - [x] Test FEM stress analysis strutture complesse
+- [x] STL import deformation warnings (QualityAnalyzer integrato)
 
 ### Prossimi step
 
