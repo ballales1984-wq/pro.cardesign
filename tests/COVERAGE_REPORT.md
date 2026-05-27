@@ -104,7 +104,8 @@ core/test_brick.py      34     34     0%  (test itself)
 | 26 | GeometryDecimator | 4 | ✅ |
 | 27 | MeshoptDecimator | 4 | ✅ |
 | 28 | BooleanOperations | 8 | ✅ |
-| **Total** | | **136** | **✅** |
+| 29 | Voxel Local Properties | 2 | ✅ |
+| **Total** | | **139** | **✅** |
 
 ### How to run
 ```bash
@@ -119,7 +120,7 @@ python -m pytest tests/test_coverage.py -v   # 51 tests
 ### ✅ Fully Tested
 - [x] `core/brick.py` — Creator, dimensions, overlap, center, volume (100%)
 - [x] `core/__init__.py` — Imports (100%)
-- [x] MaterialSystem JS — Materials database, density, voxel mass
+- [x] MaterialSystem JS — Materials database, density, voxel mass, fillCoefficient
 - [x] ModuleSystem JS — Module creation, hierarchy, removal
 - [x] Brick JS — Constructor, properties, BrickSystem instancing
 - [x] GeometryDecimator — import, instantiation, decimate, null guard, decimateForCSG
@@ -129,6 +130,7 @@ python -m pytest tests/test_coverage.py -v   # 51 tests
 - [x] Physics signature — PhysicsSignature aggregate, Aerodynamics Cd/Cl/Reynolds
 - [x] Procedural engine — Boolean operations union/subtract/intersect
 - [x] VertexEditTool — world positions, brick computation, activate/deactivate
+- [x] LODManager — Dynamic LOD per camera distance (integrato in main.js)
 
 ### 🟡 Partially Tested
 - [~] `core/component.py` — 86% coverage (11 lines uncovered: save_custom edge cases)
@@ -136,7 +138,7 @@ python -m pytest tests/test_coverage.py -v   # 51 tests
 - [~] MeshDeformer — Import/roundtrip covered; transform quality (non-planar) depends on voxel data
 
 ### 🔴 Not Tested / Gaps
-- [ ] ScalingTool JS (dependent on VoxelEngine)
+- [ ] ScalingTool JS isolation test — mock VoxelEngine, test face-drag resize math (funzionante in integrazione)
 - [ ] UI CSS/DOM (visual layout)
 - [ ] brick-system.js `_convertExistingVoxels` BFS path (integration only)
 - [ ] `head-ui.js` stale snapshot (out of date, should be removed)
@@ -146,6 +148,5 @@ python -m pytest tests/test_coverage.py -v   # 51 tests
 ## Recommended Actions
 
 1. **Bring `component.py` from 86% → 95%+** (test `save_custom` and `get_by_type` edge cases)
-2. **Add ScalingTool JS isolation test** — mock VoxelEngine, test face-drag resize math
-3. **Extend PhysicsCalc mock** in test_coverage.js to cover module-level mass calc
-4. **Remove `head-ui.js`** stale snapshot or integrate into Vite build pipeline
+2. **Extend PhysicsCalc mock** in test_coverage.js to cover module-level mass calc
+3. **Implement Video keyframe extraction** (Fase 8) - nuovo modulo richiesto

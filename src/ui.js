@@ -6,17 +6,18 @@
 import { ComponentLibrary } from './core/component-library.js';
 
 export class UI {
-    constructor(opts) {
-      this.voxelEngine = opts.voxelEngine;
-      this.materialDB = opts.materialDB;
-      this.moduleSystem = opts.moduleSystem;
-      this.physics = opts.physics;
-      this.meshExporter = opts.meshExporter;
-      this.proceduralEngine = opts.proceduralEngine;
-      this.controls = opts.controls;
-      this.camera = opts.camera;
-      this.renderer = opts.renderer;
-      this.scene = opts.scene;
+     constructor(opts) {
+       this.voxelEngine = opts.voxelEngine;
+       this.materialDB = opts.materialDB;
+       this.moduleSystem = opts.moduleSystem;
+       this.physics = opts.physics;
+       this.meshExporter = opts.meshExporter;
+       this.proceduralEngine = opts.proceduralEngine;
+       this.controls = opts.controls;
+       this.camera = opts.camera;
+       this.renderer = opts.renderer;
+       this.scene = opts.scene;
+       this.physicsSignature = opts.physicsSignature;
 
       // Essential setup only - defer heavy work to avoid blocking main thread
       this._setupToolbar();
@@ -719,8 +720,24 @@ export class UI {
         '<div class="prop-row"><span class="prop-label">Drag a 10 m/s</span><span class="prop-value">' + drag10.toFixed(2) + ' N</span></div>' +
         '<div class="prop-row"><span class="prop-label">Drag a 30 m/s</span><span class="prop-value">' + drag30.toFixed(2) + ' N</span></div>' +
         '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">0.30</span></div>';
-    } catch(e) { /* modulo non disponibile */ }
-
+     } catch(e) { /* modulo non disponibile */ }
+     
+     // ── Firma Fisica Oggetto ────────────────────────
+     try {
+       const signature = this.physicsSignature.generate(allVoxels);
+       html += '<hr style="border-color:var(--border);margin:8px 0;">' +
+         '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">🎯 Firma Fisica:</div>' +
+         '<div class="prop-row"><span class="prop-label">Volume</span><span class="prop-value">' + signature.geometry.volume.toFixed(0) + ' unit³</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Superficie est.</span><span class="prop-value">' + signature.geometry.surfaceArea.toFixed(2) + ' unit²</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Massa totale</span><span class="prop-value">' + signature.mass.totalMass.toFixed(3) + ' kg</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Centro di massa</span><span class="prop-value">[' + signature.mass.centerOfMass.map(v => v.toFixed(2)).join(', ') + ']</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Stress max</span><span class="prop-value">' + (signature.structural?.stressMassimo || 0) / 1e6 + ' MPa</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Zone critiche</span><span class="prop-value">' + (signature.structural?.criticalZones?.length || 0) + '</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Fattore sicurezza</span><span class="prop-value" style="color:' + ((signature.structural?.safetyFactor || 0) >= 2 ? 'var(--accent)' : 'var(--orange)') + ';">' + (signature.structural?.safetyFactor || 0).toFixed(2) + '</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">' + (signature.aerodynamics?.estimatedDragAt10ms ? 0.3 : 0) + '</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Materiale principale</span><span class="prop-value">' + Object.keys(signature.materials || {}).sort((a,b) => (signature.materials||{})[b] - (signature.materials||{})[a])[0] || 'N/A' + '</span></div>';
+     } catch(e) { /* modulo non disponibile */ }
+     
      physicsPanel.textContent = '';
      var temp = document.createElement('div');
      temp.innerHTML = html;

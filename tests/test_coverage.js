@@ -79,36 +79,36 @@ function mockEl() {
 }
 
 function mockDocAndGlobals() {
-  const canvas = Object.assign(mockEl(), {
-    width: 800, height: 600,
-    getContext: () => ({
-      fillText: () => {},
-      fillRect: () => {},
-      drawImage: () => {},
-      getImageData: () => ({ data: new Uint8ClampedArray(256 * 256 * 4) }),
-    }),
-  });
-  const div = mockEl();
+   const canvas = Object.assign(mockEl(), {
+     width: 800, height: 600,
+     getContext: () => ({
+       fillText: () => {},
+       fillRect: () => {},
+       drawImage: () => {},
+       getImageData: () => ({ data: new Uint8ClampedArray(256 * 256 * 4) }),
+     }),
+   });
+   const div = mockEl();
 
 global.document = {
-    createElement: () => {
-      const e = mockEl();
-      e.getContext = () => ({
-        font: '', fillStyle: '', textAlign: '', textBaseline: '',
-        fillText: () => {}, fillRect: () => {},
-        drawImage: () => {},
-        getImageData: () => ({ data: new Uint8ClampedArray(256 * 256 * 4) }),
-      });
-      return e;
-    },
-    getElementById: () => Object.assign({}, div, { textContent: '', style: { display: 'none' }, value: '', addEventListener: () => {} }),
-    querySelectorAll: () => [],
-    addEventListener: () => {},
-    body: Object.assign(mockEl(), { appendChild: () => {}, removeChild: () => {} }),
-    createElementNS: () => canvas,
-  };
-  global.window = global;
-  try { global.navigator = global.document.navigator || {}; } catch { /* ignore */ }
+     createElement: () => {
+       const e = mockEl();
+       e.getContext = () => ({
+         font: '', fillStyle: '', textAlign: '', textBaseline: '',
+         fillText: () => {}, fillRect: () => {},
+         drawImage: () => {},
+         getImageData: () => ({ data: new Uint8ClampedArray(256 * 256 * 4) }),
+       });
+       return e;
+     },
+     getElementById: () => Object.assign({}, div, { textContent: '', style: { display: 'none' }, value: '', addEventListener: () => {} }),
+     querySelectorAll: () => [],
+     addEventListener: () => {},
+     body: Object.assign(mockEl(), { appendChild: () => {}, removeChild: () => {} }),
+     createElementNS: () => canvas,
+   };
+   global.window = Object.assign({ addEventListener: () => {}, removeEventListener: () => {} }, mockEl());
+   try { global.navigator = global.document.navigator || {}; } catch { /* ignore */ }
   global.HTMLCanvasElement = function(){};
   global.requestAnimationFrame = (cb) => setTimeout(cb, 16);
   global.setTimeout = setTimeout;
@@ -1875,17 +1875,70 @@ endsolid test`;
        assert.strictEqual(voxels.length, 3 * 3 * 3, '3 length x 3 x 3');
      });
 
-     runTest('LegoBarsLibrary createInstance', () => {
-       const lib = new LegoBarsLibrary();
-       const bars = lib.getAll();
-       const def = bars[0];
-       const voxels = lib.createInstance(def, {x:10, y:0, z:0});
-       assert.ok(voxels.length > 0);
-       assert.strictEqual(voxels[0].color, def.color);
-     });
-   } catch(e) { failed++; console.log('  [FAIL] LegoBars import: ' + e.message); }
+runTest('LegoBarsLibrary createInstance', () => {
+        const lib = new LegoBarsLibrary();
+        const bars = lib.getAll();
+        const def = bars[0];
+        const voxels = lib.createInstance(def, {x:10, y:0, z:0});
+        assert.ok(voxels.length > 0);
+        assert.strictEqual(voxels[0].color, def.color);
+      });
+    } catch(e) { failed++; console.log('  [FAIL] LegoBars import: ' + e.message); }
 
-   // ── Summary ────────────────────────────────────────────────────────────────
+    // ── Voxel Local Properties ───────────────────────────────────────────────────
+    try {
+      const { VoxelEngine } = await loadESM('src/voxel-engine.js');
+      runTest('VoxelEngine voxel has local properties', () => {
+        const mockScene = { add(){}, remove(){} };
+        const mockMaterialDB = {
+          get: (name) => ({ name, density: 7850, fillCoefficient: 0.707 })
+        };
+        const mockModuleSystem = { toJSON(){ return {}; }, fromJSON(){} };
+        const mockCamera = { position: { x: 8, y: 10, z: 12 } };
+        const mockRenderer = { 
+          domElement: { 
+            addEventListener(){}, 
+            removeEventListener(){}, 
+            getBoundingClientRect(){ return { left:0, top:0, width:800, height:600 }; } 
+          } 
+        };
+        const mockControls = {};
+        const engine = new VoxelEngine(mockScene, mockMaterialDB, mockModuleSystem, mockCamera, mockRenderer, mockControls);
+        engine.addVoxel({ x: 0, y: 0, z: 0 }, 'steel');
+        const v = engine.getVoxelAt(0, 0, 0);
+        assert.ok(v);
+        assert.strictEqual(v.localDensity, null);
+        assert.strictEqual(v.localStress, 0);
+        assert.strictEqual(v.localStrain, 0);
+        assert.strictEqual(v.fillCoefficient, 0.707);
+      });
+      
+      runTest('VoxelEngine toJSON includes local properties', () => {
+        const mockScene = { add(){}, remove(){} };
+        const mockMaterialDB = {
+          get: (name) => ({ name, density: 7850, fillCoefficient: 0.707 })
+        };
+        const mockModuleSystem = { toJSON(){ return {}; }, fromJSON(){} };
+        const mockCamera = { position: { x: 8, y: 10, z: 12 } };
+        const mockRenderer = { 
+          domElement: { 
+            addEventListener(){}, 
+            removeEventListener(){}, 
+            getBoundingClientRect(){ return { left:0, top:0, width:800, height:600 }; } 
+          } 
+        };
+        const mockControls = {};
+        const engine = new VoxelEngine(mockScene, mockMaterialDB, mockModuleSystem, mockCamera, mockRenderer, mockControls);
+        engine.addVoxel({ x: 0, y: 0, z: 0 }, 'steel');
+        const json = engine.toJSON();
+        assert.ok(json.voxels[0]);
+        assert.strictEqual(json.voxels[0].localDensity, null);
+        assert.strictEqual(json.voxels[0].localStress, 0);
+        assert.strictEqual(json.voxels[0].fillCoefficient, 0.707);
+      });
+    } catch(e) { failed++; console.log('  [FAIL] Voxel local properties: ' + e.message); }
+
+    // ── Summary ────────────────────────────────────────────────────────────────
    this.passed = passed;
   this.failed = failed;
   const total = passed + failed;

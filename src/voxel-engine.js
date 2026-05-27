@@ -26,6 +26,12 @@ export class VoxelEngine {
         this.chunks = new Map();
         this.chunkSize = 16; // voxels per chunk dimension
 
+        // Dynamic chunk loading/unloading
+        this.chunkLoadRadius = 10;    // Load chunks within this radius (in chunks)
+        this.chunkUnloadRadius = 12;  // Unload chunks beyond this radius (in chunks)
+        this._chunkUpdateFrame = 0;   // Frame counter for throttling chunk updates
+        this._chunkUpdateInterval = 10; // Update chunks every N frames
+
         // Instanced rendering: one InstancedMesh per material
         this.instancedMeshes = new Map();
         this.instanceToKey = new Map();
@@ -76,6 +82,11 @@ export class VoxelEngine {
         this._redoStack = [];
         this._maxHistory = 50;
         this._maxRedo = 50;
+        
+        this._chunkUpdateFrame = 0;
+        this._chunkUpdateInterval = 10;
+        this.chunkLoadRadius = 3;
+        this.chunkUnloadRadius = 4;
 
          this._setupEvents();
          this._setupScalePanelListeners();
@@ -635,15 +646,21 @@ if (key) {
            if (!material) return false;
 
            const key = this._gridKey(pos);
-           const voxelData = {
-             x: pos.x, y: pos.y, z: pos.z,
-             material: materialName,
-             module: moduleId,
-             density: material.density,
-             temperature: 293,
-             damage: 0,
-             scale: [1, 1, 1]
-           };
+const voxelData = {
+              x: pos.x, y: pos.y, z: pos.z,
+              material: materialName,
+              module: moduleId,
+              density: material.density,
+              temperature: 293,
+              damage: 0,
+              scale: [1, 1, 1],
+              localDensity: null,
+              localTemperature: null,
+              localStress: 0,
+              localStrain: 0,
+              fillCoefficient: material.fillCoefficient ?? 0.707,
+              localFillCoefficient: null
+            };
 
 const chunkKey = this._getChunkKey(pos);
             const chunk = this._getOrCreateChunk(chunkKey);
@@ -969,21 +986,27 @@ const chunkKey = this._getChunkKey(pos);
        // ── Persistence ──────────────────────────────────────────────
    
 toJSON() {
-       const voxels = [];
-       for (const chunk of this.chunks.values()) {
-         for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
-           voxels.push({
-             x: x,
-             y: y,
-             z: z,
-             material: voxelData.material,
-             module: voxelData.module,
-             scale: voxelData.scale || [1, 1, 1],
-             temperature: voxelData.temperature,
-             damage: voxelData.damage
-           });
-         }
-       }
+        const voxels = [];
+        for (const chunk of this.chunks.values()) {
+          for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
+            voxels.push({
+              x: x,
+              y: y,
+              z: z,
+              material: voxelData.material,
+              module: voxelData.module,
+              scale: voxelData.scale || [1, 1, 1],
+              temperature: voxelData.temperature,
+              damage: voxelData.damage,
+              localDensity: voxelData.localDensity,
+              localTemperature: voxelData.localTemperature,
+              localStress: voxelData.localStress,
+              localStrain: voxelData.localStrain,
+              fillCoefficient: voxelData.fillCoefficient,
+              localFillCoefficient: voxelData.localFillCoefficient
+            });
+          }
+        }
        
        const meshData = this.meshPointEditTool?.hasCommittedMesh() 
          ? this.meshPointEditTool.toJSON() 
@@ -1028,24 +1051,34 @@ fromJSON(data) {
 
         const voxelData = this._addVoxelInternal({ x: v.x, y: v.y, z: v.z }, v.material, v.module);
         
-        // Restore scale if present
-        if (voxelData && v.scale) {
-          voxelData.scale = v.scale;
-          const materialName = voxelData.material;
-          const mesh = this.instancedMeshes.get(materialName);
-          if (mesh) {
-            const instMap = this.keyToInstance.get(materialName);
-            const instanceId = instMap?.get(key);
-            if (instanceId !== undefined) {
-              this._setInstanceMatrix(
-                mesh, 
-                instanceId, 
-                this._worldPos({ x: v.x, y: v.y, z: v.z }),
-                new THREE.Vector3(v.scale[0], v.scale[1], v.scale[2])
-              );
-            }
-          }
-        }
+// Restore scale if present
+         if (voxelData && v.scale) {
+           voxelData.scale = v.scale;
+           const materialName = voxelData.material;
+           const mesh = this.instancedMeshes.get(materialName);
+           if (mesh) {
+             const instMap = this.keyToInstance.get(materialName);
+             const instanceId = instMap?.get(key);
+             if (instanceId !== undefined) {
+               this._setInstanceMatrix(
+                 mesh, 
+                 instanceId, 
+                 this._worldPos({ x: v.x, y: v.y, z: v.z }),
+                 new THREE.Vector3(v.scale[0], v.scale[1], v.scale[2])
+               );
+             }
+           }
+         }
+
+         // Restore local properties if present
+         if (voxelData) {
+           voxelData.localDensity = v.localDensity;
+           voxelData.localTemperature = v.localTemperature;
+           voxelData.localStress = v.localStress ?? 0;
+           voxelData.localStrain = v.localStrain ?? 0;
+           voxelData.fillCoefficient = v.fillCoefficient ?? 0.707;
+           voxelData.localFillCoefficient = v.localFillCoefficient;
+         }
 
         loaded++;
       }
@@ -1177,15 +1210,79 @@ fromJSON(data) {
          }
      }
 
-     update(deltaTime) {
-        if (this.ghost && this.ghost.visible) {
-          // Cache performance.now() to avoid multiple calls
-          const time = performance.now() * 0.006;
-          this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
-        }
-      }
-
-    // ── Voxel mutation helpers (called by BrickAdapter) ────────────────────────
+      update(deltaTime) {
+         if (this.ghost && this.ghost.visible) {
+           // Cache performance.now() to avoid multiple calls
+           const time = performance.now() * 0.006;
+           this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
+         }
+         
+         // Dynamic chunk loading/unloading (throttled for performance)
+         this._chunkUpdateFrame++;
+         if (this._chunkUpdateFrame >= this._chunkUpdateInterval) {
+           this._chunkUpdateFrame = 0;
+           this._updateChunksBasedOnCamera();
+         }
+       }
+ 
+     // ── Dynamic Chunk Loading/Unloading ────────────────────────
+     /**
+      * Loads chunks near the camera and unloads distant chunks
+      * Called periodically from update() to manage memory usage
+      */
+     _updateChunksBasedOnCamera() {
+       if (!this.camera || !this.camera.position) return;
+       
+       const camPos = this.camera.position;
+       const chunkRadiusLoad = this.chunkLoadRadius;
+       const chunkRadiusUnload = this.chunkUnloadRadius;
+       
+       // Convert camera position to chunk coordinates
+       const chunkX = Math.floor(camPos.x / this.chunkSize);
+       const chunkY = Math.floor(camPos.y / this.chunkSize);
+       const chunkZ = Math.floor(camPos.z / this.chunkSize);
+       
+       // Track chunks that should be loaded (to avoid unloading them)
+       const chunksToLoad = new Set();
+       
+       // Load all chunks within load radius
+       for (let x = chunkX - chunkRadiusLoad; x <= chunkX + chunkRadiusLoad; x++) {
+         for (let y = chunkY - chunkRadiusLoad; y <= chunkY + chunkRadiusLoad; y++) {
+           for (let z = chunkZ - chunkRadiusLoad; z <= chunkZ + chunkRadiusLoad; z++) {
+             const chunkKey = `${x},${y},${z}`;
+             chunksToLoad.add(chunkKey);
+             
+             // Create chunk if it doesn't exist (this will also initialize its voxel map)
+             if (!this.chunks.has(chunkKey)) {
+               this._getOrCreateChunk(chunkKey);
+             }
+           }
+         }
+       }
+       
+       // Unload chunks that are beyond unload radius
+       for (const [chunkKey, chunk] of this.chunks.entries()) {
+         if (!chunksToLoad.has(chunkKey)) {
+           // Check if chunk is beyond unload radius
+           const [cx, cy, cz] = chunkKey.split(',').map(Number);
+           const dx = cx - chunkX;
+           const dy = cy - chunkY;
+           const dz = cz - chunkZ;
+           const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+           
+           if (distance > chunkRadiusUnload) {
+             // Remove chunk from storage
+             this.chunks.delete(chunkKey);
+             
+             // TODO: Optionally dispose of any GPU resources associated with this chunk
+             // For now, we just remove it from the chunks map
+             // The InstancedMesh instances will be cleaned up when their voxel count goes to 0
+           }
+         }
+       }
+     }
+ 
+     // ── Voxel mutation helpers (called by BrickAdapter) ────────────────────────
     /**
      * Cambia materiale a un voxel esistente alle coordinate date.
      * @returns {boolean} true se voxel esisteva e materiale aggiornato

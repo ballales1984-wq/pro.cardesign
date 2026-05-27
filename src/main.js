@@ -12,6 +12,10 @@ import { UI } from './ui.js';
 import { BrickSystem } from './core/brick-system.js';
 import { ProceduralEngine } from './core/procedural-engine.js';
 import { DepthEstimation, ObjectSegmentation } from './core/depth-estimation.js';
+import { StressAnalysis } from './core/stress-analysis.js';
+import { Aerodynamics } from './core/aerodynamics.js';
+import { PhysicsSignature } from './core/physics-signature.js';
+import { LODManager } from './core/lod-manager.js';
 
 function showFatalError(message) {
   const box = document.createElement('div');
@@ -97,10 +101,13 @@ function boot() {
   const dimensionDiv = document.getElementById('brick-dimensions');
   const fpsEl = document.getElementById('fps-counter');
 
-  const materialDB = new MaterialSystem();
-  const moduleSystem = new ModuleSystem(materialDB);
-  const physics = new PhysicsCalc(materialDB, moduleSystem);
-  const meshExporter = new MeshExporter();
+   const materialDB = new MaterialSystem();
+   const moduleSystem = new ModuleSystem(materialDB);
+   const physics = new PhysicsCalc(materialDB, moduleSystem);
+   const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
+   const aerodynamics = new Aerodynamics(meshExporter);
+   const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis, aerodynamics);
+   const meshExporter = new MeshExporter();
   const voxelEngine = new VoxelEngine(
     scene,
     materialDB,
@@ -110,28 +117,30 @@ function boot() {
     controls
   );
   const brickSystem = new BrickSystem(voxelEngine);
-  const proceduralEngine = new ProceduralEngine(voxelEngine);
-    const depthEstimation = new DepthEstimation(voxelEngine);
-    const objectSegmentation = new ObjectSegmentation();
+const proceduralEngine = new ProceduralEngine(voxelEngine);
+     const depthEstimation = new DepthEstimation(voxelEngine);
+     const objectSegmentation = new ObjectSegmentation();
+     const lodManager = new LODManager(camera, voxelEngine);
 
-  try {
-    new UI({
-      voxelEngine,
-      materialDB,
-      moduleSystem,
-      physics,
-      meshExporter,
-      proceduralEngine,
-      controls,
-      camera,
-      renderer,
-      scene,
-    });
-  } catch (err) {
-    console.error('[UI] init failed:', err);
-    showFatalError(err.stack || err.message);
-    return;
-  }
+   try {
+     new UI({
+       voxelEngine,
+       materialDB,
+       moduleSystem,
+       physics,
+       meshExporter,
+       proceduralEngine,
+       controls,
+       camera,
+       renderer,
+       scene,
+       physicsSignature
+     });
+   } catch (err) {
+     console.error('[UI] init failed:', err);
+     showFatalError(err.stack || err.message);
+     return;
+   }
 
   let lastW = 0;
   let lastH = 0;
@@ -166,9 +175,10 @@ function boot() {
 
     if (lastW < 16 || lastH < 16) resizeRenderer();
 
-    controls.update();
-
-    if (dimensionDiv) {
+controls.update();
+     lodManager.update();
+     
+     if (dimensionDiv) {
       const sel = brickSystem.selectedBrick;
       if (sel) {
         dimensionDiv.textContent = brickSystem.dimensionsText;

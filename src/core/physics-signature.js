@@ -119,13 +119,23 @@ export class PhysicsSignature {
     };
   }
 
-  _getStructuralProperties(stressResults) {
-    return {
-      maxStress: Math.max(...stressResults.map(s => s.stress), 0),
-      criticalZones: stressResults.filter(s => s.stress > 100e6).length,
-      safetyFactor: this.stressAnalysis?.getSafetyFactor?.() || 1
-    };
-  }
+   _getStructuralProperties(stressResults) {
+     if (!this.stressAnalysis || !stressResults || stressResults.length === 0) {
+       return { stressMassimo: 0, zonaCritica: 0, fattoreSicurezza: 0 };
+     }
+     
+     // Update stress analysis with latest results
+     this.stressAnalysis.analyze(stressResults.map(s => ({ 
+       x: s.x, y: s.y, z: s.z, material: s.material 
+     })));
+     
+     return {
+       stressMassimo: this.stressAnalysis.getSafetyFactor() > 0 ? 
+                      Math.max(...stressResults.map(s => s.stress)) : 0,
+       zonaCritica: this.stressAnalysis.getCriticalZones().length,
+       fattoreSicurezza: this.stressAnalysis.getSafetyFactor()
+     };
+   }
 
   _getAerodynamicProperties(geometry, voxels) {
     const frontalArea = this._estimateFrontalArea(voxels);

@@ -544,5 +544,49 @@ FASE 8 ⏳ — Da iniziare
 ---
 
 *Ultimo aggiornamento: 2026-05-27*  
-*Fase 7 completata — ONNX models integrati (139 MB)*  
 *Repository: github.com/ballales1984-wq/pro.cardesign*
+
+## Stato completamento Fasi
+
+### Fase 1: ✅ Completata
+- VoxelEngine con InstancedMesh, raycasting, ground plane
+- MaterialSystem con 8 materiali + proprietà estese (fillCoefficient, friction, fatigue, thermal)
+- PhysicsCalc con massa, CoM, inerzia
+- ModuleSystem con gerarchia moduli
+- MeshExporter (OBJ/STL)
+
+### Fase 2: ✅ Completata
+- Editor 3D interattivo con strumenti (Add, Remove, Select, Fill)
+- Undo/Redo (50 passi)
+- OrbitControls con navigation mode
+- Pannelli UI completi
+
+### Fase 3: ✅ Completata (ottimizzazione dinamica)
+- Chunk System 16³ con `_updateChunksBasedOnCamera()` throttling
+- LODManager integrato in main.js
+- Proprietà locali voxel (localDensity, localTemperature, localStress, localStrain, fillCoefficient)
+
+### Fase 4: ✅ Base completata
+- ProceduralEngine con regole (LINEA, CUBO, ESTRUSIONE, SIMMETRIA, SMUSS0, FORO)
+- Editor regole UI (rule-editor-ui.js)
+- BooleanOperations (Union, Subtract, Intersect)
+
+### Fase 5: ✅ Completata
+- SphereSystem con fillCoefficient e porosity stats
+- TetrahedralMesh con decomposizione MacNeal (5 tetra per voxel)
+- Metadati materiale estesi (tutti i materiali hanno friction, fatigue, thermal)
+
+### Fase 6: ✅ Base completata
+- StressAnalysis.js con stress/strain calculation
+- PhysicsSignature aggregator
+- Aerodynamics.js con Cd/Cl/Reynolds
+
+### Fase 7: ✅ Base avviata
+- DepthEstimation con ONNX Runtime + fallback
+- ObjectSegmentation SAM stub
+- ProceduralRuleGeneration integrata
+
+### Fase 8: 🔲 Da iniziare
+- Video keyframe extraction
+- Timeline playback
+- Trasformazioni interpolate
