@@ -12,6 +12,7 @@ import { SculptTool } from './core/sculpt-tool.js';
 import { VertexEditTool } from './core/vertex-edit-tool.js';
 import { MoveTool } from './core/move-tool.js';
 import { MeshPointEditTool } from './core/mesh-point-edit-tool.js';
+import { voxelToMesh } from './geometry/converters/voxelToMesh.js';
 
 export class VoxelEngine {
     constructor(scene, materialDB, moduleSystem, camera, renderer, controls) {
@@ -39,8 +40,14 @@ export class VoxelEngine {
         this.freeIndices = new Map();
         this.maxInstances = 200000;
 
+        // Surface mesh for external surface extraction
+        this.surfaceMesh = null;
+        this.showSurfaceMesh = false;
+
         this.voxelGroup = new THREE.Group();
         this.scene.add(this.voxelGroup);
+        
+        // Surface mesh will be added to scene when created
 
         this.voxelSize = 1.0;
 

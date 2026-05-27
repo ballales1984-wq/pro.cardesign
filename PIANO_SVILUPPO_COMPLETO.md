@@ -516,6 +516,12 @@ FASE 8 ✅ — Completata
      Video: trasformazioni interpolate
      Video: timeline playback
      Video: parallel multi-region processing
+
+FASE 9 ⏳ — GPU Compute
+     WebGPU compute shaders per LOD
+     Frame throttling per grandi scene
+     Web Worker offloading
+
 ```
 
 ---
@@ -542,7 +548,7 @@ FASE 8 ✅ — Completata
 
 ### Prossimi step
 
-- [ ] GPU Compute per grandi scene voxel
+- [x] GPU Compute per grandi scene voxel (skeleton + LOD fallback)
 - [ ] Editor regole procedurali avanzato (drag-drop UI)
 
 ---
