@@ -918,18 +918,31 @@ export class UI {
      formatSelect.appendChild(option2);
      formatSelect.appendChild(option3);
      
-     const smoothLabel = document.createElement('label');
-     smoothLabel.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px;font-size:12px;';
-     
-     const smoothCheckbox = document.createElement('input');
-     smoothCheckbox.type = 'checkbox';
-     smoothCheckbox.id = 'ex-smooth';
-     
-     const smoothSpan = document.createElement('span');
-     smoothSpan.textContent = ' Smooth surface (Marching Cubes)';
-     
-     smoothLabel.appendChild(smoothCheckbox);
-     smoothLabel.appendChild(smoothSpan);
+const smoothLabel = document.createElement('label');
+      smoothLabel.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px;font-size:12px;';
+
+      const smoothCheckbox = document.createElement('input');
+      smoothCheckbox.type = 'checkbox';
+      smoothCheckbox.id = 'ex-smooth';
+
+      const smoothSpan = document.createElement('span');
+      smoothSpan.textContent = ' Smooth surface (Marching Cubes)';
+
+      smoothLabel.appendChild(smoothCheckbox);
+      smoothLabel.appendChild(smoothSpan);
+
+      const wireframeLabel = document.createElement('label');
+      wireframeLabel.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px;font-size:12px;';
+
+      const wireframeCheckbox = document.createElement('input');
+      wireframeCheckbox.type = 'checkbox';
+      wireframeCheckbox.id = 'ex-wireframe';
+
+      const wireframeSpan = document.createElement('span');
+      wireframeSpan.textContent = ' Wireframe (internal edges)';
+
+      wireframeLabel.appendChild(wireframeCheckbox);
+      wireframeLabel.appendChild(wireframeSpan);
      
      const infoDiv = document.createElement('div');
      infoDiv.style.cssText = 'padding:10px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--text-dim);margin-bottom:18px;';
@@ -963,57 +976,66 @@ export class UI {
      buttonDiv.appendChild(cancelBtn);
      buttonDiv.appendChild(okBtn);
      
-     innerDiv.appendChild(title);
-     innerDiv.appendChild(formatLabel);
-     innerDiv.appendChild(formatSelect);
-     innerDiv.appendChild(smoothLabel);
-     innerDiv.appendChild(infoDiv);
-     innerDiv.appendChild(buttonDiv);
+innerDiv.appendChild(title);
+      innerDiv.appendChild(formatLabel);
+      innerDiv.appendChild(formatSelect);
+      innerDiv.appendChild(smoothLabel);
+      innerDiv.appendChild(wireframeLabel);
+      innerDiv.appendChild(infoDiv);
+      innerDiv.appendChild(buttonDiv);
      
      overlay.appendChild(innerDiv);
      document.body.appendChild(overlay);
 
-    const upd = () => {
-      const s = document.getElementById('ex-smooth').checked;
-      document.getElementById('ex-info').textContent = s
-        ? 'Superficie: Marching Cubes (smooth)'
-        : `Superficie: Cubi (~${allVoxels.length * 12} triangoli est.)`;
-    };
-    document.getElementById('ex-smooth').addEventListener('change', upd);
-    upd();
+const upd = () => {
+       const s = document.getElementById('ex-smooth').checked;
+       const w = document.getElementById('ex-wireframe').checked;
+       if (w) {
+         document.getElementById('ex-info').textContent = 'Superficie: Wireframe (12 edges per voxel)';
+       } else {
+         document.getElementById('ex-info').textContent = s
+           ? 'Superficie: Marching Cubes (smooth)'
+           : `Superficie: Cubi (~${allVoxels.length * 12} triangoli est.)`;
+       }
+     };
+     document.getElementById('ex-smooth').addEventListener('change', upd);
+     document.getElementById('ex-wireframe').addEventListener('change', upd);
+     upd();
 
     document.getElementById('ex-cancel').onclick = () => overlay.remove();
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-    document.getElementById('ex-ok').onclick = async () => {
-      const fmt = document.getElementById('ex-fmt').value;
-      const smooth = document.getElementById('ex-smooth').checked;
-      const btn = document.getElementById('ex-ok');
-      btn.textContent = '⏳ Generando...'; btn.disabled = true;
-      try {
-        const geom = self.meshExporter.voxelToGeometry(allVoxels, 1.0, smooth);
-        let content, fn, mime;
-        if (fmt === 'obj') {
-          content = self.meshExporter.exportOBJ(geom);
-          fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.obj';
-          mime = 'text/plain';
-        } else if (fmt === 'stl-binary') {
-          content = self.meshExporter.exportSTL(geom, false);
-          fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.stl';
-          mime = 'application/octet-stream';
-        } else {
-          content = self.meshExporter.exportSTL(geom, true);
-          fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.stl';
-          mime = 'text/plain';
-        }
-        self.meshExporter.download(fn, content, mime);
-        overlay.remove();
-        self._notify('Mesh esportata: ' + fn, 'success');
-      } catch (err) {
-        self._notify('Errore export: ' + err.message, 'error');
-        btn.textContent = '⬇ Scarica'; btn.disabled = false;
-      }
-    };
+document.getElementById('ex-ok').onclick = async () => {
+       const fmt = document.getElementById('ex-fmt').value;
+       const smooth = document.getElementById('ex-smooth').checked;
+       const wireframe = document.getElementById('ex-wireframe').checked;
+       const btn = document.getElementById('ex-ok');
+       btn.textContent = '⏳ Generando...'; btn.disabled = true;
+       try {
+         // Wireframe only supported for OBJ; STL needs triangles
+         const geom = self.meshExporter.voxelToGeometry(allVoxels, 1.0, smooth, fmt === 'obj' ? wireframe : false);
+         let content, fn, mime;
+         if (fmt === 'obj') {
+           content = self.meshExporter.exportOBJ(geom);
+           fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.obj';
+           mime = 'text/plain';
+         } else if (fmt === 'stl-binary') {
+           content = self.meshExporter.exportSTL(geom, false);
+           fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.stl';
+           mime = 'application/octet-stream';
+         } else {
+           content = self.meshExporter.exportSTL(geom, true);
+           fn = 'voxelcad_' + new Date().toISOString().slice(0,10) + '.stl';
+           mime = 'text/plain';
+         }
+         self.meshExporter.download(fn, content, mime);
+         overlay.remove();
+         self._notify('Mesh esportata: ' + fn, 'success');
+       } catch (err) {
+         self._notify('Errore export: ' + err.message, 'error');
+         btn.textContent = '⬇ Scarica'; btn.disabled = false;
+       }
+     };
   }
 
   // ── Import STL ────────────────────────────────────────────────

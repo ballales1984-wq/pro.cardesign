@@ -14,20 +14,23 @@ export class MeshExporter {
     this._faceNormals = [];
   }
 
-  /**
-   * Converte la griglia voxel in una geometria Three.js triangolata
-   * Usa il metodo "cubes" (6 facce per voxel visibile) o "marching cubes"
-   */
-  voxelToGeometry(voxels, voxelSize = 1.0, smooth = false) {
-    // Accepts Array of voxel objects; Map/Iterator callers must pass .values() or get converted correctly
-    const voxelArray = Array.isArray(voxels)
-      ? voxels
-      : (voxels.values ? Array.from(voxels.values()) : Array.from(voxels));
-    if (smooth) {
-      return this._marchingCubes(voxelArray, voxelSize);
-    }
-    return this._simpleCubes(voxelArray, voxelSize);
-  }
+/**
+    * Converte la griglia voxel in una geometria Three.js triangolata
+    * Usa il metodo "cubes" (6 facce per voxel visibile), "marching cubes", o wireframe
+    */
+   voxelToGeometry(voxels, voxelSize = 1.0, smooth = false, wireframe = false) {
+     // Accepts Array of voxel objects; Map/Iterator callers must pass .values() or get converted correctly
+     const voxelArray = Array.isArray(voxels)
+       ? voxels
+       : (voxels.values ? Array.from(voxels.values()) : Array.from(voxels));
+     if (wireframe) {
+       return this._wireframe(voxelArray, voxelSize);
+     }
+     if (smooth) {
+       return this._marchingCubes(voxelArray, voxelSize);
+     }
+     return this._simpleCubes(voxelArray, voxelSize);
+   }
 
   /**
    * Metodo semplice: un cubo per ogni voxel esposto
@@ -96,11 +99,53 @@ export class MeshExporter {
     geometry.setIndex(indices);
     geometry.computeBoundingSphere();
 
+return geometry;
+   }
+
+  /**
+   * Wireframe — all edges for internal structure visualization
+   * Renders 12 edges per voxel (all edges visible, no face culling)
+   */
+  _wireframe(voxels, voxelSize) {
+    const positions = [];
+    const half = voxelSize / 2;
+
+    for (const voxel of voxels) {
+      const cx = voxel.x * voxelSize;
+      const cy = voxel.y * voxelSize;
+      const cz = voxel.z * voxelSize;
+
+      // 12 edges of a cube (line segments)
+      const edges = [
+        // bottom face
+        [cx - half, cy - half, cz - half], [cx + half, cy - half, cz - half],
+        [cx + half, cy - half, cz - half], [cx + half, cy - half, cz + half],
+        [cx + half, cy - half, cz + half], [cx - half, cy - half, cz + half],
+        [cx - half, cy - half, cz + half], [cx - half, cy - half, cz - half],
+        // top face
+        [cx - half, cy + half, cz - half], [cx + half, cy + half, cz - half],
+        [cx + half, cy + half, cz - half], [cx + half, cy + half, cz + half],
+        [cx + half, cy + half, cz + half], [cx - half, cy + half, cz + half],
+        [cx - half, cy + half, cz + half], [cx - half, cy + half, cz - half],
+        // vertical edges
+        [cx - half, cy - half, cz - half], [cx - half, cy + half, cz - half],
+        [cx + half, cy - half, cz - half], [cx + half, cy + half, cz - half],
+        [cx + half, cy - half, cz + half], [cx + half, cy + half, cz + half],
+        [cx - half, cy - half, cz + half], [cx - half, cy + half, cz + half],
+      ];
+
+      for (const [x, y, z] of edges) {
+        positions.push(x, y, z);
+      }
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     return geometry;
   }
 
 /**
- * Marching Cubes per superfici lisse
+  * Marching Cubes per superfici lisse
  * Usa edge table standard 256 voci + triangolazione dinamica per ogni cella.
  * Non usa tabella di triangolazione precalcolata: genera i triangoli al volo
  * percorrendo la poligonale di intersezione superficie/cella.

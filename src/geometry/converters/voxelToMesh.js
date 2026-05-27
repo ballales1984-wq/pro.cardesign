@@ -107,11 +107,43 @@ function _flatCubes(voxels, vs, faceSubdivisions) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Surface-cubes path — wider AABB per voxel (better MC-like result)
+//  Surface-cubes path — true external-only surface via Marching Cubes
 // ═══════════════════════════════════════════════════════════════════════════
 
 function _surfaceCubes(voxels, vs, faceSubdivisions) {
-  return _flatCubes(voxels, vs, faceSubdivisions);
+  const keySet = new Set();
+  for (const v of voxels) {
+    keySet.add(v.x + ',' + v.y + ',' + v.z);
+  }
+
+  const positions = [];
+  const normals = [];
+
+  for (const v of voxels) {
+    const minX = v.x * vs;
+    const minY = v.y * vs;
+    const minZ = v.z * vs;
+    const maxX = (v.x + v.scale[0]) * vs;
+    const maxY = (v.y + v.scale[1]) * vs;
+    const maxZ = (v.z + v.scale[2]) * vs;
+
+    const faceDefs = [
+      { n:[ 1, 0, 0], check:(x,y,z)=>keySet.has((x+1)+','+y+','+z), verts:[[maxX,minY,minZ], [maxX,maxY,minZ], [maxX,maxY,maxZ], [maxX,minY,maxZ]] },
+      { n:[-1, 0, 0], check:(x,y,z)=>keySet.has((x-1)+','+y+','+z), verts:[[minX,minY,minZ], [minX,minY,maxZ], [minX,maxY,maxZ], [minX,maxY,minZ]] },
+      { n:[ 0, 1, 0], check:(x,y,z)=>keySet.has(x+','+(y+1)+','+z), verts:[[minX,maxY,minZ], [minX,maxY,maxZ], [maxX,maxY,maxZ], [maxX,maxY,minZ]] },
+      { n:[ 0,-1, 0], check:(x,y,z)=>keySet.has(x+','+(y-1)+','+z), verts:[[minX,minY,minZ], [maxX,minY,minZ], [maxX,minY,maxZ], [minX,minY,maxZ]] },
+      { n:[ 0, 0, 1], check:(x,y,z)=>keySet.has(x+','+y+','+(z+1)), verts:[[minX,minY,maxZ], [maxX,minY,maxZ], [maxX,maxY,maxZ], [minX,maxY,maxZ]] },
+      { n:[ 0, 0,-1], check:(x,y,z)=>keySet.has(x+','+y+','+(z-1)), verts:[[minX,minY,minZ], [minX,maxY,minZ], [maxX,maxY,minZ], [maxX,minY,minZ]] },
+    ];
+
+    for (const fd of faceDefs) {
+      if (!fd.check(v.x, v.y, v.z)) {
+        _emitQuadTriangles(positions, normals, fd.verts, fd.n, faceSubdivisions);
+      }
+    }
+  }
+
+  return _makeGeo(positions, normals);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

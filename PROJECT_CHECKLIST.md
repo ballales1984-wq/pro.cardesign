@@ -15,8 +15,8 @@
 - [x] Real-time mass and COM update
 
 ## ⏳ PHASE 2: VISUALIZATION
-- [ ] Extract external surface (visible mesh only)
-- [ ] Optional internal wireframe
+- [x] Extract external surface (visible mesh only) - implemented in voxelToMesh.js `_flatCubes()`
+- [x] Optional internal wireframe - implemented in voxelToMesh.js `_wireframe()` mode
 - [ ] Automatic LOD
 
 ## ✅ PHASE 3: PROJECT MANAGEMENT

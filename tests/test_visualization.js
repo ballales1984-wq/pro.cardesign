@@ -289,11 +289,11 @@ mockDocAndGlobals();
         this.attributes[name] = attr;
         return attr;
       };
-      this.getAttribute = (name) => this.attributes[name] || null;
-      this.setIndex = (idx) => { this.index = _mkIndex(idx); };
-      this.getIndex() => this.index;
-      this.getnormal = () => null;
-      this.getuv = () => null;
+       this.getAttribute = (name) => this.attributes[name] || null;
+       this.setIndex = (idx) => { this.index = _mkIndex(idx); };
+       this.getIndex = () => this.index;
+       this.getnormal = () => null;
+       this.getuv = () => null;
 
    this.computeBoundingSphere = function(){ this.boundingSphere={ getCenter:_=>new Vec3(), radius:1 }; };
          this.clone = function(){

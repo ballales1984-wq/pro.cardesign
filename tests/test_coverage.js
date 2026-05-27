@@ -2387,13 +2387,43 @@ runTest('LegoBarsLibrary createInstance', () => {
       assert.strictEqual(result.metadata.bounds.max.z, 20);
     });
 
-    runTest('voxelToMesh MC path (default)', () => {
-      const voxels = [{ x:0,y:0,z:0, scale:[2,2,2] }, { x:3,y:0,z:0, scale:[2,2,2] }];
-      const result = voxelToMesh(voxels); // MC path (flatCubes=false)
-      assert.ok(result.geometry);
-      assert.ok(result.geometry.attributes.position);
-    });
-  } catch(e) { failed++; console.log('  [FAIL] voxelToMesh import: ' + e.message); }
+runTest('voxelToMesh MC path (default)', () => {
+       const voxels = [{ x:0,y:0,z:0, scale:[2,2,2] }, { x:3,y:0,z:0, scale:[2,2,2] }];
+       const result = voxelToMesh(voxels); // MC path (flatCubes=false)
+       assert.ok(result.geometry);
+       assert.ok(result.geometry.attributes.position);
+     });
+
+     runTest('voxelToMesh wireframe mode - single voxel', () => {
+       const voxels = [{ x: 0, y: 0, z: 0, scale: [1,1,1] }];
+       const result = voxelToMesh(voxels, { wireframe: true });
+       assert.ok(result.geometry);
+       // Wireframe: 12 edges * 2 vertices * 3 coords = 72 positions
+       assert.strictEqual(result.geometry.attributes.position.count, 24);
+     });
+
+     runTest('voxelToMesh wireframe - 2x2x2 cube', () => {
+       const voxels = [];
+       for (let x = 0; x < 2; x++)
+         for (let y = 0; y < 2; y++)
+           for (let z = 0; z < 2; z++)
+             voxels.push({ x, y, z, scale: [1,1,1] });
+       const result = voxelToMesh(voxels, { wireframe: true });
+       assert.ok(result.geometry.attributes.position.count > 24);
+     });
+
+     runTest('voxelToMesh surface extraction - hollow cube shows inner faces', () => {
+       const voxels = [];
+       for (let x = 0; x < 3; x++)
+         for (let y = 0; y < 3; y++)
+           for (let z = 0; z < 3; z++)
+             if (!(x === 1 && y === 1 && z === 1))
+               voxels.push({ x, y, z, scale: [1,1,1] });
+       // Surface extraction (flatCubes=false uses _surfaceCubes)
+       const result = voxelToMesh(voxels, { flatCubes: false });
+       assert.ok(result.geometry.attributes.position.count > 0);
+     });
+   } catch(e) { failed++; console.log('  [FAIL] voxelToMesh import: ' + e.message); }
 
   // ── 23. MeshToVoxel converter ───────────────────────────────────────────────
   try {
