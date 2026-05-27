@@ -75,3 +75,7 @@ tmp-*.js
 temp_debug.js
 temp*.js
 vite*.log
+
+# ONNX models - large AI model files (download from releases)
+*.onnx
+public/models/*.onnx
