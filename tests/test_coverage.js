@@ -1554,19 +1554,19 @@ runTest('StressAnalysis.safetyFactor', () => {
       assert.ok(sig);
     });
 
-    runTest('PhysicsSignature.generate', () => {
-      const mockMaterialDB = { get: () => ({ density: 7850, thermalConductivity: 50, specificHeat: 486 }) };
-      const mockPhysicsCalc = { calculateAllVoxels: (v) => ({ totalMass: v.length * 7850, centerOfMass: [0,0,0], inertia: [0,0,0] }) };
-      const mockStress = { analyze: () => [], getSafetyFactor: () => 1 };
-      const mockAero = {};
+runTest('PhysicsSignature.generate', () => {
+       const mockMaterialDB = { get: () => ({ density: 7850, thermalConductivity: 50, specificHeat: 486 }) };
+       const mockPhysicsCalc = { calculateAllVoxels: (v) => ({ totalMass: v.length * 7850, centerOfMass: [0,0,0], inertia: [0,0,0] }) };
+       const mockStress = { analyze: () => [], getSafetyFactor: () => 1, getCriticalZones: () => [] };
+       const mockAero = {};
 
-      const sig = new PhysicsSignature({}, mockMaterialDB, mockPhysicsCalc, mockStress, mockAero);
-      const voxels = [{x:0,y:0,z:0,material:'steel'}];
-      const result = sig.generate(voxels);
-      assert.ok(result.geometry);
-      assert.ok(result.mass);
-      assert.ok(result.materials);
-    });
+       const sig = new PhysicsSignature({}, mockMaterialDB, mockPhysicsCalc, mockStress, mockAero);
+       const voxels = [{x:0,y:0,z:0,material:'steel'}];
+       const result = sig.generate(voxels);
+       assert.ok(result.geometry);
+       assert.ok(result.mass);
+       assert.ok(result.materials);
+     });
   } catch(e) { failed++; console.log('  [FAIL] PhysicsSignature import: ' + e.message); }
 
   // ── 15. STLImporter ─────────────────────────────────────────────────────────
@@ -2981,16 +2981,50 @@ runTest('DepthEstimation depthToVoxels generates voxel array', () => {
        assert.strictEqual(rules[0].type, 'ESTRUSIONE');
      });
      
-     runTest('ProceduralRuleGeneration _bboxToProfile creates profile points', () => {
-       const prg = new ProceduralRuleGeneration({});
-       const profile = prg._bboxToProfile([0, 0, 4, 4]);
-       assert.ok(Array.isArray(profile));
-       assert.ok(profile.length > 0);
-     });
-     
-   } catch(e) { failed++; console.log('  [FAIL] Fase 7 import: ' + e.message); }
+runTest('ProceduralRuleGeneration _bboxToProfile creates profile points', () => {
+        const prg = new ProceduralRuleGeneration({});
+        const profile = prg._bboxToProfile([0, 0, 4, 4]);
+        assert.ok(Array.isArray(profile));
+        assert.ok(profile.length > 0);
+      });
+      
+    } catch(e) { failed++; console.log('  [FAIL] Fase 7 import: ' + e.message); }
 
-   console.log(`\nResults: ${passed}/${passed + failed} passed, ${failed} failed`);
+    // ── Fase 8: Video KeyFrame Extraction ─────────────────────────────────────
+    try {
+      const { VideoKeyframeExtraction } = await loadESM('src/core/video-keyframe-extraction.js');
+      runTest('VideoKeyframeExtraction (import)', () => {
+        const vke = new VideoKeyframeExtraction({});
+        assert.ok(vke);
+      });
+
+      runTest('VideoKeyframeExtraction toJSON returns timeline', () => {
+        const vke = new VideoKeyframeExtraction({});
+        vke.keyframes.set(0, { rules: [], camera: { position: [0,0,50] } });
+        const json = vke.toJSON();
+        assert.ok(Array.isArray(json.keyframes));
+        assert.strictEqual(typeof json.duration, 'number');
+      });
+
+      runTest('VideoKeyframeExtraction fromJSON restores timeline', () => {
+        const vke = new VideoKeyframeExtraction({});
+        const data = { keyframes: [{ time: 0, rules: [], camera: { position: [0,0,50] } }], duration: 0 };
+        vke.fromJSON(data);
+        assert.strictEqual(vke.keyframes.size, 1);
+      });
+
+      runTest('VideoKeyframeExtraction _lerpCamera interpolates correctly', () => {
+        const vke = new VideoKeyframeExtraction({});
+        const cam1 = { position: [0, 0, 50], rotation: [0, 0, 0], fov: 75 };
+        const cam2 = { position: [10, 10, 60], rotation: [0, 0, 0], fov: 60 };
+        const lerped = vke._lerpCamera(cam1, cam2, 0.5);
+        assert.strictEqual(lerped.position[0], 5);
+        assert.strictEqual(lerped.fov, 67.5);
+      });
+
+    } catch(e) { failed++; console.log('  [FAIL] Fase 8 import: ' + e.message); }
+
+    console.log(`\nResults: ${passed}/${passed + failed} passed, ${failed} failed`);
   console.log('─'.repeat(50));
 
   const slowest = [...timing].sort((a,b)=>b.ms-a.ms).slice(0,3);

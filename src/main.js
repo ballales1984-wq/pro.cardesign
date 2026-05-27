@@ -101,26 +101,26 @@ function boot() {
   const dimensionDiv = document.getElementById('brick-dimensions');
   const fpsEl = document.getElementById('fps-counter');
 
-   const materialDB = new MaterialSystem();
-   const moduleSystem = new ModuleSystem(materialDB);
-   const physics = new PhysicsCalc(materialDB, moduleSystem);
-   const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
-   const aerodynamics = new Aerodynamics(meshExporter);
-   const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis, aerodynamics);
-   const meshExporter = new MeshExporter();
-  const voxelEngine = new VoxelEngine(
-    scene,
-    materialDB,
-    moduleSystem,
-    camera,
-    renderer,
-    controls
-  );
-  const brickSystem = new BrickSystem(voxelEngine);
-const proceduralEngine = new ProceduralEngine(voxelEngine);
-     const depthEstimation = new DepthEstimation(voxelEngine);
-     const objectSegmentation = new ObjectSegmentation();
-     const lodManager = new LODManager(camera, voxelEngine);
+    const materialDB = new MaterialSystem();
+    const moduleSystem = new ModuleSystem(materialDB);
+    const physics = new PhysicsCalc(materialDB, moduleSystem);
+    const meshExporter = new MeshExporter();
+    const voxelEngine = new VoxelEngine(
+      scene,
+      materialDB,
+      moduleSystem,
+      camera,
+      renderer,
+      controls
+    );
+    const brickSystem = new BrickSystem(voxelEngine);
+    const proceduralEngine = new ProceduralEngine(voxelEngine);
+    const depthEstimation = new DepthEstimation(voxelEngine);
+    const objectSegmentation = new ObjectSegmentation();
+    const lodManager = new LODManager(camera, voxelEngine);
+    const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
+    const aerodynamics = new Aerodynamics(meshExporter);
+    const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis, aerodynamics);
 
    try {
      new UI({

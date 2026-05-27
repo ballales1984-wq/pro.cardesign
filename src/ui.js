@@ -731,11 +731,14 @@ export class UI {
          '<div class="prop-row"><span class="prop-label">Superficie est.</span><span class="prop-value">' + signature.geometry.surfaceArea.toFixed(2) + ' unit²</span></div>' +
          '<div class="prop-row"><span class="prop-label">Massa totale</span><span class="prop-value">' + signature.mass.totalMass.toFixed(3) + ' kg</span></div>' +
          '<div class="prop-row"><span class="prop-label">Centro di massa</span><span class="prop-value">[' + signature.mass.centerOfMass.map(v => v.toFixed(2)).join(', ') + ']</span></div>' +
-         '<div class="prop-row"><span class="prop-label">Stress max</span><span class="prop-value">' + (signature.structural?.stressMassimo || 0) / 1e6 + ' MPa</span></div>' +
-         '<div class="prop-row"><span class="prop-label">Zone critiche</span><span class="prop-value">' + (signature.structural?.criticalZones?.length || 0) + '</span></div>' +
-         '<div class="prop-row"><span class="prop-label">Fattore sicurezza</span><span class="prop-value" style="color:' + ((signature.structural?.safetyFactor || 0) >= 2 ? 'var(--accent)' : 'var(--orange)') + ';">' + (signature.structural?.safetyFactor || 0).toFixed(2) + '</span></div>' +
-         '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">' + (signature.aerodynamics?.estimatedDragAt10ms ? 0.3 : 0) + '</span></div>' +
-         '<div class="prop-row"><span class="prop-label">Materiale principale</span><span class="prop-value">' + Object.keys(signature.materials || {}).sort((a,b) => (signature.materials||{})[b] - (signature.materials||{})[a])[0] || 'N/A' + '</span></div>';
+         '<div class="prop-row"><span class="prop-label">Conduttività term.</span><span class="prop-value">' + signature.thermal.conductivity.toFixed(2) + ' W/(m·K)</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Capacità termica</span><span class="prop-value">' + signature.thermal.heatCapacity.toFixed(2) + ' J/(kg·K)</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Stress massimo</span><span class="prop-value">' + (signature.structural.stressMassimo / 1e6).toFixed(2) + ' MPa</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Zone critiche</span><span class="prop-value">' + signature.structural.zonaCritica + '</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Fattore sicurezza</span><span class="prop-value" style="color:' + (signature.structural.fattoreSicurezza >= 2 ? 'var(--accent)' : 'var(--orange)') + ';">' + signature.structural.fattoreSicurezza.toFixed(2) + '</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Area frontale</span><span class="prop-value">' + signature.aerodynamics.frontalArea.toFixed(2) + ' m²</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">' + signature.aerodynamics.estimatedCd.toFixed(2) + '</span></div>' +
+         '<div class="prop-row"><span class="prop-label">Materiale principale</span><span class="prop-value">' + (Object.keys(signature.materials || {}).length > 0 ? Object.keys(signature.materials || {}).sort((a,b) => (signature.materials||{})[b] - (signature.materials||{})[a])[0] : 'N/A') + '</span></div>';
      } catch(e) { /* modulo non disponibile */ }
      
      physicsPanel.textContent = '';

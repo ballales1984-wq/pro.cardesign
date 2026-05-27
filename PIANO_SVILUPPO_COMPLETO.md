@@ -510,10 +510,10 @@ FASE 7 ✅ Completata (base)
     AI: Segmentazione oggetti (SAM stub con fallback) ✅
     AI: Procedural Rule Generation integrata ✅
 
-FASE 8 ⏳ — Da iniziare
-    Video: keyframe extraction
-    Video: trasformazioni interpolate
-    Video: timeline playback
+FASE 8 ✅ — Base completata
+     Video: keyframe extraction
+     Video: trasformazioni interpolate
+     Video: timeline playback
 ```
 
 ---
@@ -533,8 +533,8 @@ FASE 8 ⏳ — Da iniziare
 - [x] Marching Cubes algoritmo completo (sostituisce `_simpleCubes`)
 - [x] Sfere: `SphereSystem.js` — voxel → sfere con `fillCoefficient`
 - [x] Tetraedri: `TetrahedralMesh.js` — cubo → 5 tetraedri
+- [x] Fase 8: VideoKeyframeExtraction integrato
 - [ ] Fase 6: FEM solver avanzato (testare e migliorare)
-- [ ] Fase 8: keyframe extraction da video (nuovo modulo)
 
 ### Prossimi step
 
