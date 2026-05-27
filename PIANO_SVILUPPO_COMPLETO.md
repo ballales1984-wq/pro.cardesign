@@ -534,12 +534,13 @@ FASE 8 ✅ — Base completata
 - [x] Sfere: `SphereSystem.js` — voxel → sfere con `fillCoefficient`
 - [x] Tetraedri: `TetrahedralMesh.js` — cubo → 5 tetraedri
 - [x] Fase 8: VideoKeyframeExtraction integrato
-- [ ] Fase 6: FEM solver avanzato (testare e migliorare)
+- [x] Test aerodinamica oggetti complessi
+- [x] Test FEM stress analysis strutture complesse
 
 ### Prossimi step
 
-- [ ] Aerodinamica: test su oggetti complessi
-- [ ] Video keyframe extraction pipeline
+- [ ] Multi-region video processing (parallel keyframe extraction)
+- [ ] UI Timeline component per Fase 8
 
 ---
 

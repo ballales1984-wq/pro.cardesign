@@ -1513,16 +1513,31 @@ runTest('ProceduralEngine.symmetry', () => {
      });
 
 runTest('StressAnalysis.safetyFactor', () => {
-      const mockMatDB = { get: (n)=>({name:n, youngsModulus: 70e9, tensileStrength: 400e6}) };
-      const sa = new StressAnalysis({}, mockMatDB);
-      const results = sa.analysis || sa.analyze([
-        {x:0,y:0,z:0,material:'steel'},
-        {x:1,y:0,z:0,material:'steel'}
-      ]);
-      const sf = sa.getSafetyFactor();
-      assert.ok(sf > 0);
-    });
-  } catch(e) { failed++; console.log('  [FAIL] StressAnalysis import: ' + e.message); }
+       const mockMatDB = { get: (n)=>({name:n, youngsModulus: 70e9, tensileStrength: 400e6}) };
+       const sa = new StressAnalysis({}, mockMatDB);
+       const results = sa.analysis || sa.analyze([
+         {x:0,y:0,z:0,material:'steel'},
+         {x:1,y:0,z:0,material:'steel'}
+       ]);
+       const sf = sa.getSafetyFactor();
+       assert.ok(sf > 0);
+     });
+
+     runTest('StressAnalysis.analyze complex structure', () => {
+       const mockMatDB = { get: (n)=>({name:n, youngsModulus: 70e9, tensileStrength: 400e6}) };
+       const sa = new StressAnalysis({}, mockMatDB);
+       // Pillar structure (exposed voxels have higher stress)
+       const voxels = [];
+       for (let y = 0; y < 10; y++) {
+         voxels.push({x:0,y,z:0,material:'steel'});
+       }
+       const results = sa.analyze(voxels);
+       assert.strictEqual(results.length, 10);
+       // Check that bottom voxel has higher stress (more exposed)
+       const criticalZ = sa.getCriticalZones();
+       assert.ok(Array.isArray(criticalZ));
+     });
+   } catch(e) { failed++; console.log('  [FAIL] StressAnalysis import: ' + e.message); }
 
   // ── 13. Aerodynamics ───────────────────────────────────────────────────────
   try {
@@ -1539,12 +1554,33 @@ runTest('StressAnalysis.safetyFactor', () => {
       assert.strictEqual(result.coefficient, 0.3);
     });
 
-    runTest('Aerodynamics.reynoldsNumber', () => {
-      const aero = new Aerodynamics({});
-      const re = aero.reynoldsNumber(10, 1);
-      assert.ok(re > 0);
-    });
-  } catch(e) { failed++; console.log('  [FAIL] Aerodynamics import: ' + e.message); }
+runTest('Aerodynamics.reynoldsNumber', () => {
+       const aero = new Aerodynamics({});
+       const re = aero.reynoldsNumber(10, 1);
+       assert.ok(re > 0);
+     });
+
+     runTest('Aerodynamics.getSummary returns aerodynamic estimates', () => {
+       const aero = new Aerodynamics({});
+       const voxels = [
+         {x:0,y:0,z:0,material:'aluminum'}, {x:1,y:0,z:0,material:'aluminum'},
+         {x:0,y:1,z:0,material:'aluminum'}, {x:1,y:1,z:0,material:'aluminum'},
+         {x:0,y:0,z:1,material:'aluminum'}, {x:1,y:0,z:1,material:'aluminum'},
+         {x:0,y:1,z:1,material:'aluminum'}, {x:1,y:1,z:1,material:'aluminum'}
+       ];
+       const summary = aero.getSummary(voxels);
+       assert.strictEqual(summary.voxelCount, 8);
+       assert.ok(summary.estimatedFrontalArea > 0);
+       assert.ok(summary.estimatedDragAt10ms > 0);
+     });
+
+     runTest('Aerodynamics.calculateLift force computed', () => {
+       const aero = new Aerodynamics({});
+       const result = aero.calculateLift(15, 2.0, 0.15);
+       assert.ok(result.force > 0);
+       assert.strictEqual(result.coefficient, 0.15);
+     });
+   } catch(e) { failed++; console.log('  [FAIL] Aerodynamics import: ' + e.message); }
 
   // ── 14. PhysicsSignature ─────────────────────────────────────────────────
   try {

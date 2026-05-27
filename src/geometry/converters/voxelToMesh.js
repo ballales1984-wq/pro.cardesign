@@ -4,6 +4,7 @@
  * Converts the voxel grid into a THREE.BufferGeometry.
  * Uses face-culling for the flat-cubes path (non-uniform scale aware).
  * Uses a generaic MC-like surface path for smooth output.
+ * Wireframe mode renders all voxel edges for internal structure visualization.
  *
  * Returns: { geometry: THREE.BufferGeometry, metadata: { voxelSize, bounds, voxelsConverted } }
  */
@@ -18,7 +19,8 @@ import * as THREE from 'three';
  * @param {Iterable} voxelDataSource — iterable of {x, y, z, scale}
  * @param {Object} [opts]
  * @param {number} [opts.voxelSize=1]
- * @param {boolean} [opts.flatCubes=false]
+ * @param {boolean} [opts.flatCubes=false] - show external surfaces only
+ * @param {boolean} [opts.wireframe=false] - show all voxel edges (internal + external)
  * @param {number} [opts.faceSubdivisions=1] number of grid cells per emitted face
  * @returns {{ geometry, metadata }}
  */
@@ -26,6 +28,7 @@ export function voxelToMesh(voxelDataSource, opts) {
   opts = opts || {};
   var voxelSize = opts.voxelSize !== undefined ? opts.voxelSize : 1;
   var faceSubdivisions = Math.max(1, Math.floor(opts.faceSubdivisions || 1));
+  var wireframe = opts.wireframe || false;
 
   var voxelList = [];
   var minX = Infinity, minY = Infinity, minZ = Infinity;
@@ -49,9 +52,14 @@ export function voxelToMesh(voxelDataSource, opts) {
     return { geometry: _makeGeo([], []), metadata: { voxelSize: voxelSize, bounds: { min: _bmin, max: _bmax }, voxelsConverted: 0 } };
   }
 
-  var geometry = opts.flatCubes
-    ? _flatCubes(voxelList, voxelSize, faceSubdivisions)
-    : _surfaceCubes(voxelList, voxelSize, faceSubdivisions);
+  var geometry;
+  if (wireframe) {
+    geometry = _wireframe(voxelList, voxelSize);
+  } else {
+    geometry = opts.flatCubes
+      ? _flatCubes(voxelList, voxelSize, faceSubdivisions)
+      : _surfaceCubes(voxelList, voxelSize, faceSubdivisions);
+  }
 
   return { geometry: geometry, metadata: { voxelSize: voxelSize, bounds: { min: _bmin, max: _bmax }, voxelsConverted: voxelList.length } };
 }
@@ -105,6 +113,52 @@ function _flatCubes(voxels, vs, faceSubdivisions) {
 function _surfaceCubes(voxels, vs, faceSubdivisions) {
   return _flatCubes(voxels, vs, faceSubdivisions);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Wireframe path — all edges for internal structure visualization
+// ═══════════════════════════════════════════════════════════════════════════
+
+function _wireframe(voxels, vs) {
+  const positions = [];
+
+  for (const v of voxels) {
+    const minX = v.x * vs;
+    const minY = v.y * vs;
+    const minZ = v.z * vs;
+    const maxX = (v.x + v.scale[0]) * vs;
+    const maxY = (v.y + v.scale[1]) * vs;
+    const maxZ = (v.z + v.scale[2]) * vs;
+
+    // 12 edges of a cube (each edge has 2 vertices)
+    const edges = [
+      // bottom face
+      [minX, minY, minZ], [maxX, minY, minZ],
+      [maxX, minY, minZ], [maxX, minY, maxZ],
+      [maxX, minY, maxZ], [minX, minY, maxZ],
+      [minX, minY, maxZ], [minX, minY, minZ],
+      // top face
+      [minX, maxY, minZ], [maxX, maxY, minZ],
+      [maxX, maxY, minZ], [maxX, maxY, maxZ],
+      [maxX, maxY, maxZ], [minX, maxY, maxZ],
+      [minX, maxY, maxZ], [minX, maxY, minZ],
+      // vertical edges
+      [minX, minY, minZ], [minX, maxY, minZ],
+      [maxX, minY, minZ], [maxX, maxY, minZ],
+      [maxX, minY, maxZ], [maxX, maxY, maxZ],
+      [minX, minY, maxZ], [minX, maxY, maxZ],
+    ];
+
+    for (const [x, y, z] of edges) {
+      positions.push(x, y, z);
+    }
+  }
+
+  return _makeGeo(positions, []);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Face-culling helper for flat cubes
+// ═══════════════════════════════════════════════════════════════════════════
 
 function _emitQuadTriangles(positions, normals, verts, normal, subdivisions) {
   subdivisions = Math.max(1, subdivisions || 1);
