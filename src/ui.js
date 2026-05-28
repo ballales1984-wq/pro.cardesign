@@ -6,18 +6,19 @@
 import { ComponentLibrary } from './core/component-library.js';
 
 export class UI {
-     constructor(opts) {
-       this.voxelEngine = opts.voxelEngine;
-       this.materialDB = opts.materialDB;
-       this.moduleSystem = opts.moduleSystem;
-       this.physics = opts.physics;
-       this.meshExporter = opts.meshExporter;
-       this.proceduralEngine = opts.proceduralEngine;
-       this.controls = opts.controls;
-       this.camera = opts.camera;
-       this.renderer = opts.renderer;
-       this.scene = opts.scene;
-       this.physicsSignature = opts.physicsSignature;
+      constructor(opts) {
+        this.voxelEngine = opts.voxelEngine;
+        this.materialDB = opts.materialDB;
+        this.moduleSystem = opts.moduleSystem;
+        this.physics = opts.physics;
+        this.meshExporter = opts.meshExporter;
+        this.proceduralEngine = opts.proceduralEngine;
+        this.controls = opts.controls;
+        this.camera = opts.camera;
+        this.renderer = opts.renderer;
+        this.scene = opts.scene;
+        this.physicsSignature = opts.physicsSignature;
+        this.collisionDetection = opts.collisionDetection;
 
       // Essential setup only - defer heavy work to avoid blocking main thread
       this._setupToolbar();
@@ -534,15 +535,15 @@ runDeferred(() => {
   // Modules tree
   _populateModules() { this._renderModuleTree(); }
 
-   _renderModuleTree() {
-     var container = document.getElementById('modules-tree');
-     container.textContent = '';
-     var tree = this.moduleSystem.getTree();
-     if (!tree) return;
-     this._renderModuleNode(container, tree, 0);
-   }
+_renderModuleTree() {
+      var container = document.getElementById('modules-tree');
+      container.textContent = '';
+      var tree = this.moduleSystem.getTree();
+      if (!tree) return;
+      this._renderModuleNode(container, tree, 0);
+    }
 
-  _renderModuleNode(parent, node, depth) {
+    _renderModuleNode(parent, node, depth) {
     var self = this;
      var row = document.createElement('div');
      row.className = 'module-node' + (node.id === this.voxelEngine.activeModule ? ' selected' : '');
@@ -574,12 +575,12 @@ runDeferred(() => {
 
     parent.appendChild(row);
 
-    if (node.children && node.children.length > 0) {
-      for (var c = 0; c < node.children.length; c++) {
-        this._renderModuleNode(parent, node.children[c], depth + 1);
+if (node.children && node.children.length > 0) {
+        for (var c = 0; c < node.children.length; c++) {
+          this._renderModuleNode(parent, node.children[c], depth + 1);
+        }
       }
     }
-  }
 
     // Properties Panel
     _showProperties(voxelOrModule) {
@@ -784,9 +785,27 @@ runDeferred(() => {
         '<div class="prop-row"><span class="prop-label">Drag a 10 m/s</span><span class="prop-value">' + drag10.toFixed(2) + ' N</span></div>' +
         '<div class="prop-row"><span class="prop-label">Drag a 30 m/s</span><span class="prop-value">' + drag30.toFixed(2) + ' N</span></div>' +
         '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">0.30</span></div>';
-     } catch(e) { /* modulo non disponibile */ }
-     
-     // ── Firma Fisica Oggetto ────────────────────────
+      } catch(e) { /* modulo non disponibile */ }
+      
+      // ── Collision Detection ────────────────────────
+      try {
+        var allVoxels = Array.from(this.voxelEngine.voxelsIterator());
+        if (this.collisionDetection && allVoxels.length > 0) {
+          var collisionResult = this.collisionDetection.checkSelfCollision();
+          html += '<hr style="border-color:var(--border);margin:8px 0;">' +
+            '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">💥 Rilevamento Collisioni:</div>' +
+            '<div class="prop-row"><span class="prop-label">Collisioni Rilevate</span><span class="prop-value">' + 
+              (collisionResult.collides ? 'SI' : 'NO') + '</span></div>';
+          if (collisionResult.collides) {
+            html += '<div class="prop-row"><span class="prop-label">Punti di Contatto</span><span class="prop-value">' + 
+              collisionResult.points.length + '</span></div>' +
+              '<div class="prop-row"><span class="prop-label">Profondità Penetrazione</span><span class="prop-value">' + 
+              collisionResult.depth.toFixed(3) + ' unit</span></div>';
+          }
+        }
+      } catch(e) { /* modulo non disponibile */ }
+      
+      // ── Firma Fisica Oggetto ────────────────────────
      try {
        const signature = this.physicsSignature.generate(allVoxels);
        html += '<hr style="border-color:var(--border);margin:8px 0;">' +

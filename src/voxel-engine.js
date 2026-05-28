@@ -13,6 +13,7 @@ import { VertexEditTool } from './core/vertex-edit-tool.js';
 import { MoveTool } from './core/move-tool.js';
 import { MeshPointEditTool } from './core/mesh-point-edit-tool.js';
 import { voxelToMesh } from './geometry/converters/voxelToMesh.js';
+import { LODManager } from './core/lod-manager.js';
 
 export class VoxelEngine {
     constructor(scene, materialDB, moduleSystem, camera, renderer, controls) {
@@ -43,6 +44,10 @@ export class VoxelEngine {
         // Surface mesh for external surface extraction
         this.surfaceMesh = null;
         this.showSurfaceMesh = false;
+        
+        // Wireframe mesh for internal structure visualization
+        this.wireframeMesh = null;
+        this.showWireframe = false;
 
         this.voxelGroup = new THREE.Group();
         this.scene.add(this.voxelGroup);
@@ -85,7 +90,7 @@ export class VoxelEngine {
         this.activeTool = 'add';
         this.cameraNavigationMode = false;
 
-        this._history = [];
+this._history = [];
         this._redoStack = [];
         this._maxHistory = 50;
         this._maxRedo = 50;
@@ -95,10 +100,13 @@ export class VoxelEngine {
         this.chunkLoadRadius = 3;
         this.chunkUnloadRadius = 4;
 
-         this._setupEvents();
+        // Initialize LOD Manager
+        this.lodManager = new LODManager(this.camera, this);
+
+        this._setupEvents();
          this._setupScalePanelListeners();
-         
-         // Initialize ScalingTool
+          
+          // Initialize ScalingTool
          this.scalingTool = new ScalingTool(this, this.scene, this.camera, this.renderer);
          
          // Initialize SculptTool
@@ -1226,25 +1234,67 @@ fromJSON(data) {
          }
      }
 
-       update(deltaTime) {
-          if (this.ghost && this.ghost.visible) {
-            // Cache performance.now() to avoid multiple calls
-            const time = performance.now() * 0.006;
-            this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
-          }
-          
-          // Update surface mesh for external visualization
-          this.updateSurfaceMesh();
-          
-          // Dynamic chunk loading/unloading (throttled for performance)
-          this._chunkUpdateFrame++;
-          if (this._chunkUpdateFrame >= this._chunkUpdateInterval) {
-            this._chunkUpdateFrame = 0;
-            this._updateChunksBasedOnCamera();
-          }
-        }
+       update(deltaTime, lodManager) {
+if (this.ghost && this.ghost.visible) {
+             // Cache performance.now() to avoid multiple calls
+             const time = performance.now() * 0.006;
+             this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
+           }
+           
+           // Update surface mesh for external visualization
+           this.updateSurfaceMesh();
+           
+           // Update wireframe mesh for internal visualization
+           this.updateWireframeMesh();
+           
+           // Update LOD automatically using internal lodManager
+           if (this.lodManager) {
+             this.lodManager.update();
+             this._updateInstanceVisibility();
+           }
+           
+           // Dynamic chunk loading/unloading (throttled for performance)
+           this._chunkUpdateFrame++;
+           if (this._chunkUpdateFrame >= this._chunkUpdateInterval) {
+             this._chunkUpdateFrame = 0;
+             this._updateChunksBasedOnCamera();
+           }
+         }
 
-      // ── Surface Mesh for External Surface Extraction ────────
+       /** Update instance visibility based on LOD state */
+       _updateInstanceVisibility() {
+         // Iterate through all chunks and voxels to update their visibility based on LOD
+         for (const chunk of this.chunks.values()) {
+           for (const { x, y, z, voxelData } of chunk.voxelsIterator()) {
+             // Skip if no lod property (shouldn't happen after lodManager.update() but safe)
+             if (voxelData.lod === undefined) continue;
+             
+             const worldKey = this._gridKey({ x, y, z });
+             const matName = voxelData.material;
+             const instMap = this.keyToInstance.get(matName);
+             const mesh = this.instancedMeshes.get(matName);
+             
+             if (instMap && mesh) {
+               const instanceId = instMap.get(worldKey);
+               if (instanceId !== undefined) {
+                 if (voxelData.lod === 'hidden') {
+                   // Hide instance by moving it far away (similar to _removeVoxelSilently)
+                   const hiddenMatrix = new THREE.Matrix4();
+                   hiddenMatrix.makeTranslation(0, -999999, 0);
+                   mesh.setMatrixAt(instanceId, hiddenMatrix);
+                 } else {
+                   // Show instance at correct position
+                   const worldPos = this._worldPos({ x, y, z });
+                   this._setInstanceMatrix(mesh, instanceId, worldPos, voxelData.scale);
+                 }
+                 mesh.instanceMatrix.needsUpdate = true;
+               }
+             }
+           }
+         }
+       }
+
+       // ── Surface Mesh for External Surface Extraction ────────
       /**
        * Updates the surface mesh showing only external faces
        * Uses face-culling to hide internal faces between adjacent voxels
@@ -1303,23 +1353,78 @@ fromJSON(data) {
           this.surfaceMesh.geometry = result.geometry;
         }
         
-        // Show/hide based on current setting
+// Show/hide based on current setting
         this.surfaceMesh.visible = this.showSurfaceMesh;
         // Hide voxel group when surface mesh is shown
         this.voxelGroup.visible = !this.showSurfaceMesh;
-      },
+      }
 
-      /** Toggle surface mesh visibility */
-      toggleSurfaceMesh() {
-        this.showSurfaceMesh = !this.showSurfaceMesh;
-        if (this.surfaceMesh) {
-          this.surfaceMesh.visible = this.showSurfaceMesh;
-          // Hide/show voxel group based on surface mesh visibility
-          this.voxelGroup.visible = !this.showSurfaceMesh;
-        }
-      },
+/** Toggle surface mesh visibility */
+       toggleSurfaceMesh() {
+         this.showSurfaceMesh = !this.showSurfaceMesh;
+         if (this.surfaceMesh) {
+           this.surfaceMesh.visible = this.showSurfaceMesh;
+           // Hide/show voxel group based on surface mesh visibility
+           this.voxelGroup.visible = !this.showSurfaceMesh;
+         }
+       }
 
-      // ── Dynamic Chunk Loading/Unloading ────────────────────────
+       /** Update wireframe mesh (all voxel edges) */
+       updateWireframeMesh() {
+         const voxels = [];
+         for (const chunk of this.chunks.values()) {
+           for (const { x, y, z, voxelData } of chunk.voxelsIterator()) {
+             voxels.push({
+               x: voxelData.x,
+               y: voxelData.y,
+               z: voxelData.z,
+               scale: voxelData.scale || [1, 1, 1]
+             });
+           }
+         }
+
+         if (voxels.length === 0) {
+           if (this.wireframeMesh) {
+             this.scene.remove(this.wireframeMesh);
+             this.wireframeMesh.geometry.dispose();
+             if (this.wireframeMesh.material) this.wireframeMesh.material.dispose();
+             this.wireframeMesh = null;
+           }
+           return;
+         }
+
+         const result = voxelToMesh(voxels, {
+           voxelSize: this.voxelSize,
+           wireframe: true
+         });
+
+         if (!this.wireframeMesh) {
+           const material = new THREE.MeshBasicMaterial({
+             color: 0xffffff,
+             wireframe: true,
+             transparent: true,
+             opacity: 0.3
+           });
+           this.wireframeMesh = new THREE.Mesh(result.geometry, material);
+           this.wireframeMesh.name = 'wireframe-mesh';
+           this.scene.add(this.wireframeMesh);
+         } else {
+           this.wireframeMesh.geometry.dispose();
+           this.wireframeMesh.geometry = result.geometry;
+         }
+
+         this.wireframeMesh.visible = this.showWireframe;
+       }
+
+       /** Toggle wireframe mesh visibility */
+       toggleWireframe() {
+         this.showWireframe = !this.showWireframe;
+         if (this.wireframeMesh) {
+           this.wireframeMesh.visible = this.showWireframe;
+         }
+       }
+
+       // ── Dynamic Chunk Loading/Unloading ────────────────────────
       /**
        * Loads chunks near the camera and unloads distant chunks
        * Called periodically from update() to manage memory usage

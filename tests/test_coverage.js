@@ -305,19 +305,32 @@ this.setAttribute = (name, attr) => {
        this.getuv = () => null;
 
  this.computeBoundingSphere = function(){ this.boundingSphere={ getCenter:_=>new Vec3(), radius:1 }; };
-          this.clone = function(){
-            var c = Object.create(this);
-            c.attributes = {};
-            if (this.attributes) {
-              for (var k in this.attributes) {
-                c.attributes[k] = Object.create(this.attributes[k]);
+this.clone = function(){
+              var c = Object.create(this);
+              c.attributes = {};
+              if (this.attributes) {
+                for (var k in this.attributes) {
+                  c.attributes[k] = Object.create(this.attributes[k]);
+                }
               }
-            }
-            c.index = this.index ? Object.create(this.index) : null;
-            c.morphAttributes = this.morphAttributes ? Object.create(this.morphAttributes) : {};
-            c.groups = this.groups ? this.groups.slice() : [];
-            return c;
-          };
+              // Deep copy index with count property
+              if (this.index) {
+                c.index = {
+                  count: this.index.count,
+                  array: this.index.array,
+                  getX: this.index.getX,
+                  getY: this.index.getY,
+                  getZ: this.index.getZ
+                };
+              } else {
+                c.index = null;
+              }
+              c.morphAttributes = this.morphAttributes ? Object.create(this.morphAttributes) : {};
+              c.groups = this.groups ? this.groups.slice() : [];
+              // Preserve isBufferGeometry flag
+              c.isBufferGeometry = this.isBufferGeometry;
+              return c;
+            };
           this.toNonIndexed = function(){
             var c = Object.create(this);
             c.attributes = {};
@@ -336,10 +349,12 @@ this.setAttribute = (name, attr) => {
             return this;
           };
           this.computeVertexNormals = function(){};
-          this.computeBoundingBox = function(){ this.boundingBox={ min:{x:-1,y:-1,z:-1}, max:{x:1,y:1,z:1} }; };
-          this.dispose = function(){};
-          return this;
-    },
+this.computeBoundingBox = function(){ this.boundingBox={ min:{x:-1,y:-1,z:-1}, max:{x:1,y:1,z:1} }; };
+           this.dispose = function(){};
+           // THREE.js BufferGeometry type marker
+           this.isBufferGeometry = true;
+           return this;
+     },
     Float32BufferAttribute: function(arr, itemSize){
       this.array = Array.isArray(arr) ? new Float32Array(arr) : arr;
       this.itemSize = itemSize;

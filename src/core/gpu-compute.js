@@ -205,32 +205,9 @@ export class GPUCompute {
       ]
     });
   }
-}
-
-/**
- * Off-screen LOD Worker for large scenes
- */
-export class LODWorker {
-  constructor() {
-    this.threshold = 10000;
-  }
-
-  shouldUseWorker(voxelCount) {
-    return voxelCount > this.threshold && typeof Worker !== 'undefined';
-  }
-
-  update(voxels, camera) {
-    return this._cpuUpdate(voxels, camera);
-  }
-
-  _cpuUpdate(voxels, camera) {
-    const gpu = new GPUCompute();
-    return gpu._cpuLODUpdate(voxels, camera);
-  }
-}
 
   /**
-   * Offload to Web Worker for large voxel sets
+   * Offscreen LOD Worker for large scenes
    */
   _workerLODUpdate(voxels, cameraPos) {
     // For large voxel sets (>10k), offload to worker
@@ -256,3 +233,29 @@ export class LODWorker {
     };
   }
 }
+
+/**
+ * Off-screen LOD Worker for large scenes
+ */
+export class LODWorker {
+  constructor() {
+    this.threshold = 10000;
+  }
+
+  shouldUseWorker(voxelCount) {
+    return voxelCount > this.threshold && typeof Worker !== 'undefined';
+  }
+
+  update(voxels, camera) {
+    return this._cpuUpdate(voxels, camera);
+  }
+
+  _cpuUpdate(voxels, camera) {
+    const gpu = new GPUCompute();
+    return gpu._cpuLODUpdate(voxels, camera);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  End of file
+// ═══════════════════════════════════════════════════════════════════════════

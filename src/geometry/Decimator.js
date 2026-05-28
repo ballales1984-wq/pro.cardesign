@@ -30,6 +30,11 @@ export class GeometryDecimator {
     // calling toNonIndexed() on them can produce a broken geometry.
     if (geo.index !== null && geo.index !== undefined) {
       geo = geo.toNonIndexed();
+      // After toNonIndexed, ensure position attribute still exists
+      if (!geo || !geo.attributes || !geo.attributes.position) {
+        console.warn("Decimazione fallita (toNonIndexed produced invalid geometry), ritorno geometria originale");
+        return geometry;
+      }
     }
 
     // Rimuovi attributi non necessari
@@ -40,8 +45,20 @@ export class GeometryDecimator {
     try {
       const simplified = this.simplifyModifier.modify(geo, targetCount);
 
-      if (!simplified || !simplified.attributes || !simplified.attributes.position) {
+      // Validate simplified geometry - real SimplifyModifier may return null/invalid for mock data
+      if (!simplified || simplified.isBufferGeometry !== true) {
+        console.warn("Decimazione fallita (simplified is not a BufferGeometry), ritorno geometria originale");
+        return geometry;
+      }
+      
+      if (!simplified.attributes || !simplified.attributes.position) {
         console.warn("Decimazione fallita (simplified geometry invalid), ritorno geometria originale");
+        return geometry;
+      }
+      
+      // Additional safety: ensure position attribute has count
+      if (simplified.attributes.position.count === null || simplified.attributes.position.count === undefined) {
+        console.warn("Decimazione fallita (position.count missing), ritorno geometria originale");
         return geometry;
       }
 

@@ -16,6 +16,7 @@ import { StressAnalysis } from './core/stress-analysis.js';
 import { Aerodynamics } from './core/aerodynamics.js';
 import { PhysicsSignature } from './core/physics-signature.js';
 import { LODManager } from './core/lod-manager.js';
+import { CollisionDetection } from './core/collision-detection.js';
 
 function showFatalError(message) {
   const box = document.createElement('div');
@@ -120,22 +121,24 @@ function boot() {
     const lodManager = new LODManager(camera, voxelEngine);
     const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
     const aerodynamics = new Aerodynamics(meshExporter);
-    const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis, aerodynamics);
+     const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis, aerodynamics);
+     const collisionDetection = new CollisionDetection(voxelEngine);
 
-   try {
-     new UI({
-       voxelEngine,
-       materialDB,
-       moduleSystem,
-       physics,
-       meshExporter,
-       proceduralEngine,
-       controls,
-       camera,
-       renderer,
-       scene,
-       physicsSignature
-     });
+    try {
+      new UI({
+        voxelEngine,
+        materialDB,
+        moduleSystem,
+        physics,
+        meshExporter,
+        proceduralEngine,
+        controls,
+        camera,
+        renderer,
+        scene,
+        physicsSignature,
+        collisionDetection
+      });
    } catch (err) {
      console.error('[UI] init failed:', err);
      showFatalError(err.stack || err.message);
@@ -195,7 +198,7 @@ controls.update();
       fpsTimer = time;
     }
 
-    voxelEngine.update(time * 0.001);
+     voxelEngine.update(time * 0.001, lodManager);
     renderer.render(scene, camera);
   }
 

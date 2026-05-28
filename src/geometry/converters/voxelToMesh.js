@@ -65,6 +65,79 @@ export function voxelToMesh(voxelDataSource, opts) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  Face Quad Helpers (shared by flatCubes and surfaceCubes)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function _quadPoint(verts, u, v) {
+  var a = verts[0], b = verts[1], c = verts[2], d = verts[3];
+  var wA = (1 - u) * (1 - v);
+  var wB = u * (1 - v);
+  var wC = u * v;
+  var wD = (1 - u) * v;
+  return [
+    a[0] * wA + b[0] * wB + c[0] * wC + d[0] * wD,
+    a[1] * wA + b[1] * wB + c[1] * wC + d[1] * wD,
+    a[2] * wA + b[2] * wB + c[2] * wC + d[2] * wD,
+  ];
+}
+
+function _emitQuadTriangles(positions, normals, verts, normal, subdivisions) {
+  subdivisions = Math.max(1, subdivisions || 1);
+  for (var iy = 0; iy < subdivisions; iy++) {
+    var v0 = iy / subdivisions;
+    var v1 = (iy + 1) / subdivisions;
+    for (var ix = 0; ix < subdivisions; ix++) {
+      var u0 = ix / subdivisions;
+      var u1 = (ix + 1) / subdivisions;
+      var cell = [
+        _quadPoint(verts, u0, v0),
+        _quadPoint(verts, u1, v0),
+        _quadPoint(verts, u1, v1),
+        _quadPoint(verts, u0, v1),
+      ];
+      var order = [0, 1, 2, 0, 2, 3];
+      for (var i = 0; i < order.length; i++) {
+        var p = cell[order[i]];
+        positions.push(p[0], p[1], p[2]);
+        normals.push(normal[0], normal[1], normal[2]);
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Geometry builder — returns real THREE.BufferGeometry when THREE is available
+// ═══════════════════════════════════════════════════════════════════════════
+
+function _makeGeo(positions, normals) {
+  var T = ((typeof globalThis !== 'undefined' && globalThis.THREE) || THREE || {});
+  if (T.BufferGeometry && T.Float32BufferAttribute) {
+    var geo = new T.BufferGeometry();
+    if (positions.length > 0) {
+      geo.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('normal',   new T.Float32BufferAttribute(normals.length ? normals : positions, 3));
+      geo.computeBoundingSphere();
+    } else {
+      geo.setAttribute('position', new T.Float32BufferAttribute(new Float32Array(0), 3));
+    }
+    return geo;
+  }
+  // Fallback: plain object with expected shape (used only when THREE is unavailable)
+  var arr = new Float32Array(positions);
+  return {
+    attributes: {
+      position: { array: arr, count: positions.length / 3, needsUpdate: false },
+      normal:   { array: new Float32Array(normals.length ? normals : positions), count: (normals.length || positions.length) / 3, needsUpdate: false },
+    },
+    index: null,
+    boundingSphere: null,
+    boundingBox: null,
+    computeVertexNormals: function(){},
+    computeBoundingSphere: function(){},
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  Flat-cubes path — per-voxel AABB cube with face-culling (scale-aware)
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -185,78 +258,9 @@ function _wireframe(voxels, vs) {
     }
   }
 
-  return _makeGeo(positions, []);
+return _makeGeo(positions, []);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Face-culling helper for flat cubes
+//  End of file
 // ═══════════════════════════════════════════════════════════════════════════
-
-function _emitQuadTriangles(positions, normals, verts, normal, subdivisions) {
-  subdivisions = Math.max(1, subdivisions || 1);
-  for (var iy = 0; iy < subdivisions; iy++) {
-    var v0 = iy / subdivisions;
-    var v1 = (iy + 1) / subdivisions;
-    for (var ix = 0; ix < subdivisions; ix++) {
-      var u0 = ix / subdivisions;
-      var u1 = (ix + 1) / subdivisions;
-      var cell = [
-        _quadPoint(verts, u0, v0),
-        _quadPoint(verts, u1, v0),
-        _quadPoint(verts, u1, v1),
-        _quadPoint(verts, u0, v1),
-      ];
-      var order = [0, 1, 2, 0, 2, 3];
-      for (var i = 0; i < order.length; i++) {
-        var p = cell[order[i]];
-        positions.push(p[0], p[1], p[2]);
-        normals.push(normal[0], normal[1], normal[2]);
-      }
-    }
-  }
-}
-
-function _quadPoint(verts, u, v) {
-  var a = verts[0], b = verts[1], c = verts[2], d = verts[3];
-  var wA = (1 - u) * (1 - v);
-  var wB = u * (1 - v);
-  var wC = u * v;
-  var wD = (1 - u) * v;
-  return [
-    a[0] * wA + b[0] * wB + c[0] * wC + d[0] * wD,
-    a[1] * wA + b[1] * wB + c[1] * wC + d[1] * wD,
-    a[2] * wA + b[2] * wB + c[2] * wC + d[2] * wD,
-  ];
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Geometry builder — returns real THREE.BufferGeometry when THREE is available
-// ═══════════════════════════════════════════════════════════════════════════
-
-function _makeGeo(positions, normals) {
-  var T = ((typeof globalThis !== 'undefined' && globalThis.THREE) || THREE || {});
-  if (T.BufferGeometry && T.Float32BufferAttribute) {
-    var geo = new T.BufferGeometry();
-    if (positions.length > 0) {
-      geo.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
-      geo.setAttribute('normal',   new T.Float32BufferAttribute(normals.length ? normals : positions, 3));
-      geo.computeBoundingSphere();
-    } else {
-      geo.setAttribute('position', new T.Float32BufferAttribute(new Float32Array(0), 3));
-    }
-    return geo;
-  }
-  // Fallback: plain object with expected shape (used only when THREE is unavailable)
-  var arr = new Float32Array(positions);
-  return {
-    attributes: {
-      position: { array: arr, count: positions.length / 3, needsUpdate: false },
-      normal:   { array: new Float32Array(normals.length ? normals : positions), count: (normals.length || positions.length) / 3, needsUpdate: false },
-    },
-    index: null,
-    boundingSphere: null,
-    boundingBox: null,
-    computeVertexNormals: function(){},
-    computeBoundingSphere: function(){},
-  };
-}

@@ -26,7 +26,7 @@
 
 ## ⏳ PHASE 4: ADVANCED FUNCTIONALITY
 - [ ] Import deformation analysis
-- [ ] Collision detection
+- [x] Collision detection
 - [ ] Basic aerodynamics
 
 ## ✅ PHASE 5: MATERIAL REPRESENTATION (COMPLETED)
@@ -66,7 +66,7 @@
 - **Marching Cubes**: Implemented for smooth surface extraction
 - **LOD**: Dynamic LOD based on camera distance
 - **Procedural**: Rule-based geometry generation with booleans
-- **Physics**: Stress analysis, aerodynamics, signature aggregation
+- **Physics**: Stress analysis, aerodynamics, signature aggregation, collision detection
 - **Materials**: Extended metadata (friction, fatigue, thermal, porosity)
 - **Components**: wheel_26/27/28, beam_200/400
 - **Test Coverage**: 42/42 JavaScript, 36/36 Python
