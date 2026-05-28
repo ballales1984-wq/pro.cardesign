@@ -3172,9 +3172,22 @@ runTest('VideoKeyframeExtraction extractKeyframesParallel splits regions', () =>
         ];
         const result = gpu._cpuLODUpdate(voxels, { x: 0, y: 0, z: 0 });
         assert.strictEqual(result[0].lod, 'full');
-        assert.strictEqual(result[1].lod, 'hidden');
+assert.strictEqual(result[1].lod, 'hidden');
       });
     } catch(e) { failed++; console.log('  [FAIL] GPUCompute import: ' + e.message); }
+
+    // ── GPUCompute additional tests ───────────────────────────────────────────
+    try {
+      const { GPUCompute } = await loadESM('src/core/gpu-compute.js');
+
+      runTest('GPUCompute._workerLODUpdate returns voxels', () => {
+        const gpu = new GPUCompute();
+        const voxels = [{ x: 0, y: 0, z: 0 }, { x: 100, y: 0, z: 0 }];
+        const result = gpu._workerLODUpdate(voxels, { x: 0, y: 0, z: 0 });
+        assert.ok(Array.isArray(result));
+        assert.strictEqual(result.length, 2);
+      });
+    } catch(e) { failed++; console.log('  [FAIL] GPUCompute worker tests: ' + e.message); }
 
     console.log(`\nResults: ${passed}/${passed + failed} passed, ${failed} failed`);
   console.log('─'.repeat(50));

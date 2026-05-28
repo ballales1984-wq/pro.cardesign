@@ -806,8 +806,17 @@ const chunkKey = this._getChunkKey(pos);
             this.freeIndices.set(matName, []);
           }
 
-          this.chunks.clear();
-          this.selectedVoxel = null;
+           this.chunks.clear();
+           // Clear surface mesh
+           if (this.surfaceMesh) {
+             this.scene.remove(this.surfaceMesh);
+             this.surfaceMesh.geometry.dispose();
+             if (this.surfaceMesh.material) {
+               this.surfaceMesh.material.dispose();
+             }
+             this.surfaceMesh = null;
+           }
+           this.selectedVoxel = null;
           this.clearHistory();
           this._onVoxelChanged();
         }
@@ -1217,26 +1226,104 @@ fromJSON(data) {
          }
      }
 
-      update(deltaTime) {
-         if (this.ghost && this.ghost.visible) {
-           // Cache performance.now() to avoid multiple calls
-           const time = performance.now() * 0.006;
-           this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
-         }
-         
-         // Dynamic chunk loading/unloading (throttled for performance)
-         this._chunkUpdateFrame++;
-         if (this._chunkUpdateFrame >= this._chunkUpdateInterval) {
-           this._chunkUpdateFrame = 0;
-           this._updateChunksBasedOnCamera();
-         }
-       }
- 
-     // ── Dynamic Chunk Loading/Unloading ────────────────────────
-     /**
-      * Loads chunks near the camera and unloads distant chunks
-      * Called periodically from update() to manage memory usage
-      */
+       update(deltaTime) {
+          if (this.ghost && this.ghost.visible) {
+            // Cache performance.now() to avoid multiple calls
+            const time = performance.now() * 0.006;
+            this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
+          }
+          
+          // Update surface mesh for external visualization
+          this.updateSurfaceMesh();
+          
+          // Dynamic chunk loading/unloading (throttled for performance)
+          this._chunkUpdateFrame++;
+          if (this._chunkUpdateFrame >= this._chunkUpdateInterval) {
+            this._chunkUpdateFrame = 0;
+            this._updateChunksBasedOnCamera();
+          }
+        }
+
+      // ── Surface Mesh for External Surface Extraction ────────
+      /**
+       * Updates the surface mesh showing only external faces
+       * Uses face-culling to hide internal faces between adjacent voxels
+       */
+      updateSurfaceMesh() {
+        // Get all voxels from the chunk system
+        const voxels = [];
+        for (const chunk of this.chunks.values()) {
+          for (const { x, y, z, voxelData } of chunk.voxelsIterator()) {
+            voxels.push({
+              x: voxelData.x,
+              y: voxelData.y,
+              z: voxelData.z,
+              scale: voxelData.scale || [1, 1, 1]
+            });
+          }
+        }
+        
+        if (voxels.length === 0) {
+          // Remove surface mesh if no voxels
+          if (this.surfaceMesh) {
+            this.scene.remove(this.surfaceMesh);
+            this.surfaceMesh.geometry.dispose();
+            if (this.surfaceMesh.material) {
+              this.surfaceMesh.material.dispose();
+            }
+            this.surfaceMesh = null;
+          }
+          return;
+        }
+        
+        // Generate surface mesh using voxelToMesh with face-culling (flatCubes:true)
+        const result = voxelToMesh(voxels, {
+          voxelSize: this.voxelSize,
+          flatCubes: true,  // Enable face-culling for external surface only
+          faceSubdivisions: 1
+        });
+        
+        // Create or update surface mesh
+        if (!this.surfaceMesh) {
+          const material = new THREE.MeshStandardMaterial({
+            color: 0x00d2ff,
+            flatShading: true,
+            metalness: 0.3,
+            roughness: 0.5,
+            transparent: true,
+            opacity: 0.8
+          });
+          
+          this.surfaceMesh = new THREE.Mesh(result.geometry, material);
+          this.surfaceMesh.name = 'surface-mesh';
+          this.scene.add(this.surfaceMesh);
+        } else {
+          // Update existing mesh geometry
+          this.surfaceMesh.geometry.dispose();
+          this.surfaceMesh.geometry = result.geometry;
+        }
+        
+        // Show/hide based on current setting
+        this.surfaceMesh.visible = this.showSurfaceMesh;
+        // Hide voxel group when surface mesh is shown
+        this.voxelGroup.visible = !this.showSurfaceMesh;
+      },
+
+      /** Toggle surface mesh visibility */
+      toggleSurfaceMesh() {
+        this.showSurfaceMesh = !this.showSurfaceMesh;
+        if (this.surfaceMesh) {
+          this.surfaceMesh.visible = this.showSurfaceMesh;
+          // Hide/show voxel group based on surface mesh visibility
+          this.voxelGroup.visible = !this.showSurfaceMesh;
+        }
+      },
+
+      // ── Dynamic Chunk Loading/Unloading ────────────────────────
+      /**
+       * Loads chunks near the camera and unloads distant chunks
+       * Called periodically from update() to manage memory usage
+       */
      _updateChunksBasedOnCamera() {
        if (!this.camera || !this.camera.position) return;
        

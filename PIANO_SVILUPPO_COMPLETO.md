@@ -520,6 +520,7 @@ FASE 8 ✅ — Completata
 FASE 9 ⏳ — GPU Compute
      WebGPU compute shaders per LOD
      Frame throttling per grandi scene
+     Web Worker offloading ✅ (CPU fallback implementato)
      Web Worker offloading
 
 ```
