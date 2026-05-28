@@ -331,30 +331,20 @@ this.clone = function(){
               c.isBufferGeometry = this.isBufferGeometry;
               return c;
             };
-          this.toNonIndexed = function(){
-            var c = Object.create(this);
-            c.attributes = {};
-            if (this.attributes) {
-              for (var k in this.attributes) {
-                c.attributes[k] = Object.create(this.attributes[k]);
-              }
-            }
-            c.index = null;
-            c.morphAttributes = this.morphAttributes ? Object.create(this.morphAttributes) : {};
-            c.groups = this.groups ? this.groups.slice() : [];
-            return c;
-          };
-          this.deleteAttribute = function(name){
-            delete this.attributes[name];
-            return this;
-          };
-          this.computeVertexNormals = function(){};
-this.computeBoundingBox = function(){ this.boundingBox={ min:{x:-1,y:-1,z:-1}, max:{x:1,y:1,z:1} }; };
-           this.dispose = function(){};
-           // THREE.js BufferGeometry type marker
-           this.isBufferGeometry = true;
-           return this;
-     },
+this.toNonIndexed = function(){
+             var c = Object.create(this);
+             c.attributes = {};
+             if (this.attributes) {
+               for (var k in this.attributes) {
+                 c.attributes[k] = Object.create(this.attributes[k]);
+               }
+             }
+             c.index = null;
+             c.morphAttributes = this.morphAttributes ? Object.create(this.morphAttributes) : {};
+             c.groups = this.groups ? this.groups.slice() : [];
+             c.isBufferGeometry = this.isBufferGeometry;
+             return c;
+           };
     Float32BufferAttribute: function(arr, itemSize){
       this.array = Array.isArray(arr) ? new Float32Array(arr) : arr;
       this.itemSize = itemSize;
