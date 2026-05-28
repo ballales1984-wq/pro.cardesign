@@ -88,9 +88,10 @@ runDeferred(() => {
       document.getElementById('btn-redo').addEventListener('click', function() { self.voxelEngine.redo(); self._refreshProperties(); });
        document.getElementById('btn-save').addEventListener('click', function() { self._saveProject(); });
        document.getElementById('btn-load').addEventListener('click', function() { self._loadProject(); });
-       document.getElementById('btn-help').addEventListener('click', function() { self._openHelpModal(); });
-       document.getElementById('btn-reset-cam').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
-      document.getElementById('cam-fit').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
+        document.getElementById('btn-help').addEventListener('click', function() { self._openHelpModal(); });
+        document.getElementById('btn-reset-cam').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
+        document.getElementById('btn-surface').addEventListener('click', function() { self.voxelEngine.toggleSurfaceMesh(); });
+        document.getElementById('cam-fit').addEventListener('click', function() { self.voxelEngine.resetCamera(); });
       document.getElementById('cam-iso').addEventListener('click', function() { self.voxelEngine.setCameraView('iso'); });
       document.getElementById('cam-front').addEventListener('click', function() { self.voxelEngine.setCameraView('front'); });
       document.getElementById('cam-right').addEventListener('click', function() { self.voxelEngine.setCameraView('right'); });
@@ -158,11 +159,11 @@ runDeferred(() => {
       var mod = self.moduleSystem.get(self.voxelEngine.activeModule);
       if (!mod) return;
       self._showConfirm('Rimuovere modulo "' + mod.name + '" e tutti i suoi figli?', function() {
-        self.moduleSystem.removeModule(self.voxelEngine.activeModule);
-        self.voxelEngine.activeModule = null;
-        self._refreshModules();
-        self._showVoxelProperties(null);
-         self._notify(`Modulo "${mod.name}" rimosso`, 'success');
+         self.moduleSystem.removeModule(self.voxelEngine.activeModule);
+         self.voxelEngine.activeModule = null;
+         self._refreshModules();
+         self._showProperties(null);
+          self._notify(`Modulo "${mod.name}" rimosso`, 'success');
       });
     });
 
@@ -563,12 +564,13 @@ runDeferred(() => {
      voxelCountSmall.textContent = '(' + node.voxelCount + ')';
      row.appendChild(voxelCountSmall);
 
-    row.addEventListener('click', function() {
-      self.voxelEngine.activeModule = node.id;
-      var nodes = document.querySelectorAll('.module-node');
-      for (var i = 0; i < nodes.length; i++) nodes[i].classList.remove('selected');
-      row.classList.add('selected');
-    });
+     row.addEventListener('click', function() {
+       self.voxelEngine.activeModule = node.id;
+       var nodes = document.querySelectorAll('.module-node');
+       for (var i = 0; i < nodes.length; i++) nodes[i].classList.remove('selected');
+       row.classList.add('selected');
+       self._refreshProperties();
+     });
 
     parent.appendChild(row);
 
@@ -579,17 +581,73 @@ runDeferred(() => {
     }
   }
 
-   // Properties Panel
-   _showVoxelProperties(voxel) {
-     var container = document.getElementById('properties-panel');
-     if (!voxel) {
-       container.textContent = '';
-       var hint = document.createElement('p');
-       hint.className = 'hint';
-       hint.textContent = 'Seleziona un voxel o un modulo';
-       container.appendChild(hint);
-       return;
-     }
+    // Properties Panel
+    _showProperties(voxelOrModule) {
+      var container = document.getElementById('properties-panel');
+      if (!voxelOrModule) {
+        container.textContent = '';
+        var hint = document.createElement('p');
+        hint.className = 'hint';
+        hint.textContent = 'Seleziona un voxel o un modulo';
+        container.appendChild(hint);
+        return;
+      }
+      
+      // Check if it's a voxel (has x,y,z coordinates) or a module (has id, name properties)
+      if (voxelOrModule.x !== undefined && voxelOrModule.y !== undefined && voxelOrModule.z !== undefined) {
+        // It's a voxel
+        this._showVoxelProperties(voxelOrModule);
+      } else if (voxelOrModule.id !== undefined && voxelOrModule.name !== undefined) {
+        // It's a module
+        this._showModuleProperties(voxelOrModule);
+      } else {
+        // Unknown type
+        container.textContent = '';
+        var hint = document.createElement('p');
+        hint.className = 'hint';
+        hint.textContent = 'Tipo di oggetto sconosciuto';
+        container.appendChild(hint);
+      }
+    },
+    
+    _showModuleProperties(module) {
+      var container = document.getElementById('properties-panel');
+      container.textContent = '';
+      
+      var moduleHtml = '<div class="prop-row"><span class="prop-label">Nome modulo</span><span class="prop-value">' + (module.name || 'Senza nome') + '</span></div>' +
+        '<div class="prop-row"><span class="prop-label">ID modulo</span><span class="prop-value">' + module.id + '</span></div>';
+      
+      // Add module properties if they exist
+      if (module.properties && Object.keys(module.properties).length > 0) {
+        moduleHtml += '<hr style="border-color: var(--border); margin: 8px 0;"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">Proprietà modulo</div>';
+        for (var propName in module.properties) {
+          if (module.properties.hasOwnProperty(propName)) {
+            moduleHtml += '<div class="prop-row"><span class="prop-label">' + propName + '</span><span class="prop-value">' + module.properties[propName] + '</span></div>';
+          }
+        }
+      }
+      
+      // Add module metadata if it exists
+      if (module.metadata && Object.keys(module.metadata).length > 0) {
+        moduleHtml += '<hr style="border-color: var(--border); margin: 8px 0;"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;">Metadati modulo</div>';
+        for (var metaName in module.metadata) {
+          if (module.metadata.hasOwnProperty(metaName)) {
+            moduleHtml += '<div class="prop-row"><span class="prop-label">' + metaName + '</span><span class="prop-value">' + module.metadata[metaName] + '</span></div>';
+          }
+        }
+      }
+      
+      // We need to parse the HTML string into elements
+      var temp = document.createElement('div');
+      temp.innerHTML = moduleHtml;
+      while (temp.firstChild) {
+        container.appendChild(temp.firstChild);
+      }
+    },
+
+    // Properties Panel
+    
+    _showVoxelProperties(voxel) {
 
      var mat = this.materialDB.get(voxel.material);
      var matInfo = '';
@@ -626,16 +684,21 @@ runDeferred(() => {
      }
    }
 
-  _refreshProperties() {
-    if (this.voxelEngine.selectedVoxel) {
-      var vox = this.voxelEngine.getVoxelAt(
-        this.voxelEngine.selectedVoxel.x,
-        this.voxelEngine.selectedVoxel.y,
-        this.voxelEngine.selectedVoxel.z
-      );
-      this._showVoxelProperties(vox);
-    }
-  }
+   _refreshProperties() {
+     if (this.voxelEngine.selectedVoxel) {
+       var vox = this.voxelEngine.getVoxelAt(
+         this.voxelEngine.selectedVoxel.x,
+         this.voxelEngine.selectedVoxel.y,
+         this.voxelEngine.selectedVoxel.z
+       );
+       this._showProperties(vox);
+     } else if (this.voxelEngine.activeModule !== null) {
+       var module = this.moduleSystem.get(this.voxelEngine.activeModule);
+       if (module) {
+         this._showProperties(module);
+       }
+     }
+   }
 
   // Physics simulation
   async _runSimulation() {
@@ -939,13 +1002,27 @@ const smoothLabel = document.createElement('label');
       wireframeCheckbox.type = 'checkbox';
       wireframeCheckbox.id = 'ex-wireframe';
 
-      const wireframeSpan = document.createElement('span');
-      wireframeSpan.textContent = ' Wireframe (internal edges)';
+       const wireframeSpan = document.createElement('span');
+       wireframeSpan.textContent = ' Wireframe (internal edges)';
 
-      wireframeLabel.appendChild(wireframeCheckbox);
-      wireframeLabel.appendChild(wireframeSpan);
-     
-     const infoDiv = document.createElement('div');
+       wireframeLabel.appendChild(wireframeCheckbox);
+       wireframeLabel.appendChild(wireframeSpan);
+       
+       // Surface mesh toggle
+       const surfaceLabel = document.createElement('label');
+       surfaceLabel.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px;font-size:12px;';
+ 
+       const surfaceCheckbox = document.createElement('input');
+       surfaceCheckbox.type = 'checkbox';
+       surfaceCheckbox.id = 'ex-surface';
+ 
+       const surfaceSpan = document.createElement('span');
+       surfaceSpan.textContent = ' Surface (external only)';
+ 
+       surfaceLabel.appendChild(surfaceCheckbox);
+       surfaceLabel.appendChild(surfaceSpan);
+       
+      const infoDiv = document.createElement('div');
      infoDiv.style.cssText = 'padding:10px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--text-dim);margin-bottom:18px;';
      
      const voxelStrong = document.createElement('strong');
@@ -978,30 +1055,35 @@ const smoothLabel = document.createElement('label');
      buttonDiv.appendChild(okBtn);
      
 innerDiv.appendChild(title);
-      innerDiv.appendChild(formatLabel);
-      innerDiv.appendChild(formatSelect);
-      innerDiv.appendChild(smoothLabel);
-      innerDiv.appendChild(wireframeLabel);
-      innerDiv.appendChild(infoDiv);
-      innerDiv.appendChild(buttonDiv);
+       innerDiv.appendChild(formatLabel);
+       innerDiv.appendChild(formatSelect);
+       innerDiv.appendChild(smoothLabel);
+       innerDiv.appendChild(wireframeLabel);
+       innerDiv.appendChild(surfaceLabel);
+       innerDiv.appendChild(infoDiv);
+       innerDiv.appendChild(buttonDiv);
      
      overlay.appendChild(innerDiv);
      document.body.appendChild(overlay);
 
 const upd = () => {
-       const s = document.getElementById('ex-smooth').checked;
-       const w = document.getElementById('ex-wireframe').checked;
-       if (w) {
-         document.getElementById('ex-info').textContent = 'Superficie: Wireframe (12 edges per voxel)';
-       } else {
-         document.getElementById('ex-info').textContent = s
-           ? 'Superficie: Marching Cubes (smooth)'
-           : `Superficie: Cubi (~${allVoxels.length * 12} triangoli est.)`;
-       }
-     };
-     document.getElementById('ex-smooth').addEventListener('change', upd);
-     document.getElementById('ex-wireframe').addEventListener('change', upd);
-     upd();
+        const s = document.getElementById('ex-smooth').checked;
+        const w = document.getElementById('ex-wireframe').checked;
+        const surf = document.getElementById('ex-surface').checked;
+        if (w) {
+          document.getElementById('ex-info').textContent = 'Superficie: Wireframe (12 edges per voxel)';
+        } else if (surf) {
+          document.getElementById('ex-info').textContent = 'Superficie: Esterna sola (face-culling)';
+        } else {
+          document.getElementById('ex-info').textContent = s
+            ? 'Superficie: Marching Cubes (smooth)'
+            : `Superficie: Cubi (~${allVoxels.length * 12} triangoli est.)`;
+        }
+      };
+      document.getElementById('ex-smooth').addEventListener('change', upd);
+      document.getElementById('ex-wireframe').addEventListener('change', upd);
+      document.getElementById('ex-surface').addEventListener('change', upd);
+      upd();
 
     document.getElementById('ex-cancel').onclick = () => overlay.remove();
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
@@ -1230,11 +1312,11 @@ document.getElementById('ex-ok').onclick = async () => {
    // Keyboard shortcuts
    _setupKeyboard() {
      var self = this;
-     document.addEventListener('keydown', function(e) {
-       if (e.key === 'Escape') {
-         self.voxelEngine.selectedVoxel = null;
-         self._showVoxelProperties(null);
-       }
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          self.voxelEngine.selectedVoxel = null;
+          self._showProperties(null);
+        }
        // Ctrl+Z → Undo
        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
          e.preventDefault();
@@ -1267,11 +1349,11 @@ document.getElementById('ex-ok').onclick = async () => {
    }
 
   // Event subscriptions
-  _subscribeEvents() {
-    var self = this;
-    window.addEventListener('voxel-selected', function(e) {
-      self._showVoxelProperties(e.detail);
-    });
+   _subscribeEvents() {
+     var self = this;
+     window.addEventListener('voxel-selected', function(e) {
+       self._showProperties(e.detail);
+     });
 
     window.addEventListener('tool-changed', function(e) {
     // Show/hide sculpt panel

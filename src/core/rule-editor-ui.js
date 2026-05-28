@@ -50,25 +50,78 @@ export class RuleEditorUI {
   }
 
   _attachEventListeners() {
+    const self = this;
     this.container.addEventListener('click', (e) => {
       if (e.target.id === 'add-rule-btn') {
-        this._createNewRule();
+        self._createNewRule();
       }
       if (e.target.classList.contains('edit-rule')) {
         const ruleId = e.target.dataset.ruleId;
-        this._editRule(ruleId);
+        self._editRule(ruleId);
       }
       if (e.target.classList.contains('delete-rule')) {
         const ruleId = e.target.dataset.ruleId;
-        this._deleteRule(ruleId);
+        self._deleteRule(ruleId);
       }
       if (e.target.id === 'preview-btn') {
-        this._previewRule();
+        self._previewRule();
+      }
+    });
+
+    // Drag-drop support for rules list
+    this._setupDragAndDrop();
+  }
+
+  _setupDragAndDrop() {
+    const self = this;
+    const listEl = this.container.querySelector('#rule-list');
+
+    listEl.addEventListener('dragstart', (e) => {
+      if (e.target.classList.contains('rule-item')) {
+        e.dataTransfer.setData('text/plain', e.target.dataset.ruleId);
+        e.target.classList.add('dragging');
+      }
+    });
+
+    listEl.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const dragging = listEl.querySelector('.dragging');
+      if (!dragging) return;
+
+      const afterElement = self._getDragAfterElement(listEl, e.clientY);
+      if (afterElement) {
+        afterElement.parentNode.insertBefore(dragging, afterElement);
+      } else {
+        listEl.appendChild(dragging);
+      }
+    });
+
+    listEl.addEventListener('dragend', (e) => {
+      if (e.target.classList.contains('rule-item')) {
+        e.target.classList.remove('dragging');
+        self._reorderRules();
       }
     });
   }
 
-   _renderRuleList() {
+  _getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.rule-item:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  _reorderRules() {
+    const newOrder = [...this.container.querySelectorAll('#rule-list .rule-item')].map(el => el.dataset.ruleId);
+    this.rules = newOrder.map(id => this.rules.find(r => r.id === id)).filter(Boolean);
+  }
+  
+  _renderRuleList() {
      const listEl = this.container.querySelector('#rule-list');
      listEl.textContent = '';
      const fragment = document.createDocumentFragment();
