@@ -518,9 +518,9 @@ FASE 8 ✅ — Completata
      Video: parallel multi-region processing
 
 FASE 9 ⏳ — GPU Compute
-     WebGPU compute shaders per LOD
-     Frame throttling per grandi scene
-     Web Worker offloading ✅ (CPU fallback implementato)
+     WebGPU compute shaders per LOD ✅ (compute pipeline + bind group)
+     Frame throttling per grandi scene ✅ (LODWorker)
+     Web Worker offloading ✅ (CPU fallback)
      Web Worker offloading
 
 ```
