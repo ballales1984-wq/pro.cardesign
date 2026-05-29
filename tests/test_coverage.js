@@ -3192,6 +3192,38 @@ assert.strictEqual(result[1].lod, 'hidden');
       });
     } catch(e) { failed++; console.log('  [FAIL] GPUCompute worker tests: ' + e.message); }
 
+    // ── Video Keyframe Playback Integration ─────────────────────────────────────
+    try {
+      const { VideoKeyframeExtraction } = await loadESM('src/core/video-keyframe-extraction.js');
+      const { ProceduralEngine } = await loadESM('src/core/procedural-engine.js');
+
+      runTest('VideoKeyframeExtraction _lerpRules preserves types', () => {
+        const vke = new VideoKeyframeExtraction({});
+        const r1 = [{ type: 'cube', name: 'c1', params: { dimensions: [5,5,5] } }];
+        const r2 = [{ type: 'line', name: 'l1', params: { length: 10 } }];
+        const interpolated = vke._lerpRules(r1, r2, 0.5);
+        assert.ok(interpolated.length === 2);
+        const cubeRule = interpolated.find(r => r.name.includes('c1'));
+        const lineRule = interpolated.find(r => r.name.includes('l1'));
+        assert.strictEqual(cubeRule.type, 'cube');
+        assert.strictEqual(lineRule.type, 'line');
+      });
+
+      runTest('VideoKeyframeExtraction seekTo returns interpolated state', () => {
+        const vke = new VideoKeyframeExtraction({});
+        vke.keyframes.set(0, { rules: [{ type: 'cube', params: { dimensions: [5,5,5] } }], camera: { position: [0,0,50] } });
+        vke.keyframes.set(60, { rules: [{ type: 'line', params: { length: 10 } }], camera: { position: [10,10,60] } });
+
+        const state = vke.interpolate(30);
+        assert.ok(state?.interpolated);
+      });
+
+      runTest('VideoKeyframeExtraction play method exists', () => {
+        const vke = new VideoKeyframeExtraction({});
+        assert.strictEqual(typeof vke.play, 'function');
+      });
+    } catch(e) { failed++; console.log('  [FAIL] Video playback integration: ' + e.message); }
+
     console.log(`\nResults: ${passed}/${passed + failed} passed, ${failed} failed`);
   console.log('─'.repeat(50));
 

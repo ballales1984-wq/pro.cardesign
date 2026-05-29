@@ -8,6 +8,11 @@ export class GPUCompute {
     this.enabled = false;
     this.lodPipeline = null;
     this.voxelGridBuffer = null;
+    this.lodLevels = {
+      near: { distance: 5 },
+      medium: { distance: 20 },
+      far: { distance: 50 }
+    };
   }
 
   /**

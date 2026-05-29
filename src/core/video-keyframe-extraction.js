@@ -273,8 +273,10 @@ export class VideoKeyframeExtraction {
   _lerpRules(r1, r2, t) {
     // Interpolate rule parameters for smooth transition
     const merged = {};
+    const types = {};
     for (const r of (r1 || [])) {
       merged[r.name] = { ...r.params, factor: 0 };
+      types[r.name] = r.type || 'ESTRUSIONE';
     }
     for (const r of (r2 || [])) {
       if (merged[r.name]) {
@@ -282,10 +284,11 @@ export class VideoKeyframeExtraction {
       } else {
         merged[r.name] = { ...r.params, factor: 1 };
       }
+      types[r.name] = r.type || types[r.name] || 'ESTRUSIONE';
     }
-    return Object.values(merged).map((p, i) => ({
-      type: p.type || 'ESTRUSIONE',
-      name: `interpolated_${i}`,
+    return Object.entries(merged).map(([name, p]) => ({
+      type: types[name],
+      name: `interpolated_${name}`,
       params: p
     }));
   }

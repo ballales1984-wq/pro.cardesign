@@ -16,6 +16,7 @@ import { StressAnalysis } from './core/stress-analysis.js';
 import { Aerodynamics } from './core/aerodynamics.js';
 import { PhysicsSignature } from './core/physics-signature.js';
 import { LODManager } from './core/lod-manager.js';
+import { GPUCompute } from './core/gpu-compute.js';
 import { CollisionDetection } from './core/collision-detection.js';
 
 function showFatalError(message) {
@@ -29,7 +30,7 @@ function showFatalError(message) {
   document.body.appendChild(box);
 }
 
-function boot() {
+async function boot() {
   window.addEventListener('error', (e) => {
     console.error(e.error || e.message);
     showFatalError((e.error && e.error.stack) || e.message);
@@ -114,11 +115,13 @@ function boot() {
       renderer,
       controls
     );
-    const brickSystem = new BrickSystem(voxelEngine);
+const brickSystem = new BrickSystem(voxelEngine);
     const proceduralEngine = new ProceduralEngine(voxelEngine);
     const depthEstimation = new DepthEstimation(voxelEngine);
     const objectSegmentation = new ObjectSegmentation();
-    const lodManager = new LODManager(camera, voxelEngine);
+    const gpuCompute = new GPUCompute();
+    await gpuCompute.init(renderer);
+    const lodManager = new LODManager(camera, voxelEngine, { gpuCompute });
     const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
     const aerodynamics = new Aerodynamics(meshExporter);
      const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis, aerodynamics);
@@ -179,9 +182,8 @@ function boot() {
     if (lastW < 16 || lastH < 16) resizeRenderer();
 
 controls.update();
-     lodManager.update();
-     
-     if (dimensionDiv) {
+      
+      if (dimensionDiv) {
       const sel = brickSystem.selectedBrick;
       if (sel) {
         dimensionDiv.textContent = brickSystem.dimensionsText;

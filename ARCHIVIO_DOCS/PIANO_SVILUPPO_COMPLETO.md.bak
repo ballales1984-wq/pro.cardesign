@@ -517,11 +517,11 @@ FASE 8 ✅ — Completata
      Video: timeline playback
      Video: parallel multi-region processing
 
-FASE 9 ⏳ — GPU Compute
-     WebGPU compute shaders per LOD ✅ (compute pipeline + bind group)
-     Frame throttling per grandi scene ✅ (LODWorker)
-     Web Worker offloading ✅ (CPU fallback)
-     Web Worker offloading
+FASE 9 ✅ — GPU Compute Completata
+      WebGPU compute shaders per LOD ✅ (compute pipeline + bind group)
+      Frame throttling per grandi scene ✅ (LODWorker)
+      Web Worker offloading ✅ (CPU fallback)
+      Integrazione main.js + LODManager ✅ (gpuCompute inizializzato, passato a lodManager)
 
 ```
 
@@ -550,7 +550,7 @@ FASE 9 ⏳ — GPU Compute
 ### Prossimi step
 
 - [x] GPU Compute per grandi scene voxel (skeleton + LOD fallback)
-- [ ] Editor regole procedurali avanzato (drag-drop UI)
+- [x] Editor regole procedurali avanzato (drag-drop UI) - Completato 2026-05-29
 
 ---
 
@@ -597,7 +597,8 @@ FASE 9 ⏳ — GPU Compute
 - ObjectSegmentation SAM stub
 - ProceduralRuleGeneration integrata
 
-### Fase 8: 🔲 Da iniziare
-- Video keyframe extraction
-- Timeline playback
-- Trasformazioni interpolate
+### Fase 8: ✅ Completata
+- Video keyframe extraction ✅
+- Timeline playback ✅
+- Trasformazioni interpolate ✅
+- Parallel multi-region processing ✅

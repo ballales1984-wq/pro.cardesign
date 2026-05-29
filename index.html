@@ -383,20 +383,99 @@
                    class="offset-input" title="Offset Z"/>
           </div>
 
-          <!-- Rule editor -->
-          <div id="rule-editor">
-            <div id="rule-editor-header" class="rule-editor-header">
-              Seleziona una regola per modificarla
+            <!-- Rule editor -->
+            <div id="rule-editor">
+              <div id="rule-editor-header" class="rule-editor-header">
+                Seleziona una regola per modificarla
+              </div>
+              <div id="rule-editor-body">
+                <p class="hint">Nessuna regola selezionata.</p>
+              </div>
+              
+              <!-- Preview section -->
+              <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                  <h4 style="margin: 0; font-size: 14px;">Anteprima</h4>
+                  <button id="preview-btn" class="btn-secondary">Genera Anteprima</button>
+                </div>
+                <div id="preview-status" style="font-size: 12px; min-height: 20px;"></div>
+              </div>
             </div>
-            <div id="rule-editor-body">
-              <p class="hint">Nessuna regola selezionata.</p>
-            </div>
-          </div>
 
-        </div>
-      </div>
+         </div>
+       </div>
 
-      <!-- ── Libreria Componenti ── -->
+       <!-- ── Operazioni Booleane ── -->
+       <div class="panel" id="panel-boolean">
+         <div
+           class="panel-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="true"
+           aria-controls="boolean-body">
+           ➕ Operazioni Booleane
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body" id="boolean-body">
+           <!-- Boolean operations controls -->
+           <div style="margin-bottom: 12px;">
+             <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Operazione:</div>
+             <div style="display: flex; gap: 8px;">
+               <button id="bool-union" class="btn-secondary boolean-op-btn">Unione (A ∪ B)</button>
+               <button id="bool-subtract" class="btn-secondary boolean-op-btn">Sottrazione (A - B)</button>
+               <button id="bool-intersect" class="btn-secondary boolean-op-btn">Intersezione (A ∩ B)</button>
+             </div>
+           </div>
+           
+           <!-- Object selection -->
+           <div style="margin-bottom: 12px;">
+             <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Oggetti:</div>
+             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+               <div style="flex: 1; min-width: 120px;">
+                 <label for="bool-object-a" class="sr-only">Oggetto A</label>
+                 <select id="bool-object-a" class="prop-input">
+                   <option value="">Seleziona oggetto A...</option>
+                 </select>
+               </div>
+               <div style="flex: 1; min-width: 120px;">
+                 <label for="bool-object-b" class="sr-only">Oggetto B</label>
+                 <select id="bool-object-b" class="prop-input">
+                   <option value="">Seleziona oggetto B...</option>
+                 </select>
+               </div>
+             </div>
+           </div>
+           
+           <!-- Result options -->
+           <div style="margin-bottom: 12px;">
+             <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Opzioni risultato:</div>
+             <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+               <div>
+                 <label for="bool-replace-a" class="prop-check">
+                   <input type="checkbox" id="bool-replace-a" checked>
+                   Sostituisci oggetto A con il risultato
+                 </label>
+               </div>
+               <div>
+                 <label for="bool-create-new" class="prop-check">
+                   <input type="checkbox" id="bool-create-new">
+                   Crea nuovo oggetto con il risultato
+                 </label>
+               </div>
+             </div>
+           </div>
+           
+           <!-- Action button -->
+           <div style="text-align: center; margin-top: 12px;">
+             <button id="bool-apply-btn" class="btn-primary">Applica Operazione Booleana</button>
+           </div>
+           
+           <!-- Status -->
+           <div id="bool-status" style="margin-top: 12px; min-height: 20px; font-size: 12px;"></div>
+         </div>
+       </div>
+
+       <!-- ── Libreria Componenti ── -->
       <div class="panel" id="panel-library">
         <div
           class="panel-header"

@@ -124,17 +124,11 @@ node tests/test_coverage.js
 cat tests/COVERAGE_REPORT.md
 ```
 
-**Current status:** 43/43 Python ✅ | 4/4 JavaScript ✅
+**Current status:** 84/84 Python ✅ | ~50/~50 JavaScript ✅
 
-## Roadmap
+## Documentation
 
-- [x] Phase 1: Brick System with real measurements
-- [x] Phase 2: Interactive Scaling Tool
-- [x] Phase 3: Component Library
-- [x] Phase 4: Project Management
-- [x] Phase 5: STL Import + Quality Check
-- [x] Phase 6: Vertex Edit Tool
-- [ ] Phase 7: Aerodynamics visualization
+See [DOCUMENTAZIONE_UNIFICATA.md](./DOCUMENTAZIONE_UNIFICATA.md) for complete documentation.
 
 ## Technologies
 

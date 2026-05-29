@@ -101,8 +101,8 @@ this._history = [];
         this.chunkLoadRadius = 3;
         this.chunkUnloadRadius = 4;
 
-        // Initialize LOD Manager
-        this.lodManager = new LODManager(this.camera, this);
+// Initialize LOD Manager
+         this.lodManager = new LODManager(this.camera, this);
 
         this._setupEvents();
          this._setupScalePanelListeners();
@@ -1273,24 +1273,21 @@ fromJSON(data) {
          }
      }
 
-       update(deltaTime, lodManager) {
-if (this.ghost && this.ghost.visible) {
-             // Cache performance.now() to avoid multiple calls
-             const time = performance.now() * 0.006;
-             this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
-           }
-           
-           // Update surface mesh for external visualization
-           this.updateSurfaceMesh();
-           
-           // Update wireframe mesh for internal visualization
-           this.updateWireframeMesh();
-           
-           // Update LOD automatically using internal lodManager
-           if (this.lodManager) {
-             this.lodManager.update();
-             this._updateInstanceVisibility();
-           }
+update(deltaTime, lodManager) {
+            if (this.ghost && this.ghost.visible) {
+              const time = performance.now() * 0.006;
+              this.ghost.material.opacity = 0.3 + Math.sin(time) * 0.15;
+            }
+            
+            this.updateSurfaceMesh();
+            this.updateWireframeMesh();
+            
+            // Use external lodManager (with GPU support) if provided, else internal
+            const activeLOD = lodManager || this.lodManager;
+            if (activeLOD) {
+              activeLOD.update();
+              this._updateInstanceVisibility();
+            }
            
            // Dynamic chunk loading/unloading (throttled for performance)
            this._chunkUpdateFrame++;
@@ -1705,7 +1702,7 @@ if (this.ghost && this.ghost.visible) {
         return voxels;
     }
 
-    // ── Optimize: clean up stale references ───────────────────────
+// ── Optimize: clean up stale references ───────────────────────
     /**
      * Rimuove riferimenti stale da keyToInstance
      */
@@ -1722,4 +1719,4 @@ if (this.ghost && this.ghost.visible) {
             }
             this._onVoxelChanged();
           }
-      }
+}

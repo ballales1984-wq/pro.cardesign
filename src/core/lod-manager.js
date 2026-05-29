@@ -6,6 +6,7 @@ export class LODManager {
   constructor(camera, voxelEngine, options = {}) {
     this.camera = camera;
     this.voxelEngine = voxelEngine;
+    this.gpuCompute = options.gpuCompute || null;
     this.lodLevels = options.lodLevels || {
       near: { distance: 5, detail: 'full' },
       medium: { distance: 20, detail: 'reduced' },
@@ -38,6 +39,13 @@ export class LODManager {
     const cameraPos = this.camera?.position;
     if (!cameraPos) return;
 
+    // Use GPU compute if available and scene is large
+    if (this.gpuCompute && this.gpuCompute.enabled && this._getVoxelCount() > 5000) {
+      this._updateLODisGPU(cameraPos);
+      return;
+    }
+
+    // CPU fallback
     for (const chunk of this.voxelEngine.chunks.values()) {
       for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
         const distance = Math.sqrt(
@@ -57,6 +65,45 @@ export class LODManager {
         }
       }
     }
+  }
+
+  /**
+   * GPU-accelerated LOD update for large scenes
+   */
+  async _updateLODisGPU(cameraPos) {
+    const voxels = [];
+    for (const chunk of this.voxelEngine.chunks.values()) {
+      for (const {x, y, z, voxelData} of chunk.voxelsIterator()) {
+        voxels.push({ x, y, z, ...voxelData });
+      }
+    }
+    
+    if (voxels.length === 0) return;
+    
+    const updated = await this.gpuCompute.updateVoxelsLOD(voxels, cameraPos);
+    // Update voxel LOD state from GPU results
+    for (const v of updated) {
+      const key = `${v.x},${v.y},${v.z}`;
+      const chunkKey = this.voxelEngine._getChunkKey(v);
+      const chunk = this.voxelEngine.chunks.get(chunkKey);
+      if (chunk) {
+        const voxel = chunk.getVoxel(v.x, v.y, v.z);
+        if (voxel) {
+          voxel.lod = v.lod;
+        }
+      }
+    }
+  }
+
+  /**
+   * Get total voxel count
+   */
+  _getVoxelCount() {
+    let total = 0;
+    for (const chunk of this.voxelEngine.chunks.values()) {
+      total += chunk.size();
+    }
+    return total;
   }
 
   /**

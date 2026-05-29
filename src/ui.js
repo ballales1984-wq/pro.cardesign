@@ -4,6 +4,7 @@
  */
 
 import { ComponentLibrary } from './core/component-library.js';
+import { RuleEditorUI } from './core/rule-editor-ui.js';
 
 export class UI {
       constructor(opts) {
@@ -31,21 +32,22 @@ export class UI {
         : (cb) => setTimeout(cb, 0);
 
 runDeferred(() => {
-         try {
-           this._setupPanels();
-           this._setupSculptPanelListeners();
-           this._setupProceduralPanel();
-           this._populateMaterials();
-           this._populateModules();
-           this._setupLibrary();
-           this._setupAIImportPanel();
-           this._setupTimelinePanel();
-           this._addDemoVoxels();
-         } catch (err) {
-           console.error('[UI] deferred setup failed:', err);
-           this._notify('Errore UI: ' + err.message, 'error');
-         }
-       });
+          try {
+            this._setupPanels();
+            this._setupSculptPanelListeners();
+            this._setupProceduralPanel();
+            this._setupBooleanPanel();
+            this._populateMaterials();
+            this._populateModules();
+            this._setupLibrary();
+            this._setupAIImportPanel();
+            this._setupTimelinePanel();
+            this._addDemoVoxels();
+          } catch (err) {
+            console.error('[UI] deferred setup failed:', err);
+            this._notify('Errore UI: ' + err.message, 'error');
+          }
+        });
     }
 
   // Notification helper
@@ -231,226 +233,131 @@ var toolNames = {
     _setupProceduralPanel() {
       const self = this;
       const container = document.getElementById('procedural-panel');
-      const rulesList = document.getElementById('procedural-rules-list');
-      const ruleEditor = document.getElementById('rule-editor');
-      const ruleEditorHeader = document.getElementById('rule-editor-header');
-      const ruleEditorBody = document.getElementById('rule-editor-body');
-      const newRuleNameInput = document.getElementById('new-rule-name');
-      const addRuleBtn = document.getElementById('btn-add-rule');
-
-      // ── Populate rules list (HTML only, no event binding) ──────
-      function populateRulesList() {
-        rulesList.textContent = '';
-        const rules = Array.from(self.proceduralEngine.rules.keys());
-        if (rules.length === 0) {
-          const hint = document.createElement('p');
-          hint.className = 'hint';
-          hint.textContent = 'Nessuna regola definita';
-          rulesList.appendChild(hint);
-          return;
-        }
-
-         rules.forEach(ruleName => {
-           const ruleDiv = document.createElement('div');
-           ruleDiv.className = 'procedural-rule-item';
-           
-           const ruleNameSpan = document.createElement('span');
-           ruleNameSpan.className = 'rule-name';
-           ruleNameSpan.textContent = ruleName;
-           ruleDiv.appendChild(ruleNameSpan);
-           
-           const applyBtn = document.createElement('button');
-           applyBtn.id = `rule-apply-${ruleName}`;
-           applyBtn.className = 'rule-apply-btn';
-           applyBtn.dataset.rule = ruleName;
-           applyBtn.title = 'Applica regola nella scena';
-           applyBtn.style.cssText = 'background:var(--accent);color:#fff;border:none;border-radius:3px;padding:2px 7px;font-size:10px;cursor:pointer;';
-           applyBtn.textContent = '▶ Applica';
-           ruleDiv.appendChild(applyBtn);
-           
-           const editBtn = document.createElement('button');
-           editBtn.id = `rule-edit-${ruleName}`;
-           editBtn.className = 'rule-edit-btn';
-           editBtn.dataset.rule = ruleName;
-           editBtn.textContent = 'Modifica';
-           ruleDiv.appendChild(editBtn);
-           
-           const deleteBtn = document.createElement('button');
-           deleteBtn.id = `rule-delete-${ruleName}`;
-           deleteBtn.className = 'rule-delete-btn';
-           deleteBtn.dataset.rule = ruleName;
-           deleteBtn.textContent = 'Elimina';
-           ruleDiv.appendChild(deleteBtn);
-           
-           rulesList.appendChild(ruleDiv);
-         });
-      }
-
-      // ── Bind rule-list buttons (called after every repopulate) ──
-      function bindRuleButtons() {
-        // Apply button
-        document.querySelectorAll('.rule-apply-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const ruleName = this.getAttribute('data-rule');
-            // Read offset from inputs (with fallback to 0)
-            const ox = parseInt(document.getElementById('rule-offset-x')?.value, 10) || 0;
-            const oy = parseInt(document.getElementById('rule-offset-y')?.value, 10) || 0;
-            const oz = parseInt(document.getElementById('rule-offset-z')?.value, 10) || 0;
-            try {
-              const voxels = self.proceduralEngine.build(ruleName, {
-                position: { x: ox, y: oy, z: oz },
-                material: self.voxelEngine.activeMaterial
-              });
-              if (!voxels || voxels.length === 0) {
-                self._notify(`Regola "${ruleName}" non ha generato voxel`, 'warn');
-              } else {
-                self._notify(`Regola "${ruleName}" applicata: ${voxels.length} voxel`, 'success');
-              }
-             } catch(e) {
-               self._notify(`Errore nell'applicare "${ruleName}": ${e.message}`, 'error');
-             }
-          });
-        });
-
-        // Edit / delete buttons
-        document.querySelectorAll('.rule-edit-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const ruleName = this.getAttribute('data-rule');
-            self._editRule(ruleName);
-          });
-        });
-
-        document.querySelectorAll('.rule-delete-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const ruleName = this.getAttribute('data-rule');
-            self._showConfirm('Eliminare la regola "' + ruleName + '"?', function() {
-              self.proceduralEngine.rules.delete(ruleName);
-              populateRulesList();
-              bindRuleButtons();
-               self._notify(`Regola "${ruleName}" eliminata`, 'success');
+      
+      // Create and initialize RuleEditorUI
+      const ruleEditorUI = new RuleEditorUI(container, self.proceduralEngine);
+      ruleEditorUI.init();
+      
+      // Override the notification method to use UI's notification system
+      ruleEditorUI._showNotification = (message, level) => {
+        self._notify(message, level);
+      };
+      
+      // Add apply functionality to preview button
+      const previewBtn = container.querySelector('#preview-btn');
+      if (previewBtn) {
+        previewBtn.textContent = 'Applica e Anteprima';
+        previewBtn.addEventListener('click', () => {
+          if (!ruleEditorUI.selectedRule) {
+            self._notify('Seleziona una regola da applicare', 'warn');
+            return;
+          }
+          
+          try {
+            // Read offset from inputs
+            const ox = parseInt(document.getElementById('rule-offset-x')?.value) || 0;
+            const oy = parseInt(document.getElementById('rule-offset-y')?.value) || 0;
+            const oz = parseInt(document.getElementById('rule-offset-z')?.value) || 0;
+            
+            const voxels = self.proceduralEngine.build(ruleEditorUI.selectedRule.name, {
+              position: { x: ox, y: oy, z: oz },
+              material: self.voxelEngine.activeMaterial,
+              ...ruleEditorUI.selectedRule.params
             });
-          });
-        });
-      }
-
-      // ── Add new rule ─────────────────────────────────────────
-      addRuleBtn.addEventListener('click', function() {
-        const ruleName = newRuleNameInput.value.trim();
-        if (!ruleName) {
-          self._notify('Inserisci un nome per la regola', 'warn');
-          return;
-        }
-        if (self.proceduralEngine.rules.has(ruleName)) {
-          self._notify('Una regola con questo nome esiste già', 'warn');
-          return;
-        }
-        // Create a simple rule template
-        self.proceduralEngine.rules.set(ruleName, {
-          execute: (params, context) => {
-            // Default: create a single voxel at origin
-            return [{x: 0, y: 0, z: 0, material: 'steel'}];
+            
+            if (!voxels || voxels.length === 0) {
+              self._notify(`Regola "${ruleEditorUI.selectedRule.name}" non ha generato voxel`, 'warn');
+            } else {
+              self._notify(`Regola "${ruleEditorUI.selectedRule.name}" applicata: ${voxels.length} voxel`, 'success');
+            }
+          } catch(e) {
+            self._notify(`Errore nell'applicare "${ruleEditorUI.selectedRule.name}": ${e.message}`, 'error');
           }
         });
-        newRuleNameInput.value = '';
-        populateRulesList();
-        bindRuleButtons();
-        self._notify(`Regola "${ruleName}" creata`, 'success');
-      });
-
-      // ── Initial population ───────────────────────────────────
-      populateRulesList();
-      bindRuleButtons();
-    }
-
-    _editRule(ruleName) {
-      if (!this.proceduralEngine.rules.has(ruleName)) return;
-      const rule = this.proceduralEngine.rules.get(ruleName);
-
-     const editorHeader = document.getElementById('rule-editor-header');
-     const editorBody = document.getElementById('rule-editor-body');
-
-      editorHeader.textContent = `Modifica regola: ${ruleName}`;
+      }
       
-      // Clear editor body
-      editorBody.textContent = '';
+      // Sync RuleEditorUI with proceduralEngine rules
+      const syncRuleEditorUIWithProceduralEngine = () => {
+        // Clear RuleEditorUI's rules
+        ruleEditorUI.rules = [];
+        
+        // Copy rules from proceduralEngine
+        self.proceduralEngine.rules.forEach((execute, name) => {
+          // Determine rule type based on the execute function (simplified)
+          let ruleType = 'custom';
+          if (execute.toString().includes('line(')) ruleType = 'line';
+          else if (execute.toString().includes('cube(')) ruleType = 'cube';
+          else if (execute.toString().includes('extrude(')) ruleType = 'extrude';
+          else if (execute.toString().includes('symmetry(')) ruleType = 'symmetry';
+          else if (execute.toString().includes('hole(')) ruleType = 'hole';
+          
+          ruleEditorUI.rules.push({
+            id: name,
+            name: name,
+            type: ruleType,
+            params: {}, // We don't extract params from execute function for simplicity
+            enabled: true
+          });
+        });
+        
+        ruleEditorUI._renderRuleList();
+      };
       
-      // Create rule editor section
-      const ruleEditorSection = document.createElement('div');
-      ruleEditorSection.className = 'rule-editor-section';
+      // Initial sync
+      syncRuleEditorUIWithProceduralEngine();
       
-      const ruleLabel = document.createElement('label');
-      ruleLabel.htmlFor = 'rule-code';
-      ruleLabel.textContent = 'Funzione execute (params, context)';
-      ruleEditorSection.appendChild(ruleLabel);
-      
-      const ruleCode = document.createElement('textarea');
-      ruleCode.id = 'rule-code';
-      ruleCode.rows = 10;
-      ruleCode.className = 'rule-editor-textarea';
-      ruleCode.spellcheck = false;
-      ruleEditorSection.appendChild(ruleCode);
-      
-      editorBody.appendChild(ruleEditorSection);
-      
-      // Create rule editor actions
-      const ruleEditorActions = document.createElement('div');
-      ruleEditorActions.className = 'rule-editor-actions';
-      
-      const saveRuleBtn = document.createElement('button');
-      saveRuleBtn.id = 'save-rule-btn';
-      saveRuleBtn.className = 'btn-primary';
-      saveRuleBtn.textContent = 'Salva Regola';
-      ruleEditorActions.appendChild(saveRuleBtn);
-      
-      const cancelRuleBtn = document.createElement('button');
-      cancelRuleBtn.id = 'cancel-rule-btn';
-      cancelRuleBtn.className = 'btn-secondary';
-      cancelRuleBtn.textContent = 'Annulla';
-      ruleEditorActions.appendChild(cancelRuleBtn);
-      
-      editorBody.appendChild(ruleEditorActions);
-
-     // Query AFTER innerHTML assignment so elements exist
-     const saveBtn = document.getElementById('save-rule-btn');
-     const cancelBtn = document.getElementById('cancel-rule-btn');
-     const codeTextarea = document.getElementById('rule-code');
-
-     // Set current rule code (simplified)
-     codeTextarea.value = rule.execute.toString();
-
-      const engine = this.proceduralEngine;
-      const notifyFn  = this._notify.bind(this);
-      const refreshFn = this._setupProceduralPanel.bind(this);
-
-      saveBtn.addEventListener('click', function() {
-        try {
-          const newCode = codeTextarea.value;
-          // Extract function body from string like "function (params, context) { ... }"
-          const funcBody = newCode.includes('{')
-            ? newCode.substring(newCode.indexOf('{') + 1, newCode.lastIndexOf('}'))
-            : newCode;
-
-          // ⚠️  SECURITY NOTE: `new Function` executes arbitrary code from the
-          // textarea. This is intentional — power-users need JS flexibility —
-          // but in a production or multi-user deployment this MUST be replaced
-          // with a sandboxed expression parser (e.g. Acorn + whitelisted AST),
-          // a Web-Worker worker-based evaluator, or a dedicated DSL.
-          // Current behaviour: trusted-user-only.
-          const newFunction = new Function('params', 'context', `return {${funcBody}}`);
-
-          // Update rule
-          engine.rules.set(ruleName, { execute: newFunction });
-          notifyFn(`Regola "${ruleName}" salvata`, 'success');
-          refreshFn(); // Refresh the panel
-        } catch (err) {
-          notifyFn(`Errore nel salvare la regola: ${err.message}`, 'error');
-        }
-      });
-
-      cancelBtn.addEventListener('click', function() {
-        refreshFn(); // Reset to default view
-      });
-   }
+       // Listen for changes from RuleEditorUI to proceduralEngine
+       // Override saveRule to also update proceduralEngine
+       const originalSaveRule = ruleEditorUI._saveRule.bind(ruleEditorUI);
+       ruleEditorUI._saveRule = (rule) => {
+         originalSaveRule(rule);
+         
+         // Also update proceduralEngine with a proper execute function
+         const executeFunction = (params, context) => {
+           // Merge rule params with passed params (passed params take precedence)
+           const mergedParams = { ...rule.params, ...params };
+           
+           switch (rule.type) {
+             case 'cube':
+               return self.proceduralEngine.cube(
+                 mergedParams.dimensions || [10, 10, 10],
+                 mergedParams.position || {x: 0, y: 0, z: 0},
+                 mergedParams.material || 'steel'
+               );
+             case 'line':
+               return self.proceduralEngine.line(
+                 mergedParams.length || 10,
+                 mergedParams.axis || 'x',
+                 mergedParams.offset || {x: 0, y: 0, z: 0},
+                 mergedParams.material || 'steel'
+               );
+             case 'extrude':
+               return self.proceduralEngine.extrude(
+                 mergedParams.profile || [],
+                 mergedParams.height || 10,
+                 mergedParams.direction || 'y',
+                 mergedParams.material || 'steel'
+               );
+             case 'symmetry':
+               // For symmetry, we need the original voxels to symmetryze
+               // Since we don't have them in this context, we'll return an empty array
+               // A real implementation would need to store the original voxels
+               return [];
+             case 'hole':
+               return self.proceduralEngine.hole(
+                 mergedParams.dimensions || [5, 5, 5],
+                 mergedParams.position || {x: 0, y: 0, z: 0},
+                 mergedParams.material || 'air'
+               );
+             default:
+               // Fallback to creating a single voxel
+               return [{x: 0, y: 0, z: 0, material: 'steel'}];
+           }
+         };
+         
+         self.proceduralEngine.rules.set(rule.name, executeFunction);
+       };
+     }
 
    // Materials palette
     _populateMaterials() {
@@ -511,10 +418,228 @@ var toolNames = {
         matGroup.appendChild(swatch);
       }
 
-       // Clear container and append elements
-       container.textContent = '';
-       container.appendChild(sel);
-       container.appendChild(matGroup);
+        // Clear container and append elements
+        container.textContent = '';
+        container.appendChild(sel);
+        container.appendChild(matGroup);
+    }
+
+    // Boolean Operations Panel
+    _setupBooleanPanel() {
+        const self = this;
+        const container = document.getElementById('boolean-body');
+        const unionBtn = document.getElementById('bool-union');
+        const subtractBtn = document.getElementById('bool-subtract');
+        const intersectBtn = document.getElementById('bool-intersect');
+        const objectASelect = document.getElementById('bool-object-a');
+        const objectBSelect = document.getElementById('bool-object-b');
+        const replaceACheckbox = document.getElementById('bool-replace-a');
+        const createNewCheckbox = document.getElementById('bool-create-new');
+        const applyBtn = document.getElementById('bool-apply-btn');
+        const statusEl = document.getElementById('bool-status');
+
+        // Populate object dropdowns
+        function populateObjectDropdowns() {
+            // Clear existing options
+            objectASelect.innerHTML = '<option value="">Seleziona oggetto A...</option>';
+            objectBSelect.innerHTML = '<option value="">Seleziona oggetto B...</option>';
+            
+            // Add voxel objects from the voxel engine
+            const voxels = self.voxelEngine.voxelsIterator();
+            let voxelCount = 0;
+            for (const voxel of voxels) {
+                voxelCount++;
+                const optionText = `Voxel (${voxel.x}, ${voxel.y}, ${voxel.z})`;
+                const optionA = document.createElement('option');
+                optionA.value = `voxel_${voxelCount}`;
+                optionA.textContent = optionText;
+                optionA.dataset.type = 'voxel';
+                optionA.dataset.index = voxelCount - 1; // Store index for lookup
+                objectASelect.appendChild(optionA);
+                
+                const optionB = optionA.cloneNode(true);
+                optionB.value = `voxel_${voxelCount}_b`;
+                objectBSelect.appendChild(optionB);
+            }
+            
+            // TODO: Add support for meshes, imported objects, etc.
+            // For now, we'll just work with voxels
+        }
+
+        // Update status
+        function setStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `status-${type}`;
+        }
+
+        // Get selected object A
+        function getSelectedObjectA() {
+            const selectedValue = objectASelect.value;
+            if (!selectedValue || !selectedValue.startsWith('voxel_')) return null;
+            
+            const index = parseInt(objectASelect.selectedOptions[0].dataset.index);
+            if (isNaN(index)) return null;
+            
+            // Get voxel at index
+            let count = 0;
+            for (const voxel of self.voxelEngine.voxelsIterator()) {
+                if (count === index) {
+                    return voxel;
+                }
+                count++;
+            }
+            return null;
+        }
+
+        // Get selected object B
+        function getSelectedObjectB() {
+            const selectedValue = objectBSelect.value;
+            if (!selectedValue || !selectedValue.startsWith('voxel_')) return null;
+            
+            const index = parseInt(objectBSelect.selectedOptions[0].dataset.index);
+            if (isNaN(index)) return null;
+            
+            // Get voxel at index
+            let count = 0;
+            for (const voxel of self.voxelEngine.voxelsIterator()) {
+                if (count === index) {
+                    return voxel;
+                }
+                count++;
+            }
+            return null;
+        }
+
+        // Convert voxel to mesh for boolean operations
+        function voxelToMesh(voxel) {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            geometry.translate(voxel.x + 0.5, voxel.y + 0.5, voxel.z + 0.5);
+            
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x00d2ff,
+                transparent: true,
+                opacity: 0.5
+            });
+            
+            return new THREE.Mesh(geometry, material);
+        }
+
+        // Apply boolean operation
+        async function applyBooleanOperation(operation) {
+            try {
+                setStatus('Elaborazione operazione booleana...', 'info');
+                
+                const voxelA = getSelectedObjectA();
+                const voxelB = getSelectedObjectB();
+                
+                if (!voxelA || !voxelB) {
+                    setStatus('Seleziona entrambi gli oggetti A e B', 'warn');
+                    return;
+                }
+                
+                // Convert voxels to meshes
+                const meshA = voxelToMesh(voxelA);
+                const meshB = voxelToMesh(voxelB);
+                
+                // Import BooleanOperations dynamically to avoid issues
+                const { BooleanOperations } = await import('./boolean/BooleanOperations.js');
+                
+                // Perform the operation
+                let resultMesh;
+                switch (operation) {
+                    case 'union':
+                        resultMesh = BooleanOperations.union(meshA, meshB);
+                        break;
+                    case 'subtract':
+                        resultMesh = BooleanOperations.subtract(meshA, meshB);
+                        break;
+                    case 'intersect':
+                        resultMesh = BooleanOperations.intersect(meshA, meshB);
+                        break;
+                    default:
+                        setStatus('Operazione booleana non supportata', 'error');
+                        return;
+                }
+                
+                // Handle result based on user options
+                if (resultMesh) {
+                    // Replace object A with result
+                    if (replaceACheckbox.checked) {
+                        // Remove original voxel A and add voxels from result
+                        self.voxelEngine.removeVoxel(voxelA.x, voxelA.y, voxelA.z);
+                        
+                        // Sample points from the result mesh to create voxels
+                        // This is a simplified approach - in practice, you'd want to properly voxelize the mesh
+                        const voxelSize = self.voxelEngine.voxelSize;
+                        const positions = resultMesh.geometry.attributes.position;
+                        
+                        let addedCount = 0;
+                        for (let i = 0; i < positions.count; i += 3) { // Sample every 3rd point to avoid too many voxels
+                            const x = positions.getX(i);
+                            const y = positions.getY(i);
+                            const z = positions.getZ(i);
+                            
+                            const voxelX = Math.round(x / voxelSize) - 1;
+                            const voxelY = Math.round(y / voxelSize) - 1;
+                            const voxelZ = Math.round(z / voxelSize) - 1;
+                            
+                            if (self.voxelEngine.addVoxel({x: voxelX, y: voxelY, z: voxelZ}, 'steel', self.voxelEngine.activeModule)) {
+                                addedCount++;
+                            }
+                        }
+                        
+                        setStatus(`Operazione ${operation} completata: ${addedCount} voxel risultanti`, 'success');
+                    }
+                    // Create new object with result
+                    if (createNewCheckbox.checked) {
+                        // Similar to above, but don't remove original voxel A
+                        const voxelSize = self.voxelEngine.voxelSize;
+                        const positions = resultMesh.geometry.attributes.position;
+                        
+                        let addedCount = 0;
+                        for (let i = 0; i < positions.count; i += 3) {
+                            const x = positions.getX(i);
+                            const y = positions.getY(i);
+                            const z = positions.getZ(i);
+                            
+                            const voxelX = Math.round(x / voxelSize) - 1;
+                            const voxelY = Math.round(y / voxelSize) - 1;
+                            const voxelZ = Math.round(z / voxelSize) - 1;
+                            
+                            if (self.voxelEngine.addVoxel({x: voxelX, y: voxelY, z: voxelZ}, 'steel', self.voxelEngine.activeModule)) {
+                                addedCount++;
+                            }
+                        }
+                        
+                        setStatus(`Nuovo oggetto creato con operazione ${operation}: ${addedCount} voxel`, 'success');
+                    }
+                    
+                    if (!replaceACheckbox.checked && !createNewCheckbox.checked) {
+                        setStatus('Seleziona almeno un'opzione di risultato', 'warn');
+                    }
+                } else {
+                    setStatus('Operazione booleana fallita: risultato nullo', 'error');
+                }
+            } catch (error) {
+                console.error('Errore operazione booleana:', error);
+                setStatus(`Errore: ${error.message}`, 'error');
+            }
+        }
+
+        // Event listeners
+        unionBtn.addEventListener('click', () => applyBooleanOperation('union'));
+        subtractBtn.addEventListener('click', () => applyBooleanOperation('subtract'));
+        intersectBtn.addEventListener('click', () => applyBooleanOperation('intersect'));
+        
+        // Refresh object lists when panel is shown
+        const panelHeader = document.querySelector('#panel-boolean .panel-header');
+        panelHeader.addEventListener('click', () => {
+            // Small delay to ensure panel is fully expanded
+            setTimeout(populateObjectDropdowns, 100);
+        });
+        
+        // Initial population
+        populateObjectDropdowns();
     }
 
    _createSwatchColor(colorValue) {
@@ -1632,15 +1757,77 @@ window.addEventListener('tool-changed', function(e) {
       if (state.camera?.position) {
         this.camera.position.set(...state.camera.position);
       }
+      // Apply interpolated rules to voxel engine
+      if (state.rules && state.rules.length > 0 && this.proceduralEngine) {
+        // Clear existing scene for clean rule application
+        this.voxelEngine.clearAll();
+        // Apply each rule
+        for (const rule of state.rules) {
+          this._applyProceduralRule(rule);
+        }
+      }
       // Sync progress bar
       const duration = this.keyframeExtraction.toJSON().duration;
       progressEl.style.width = `${(this._timelineCurrentTime / (duration || 1)) * 100}%`;
       timeEl.textContent = `${this._formatTime(this._timelineCurrentTime)} / ${this._formatTime(duration)}`;
     }
 
-    this._timelineCurrentTime += 1;
-    if (this._timelinePlaying) {
-      requestAnimationFrame(() => this._playTimeline());
+this._timelineCurrentTime += 1;
+     if (this._timelinePlaying) {
+       requestAnimationFrame(() => this._playTimeline());
+     }
+   }
+
+  _applyProceduralRule(rule) {
+    if (!rule || !rule.type) return;
+    try {
+      const voxels = [];
+      switch (rule.type) {
+        case 'cube':
+          const cubeVoxels = this.proceduralEngine.cube(
+            rule.params.dimensions || [10, 10, 10],
+            rule.params.position || {x: 0, y: 0, z: 0},
+            rule.params.material || 'steel'
+          );
+          voxels.push(...cubeVoxels);
+          break;
+        case 'line':
+          const lineVoxels = this.proceduralEngine.line(
+            rule.params.length || 10,
+            rule.params.axis || 'x',
+            rule.params.offset || {x: 0, y: 0, z: 0},
+            rule.params.material || 'steel'
+          );
+          voxels.push(...lineVoxels);
+          break;
+        case 'extrude':
+        case 'ESTRUSIONE':
+          const extrudeVoxels = this.proceduralEngine.extrude(
+            rule.params.profile || [],
+            rule.params.height || 10,
+            rule.params.direction || 'y',
+            rule.params.material || 'steel'
+          );
+          voxels.push(...extrudeVoxels);
+          break;
+        case 'hole':
+          const holeVoxels = this.proceduralEngine.hole(
+            rule.params.dimensions || [5, 5, 5],
+            rule.params.position || {x: 0, y: 0, z: 0},
+            rule.params.material || 'air'
+          );
+          voxels.push(...holeVoxels);
+          break;
+        default:
+          const pos = rule.params?.position || {x: 0, y: 0, z: 0};
+          voxels.push({x: pos.x, y: pos.y, z: pos.z, material: 'steel'});
+      }
+      // Add all voxels to engine
+      for (const v of voxels) {
+        this.voxelEngine.addVoxel({ x: v.x, y: v.y, z: v.z }, v.material || 'steel', v.module);
+      }
+    } catch (e) {
+      console.warn('Failed to apply procedural rule:', rule.name, e.message);
     }
   }
 

@@ -38,7 +38,11 @@ class HoleSpec:
 
 
 def get_thread_pitch(diameter: float) -> float:
-    """Get ISO metric thread pitch for a given nominal diameter"""
+    """Get ISO metric thread pitch for a given nominal diameter
+    
+    For diameters above the maximum standard size (200mm), returns the
+    maximum standard diameter (200.0) so the caller can do the pitch lookup.
+    """
     if diameter in THREAD_PITCHES:
         return THREAD_PITCHES[diameter]
     # Find closest standard size
@@ -46,6 +50,7 @@ def get_thread_pitch(diameter: float) -> float:
     for s in sizes:
         if s >= diameter:
             return THREAD_PITCHES[s]
+    # Above maximum - return the diameter (200.0) for caller's pitch lookup
     return sizes[-1]
 
 

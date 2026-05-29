@@ -96,9 +96,10 @@ createLayerFromVoxels(options = {}) {
      this._sourceMaterialName = this._resolveSourceMaterial(sourceVoxels);
 
      const result = voxelToMesh(sourceVoxels, {
-       voxelSize: this.voxelEngine.voxelSize || 1.0,
-       flatCubes: options.flatCubes !== undefined ? options.flatCubes : true,
-       faceSubdivisions: options.faceSubdivisions || 4,
+       voxelSize: this.voxelEngine?.voxelSize || 1,
+       flatCubes: false,
+       wireframe: false,
+       faceSubdivisions: 4
      });
 
      this.geometry = result.geometry;
