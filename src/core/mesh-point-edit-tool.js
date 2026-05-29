@@ -175,7 +175,7 @@ finishEditing() {
       this._isCommitted = true;
       this.points.visible = false;
       this.mesh.visible = true;
-      this._setVoxelLayerVisible(true);
+      this._setVoxelLayerVisible(false);
       this.isActive = false;
       this.isDragging = false;
       this.selectedVertexIndex = null;
@@ -188,7 +188,7 @@ finishEditing() {
       this._unbindEvents();
       document.body.style.cursor = '';
       this.voxelEngine?._notify?.('Mesh modificata salvata nella scena', 'success');
-      this.voxelEngine?.setTool('select');
+      this.voxelEngine?.setTool?.('select');
       return true;
     }
 
