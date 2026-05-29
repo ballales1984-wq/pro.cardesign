@@ -17,6 +17,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.brick import Brick, create_brick, create_cube, create_bar, create_wheel_tire, create_cylinder, create_cone, create_sphere, next_brick_id
 from core.component import ComponentDefinition, ComponentInstance, ComponentLibrary, create_component_instance
+from core.hole import HoleSpec, create_thread_spec, create_counterbore_spec, drill_hole, get_thread_pitch
+from core.hole import next_hole_id
 
 
 class TestBrick(unittest.TestCase):
@@ -480,6 +482,59 @@ class TestPhysicsIntegration(unittest.TestCase):
             shutil.rmtree(tmpdir, ignore_errors=True)
 
 
+
+
+class TestHoleTool(unittest.TestCase):
+    """Tests for the Hole Tool system"""
+
+    def test_thread_pitch_values(self):
+        self.assertEqual(get_thread_pitch(8.0), 1.25)
+        self.assertEqual(get_thread_pitch(10.0), 1.5)
+        self.assertEqual(get_thread_pitch(20.0), 2.5)
+
+    def test_thread_pitch_interpolation(self):
+        # Values between standard sizes should return next larger
+        self.assertEqual(get_thread_pitch(15.0), 2.0)  # Between 14 and 16
+
+    def test_hole_spec_creation(self):
+        spec = HoleSpec(diameter=10, depth=50, hole_type='through')
+        self.assertEqual(spec.diameter, 10)
+        self.assertEqual(spec.depth, 50)
+        self.assertEqual(spec.hole_type, 'through')
+
+    def test_create_thread_spec(self):
+        spec = create_thread_spec(10.0, 30.0)
+        self.assertEqual(spec.hole_type, 'threaded')
+        self.assertEqual(spec.thread_diameter, 10.0)
+        self.assertEqual(spec.thread_pitch, 1.5)  # ISO pitch for M10
+        self.assertEqual(spec.depth, 30.0)
+
+    def test_create_counterbore_spec(self):
+        spec = create_counterbore_spec(6.0, 'hex')
+        self.assertEqual(spec.hole_type, 'counterbore')
+        self.assertEqual(spec.diameter, 6.0)
+        self.assertEqual(spec.counterbore_diameter, 4.5)  # hex head for M6
+
+    def test_drill_hole_removes_voxels(self):
+        import tempfile
+        import os
+        from voxel_editor import VoxelEngine
+        engine = VoxelEngine(20, 20, 20)
+        # Create a 10x10x10 block of voxels
+        for x in range(5, 15):
+            for y in range(5, 15):
+                for z in range(5, 15):
+                    engine.set_voxel(x, y, z, 'acciaio')
+        self.assertEqual(len(engine.voxel_map), 1000)
+
+        from core.hole import HoleSpec, drill_hole
+        import numpy as np
+        spec = HoleSpec(diameter=6, depth=100, hole_type='through')
+        center = np.array([10, 10, 10])
+        # Create a brick for drilling (not using VoxelEngine's Voxel, which lacks position/size)
+        brick = create_brick(1, "TestBrick", [10, 10, 10], [5, 5, 5])
+        removed = drill_hole(brick, center, spec)
+        self.assertGreater(len(removed), 0)
 
 
 class TestBrickResize(unittest.TestCase):

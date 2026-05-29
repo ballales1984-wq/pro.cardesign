@@ -11,6 +11,7 @@ import { ScalingTool } from './core/scaling-tool.js';
 import { SculptTool } from './core/sculpt-tool.js';
 import { VertexEditTool } from './core/vertex-edit-tool.js';
 import { MoveTool } from './core/move-tool.js';
+import { HoleTool } from './core/hole-tool.js';
 import { MeshPointEditTool } from './core/mesh-point-edit-tool.js';
 import { voxelToMesh } from './geometry/converters/voxelToMesh.js';
 import { LODManager } from './core/lod-manager.js';
@@ -118,9 +119,12 @@ this._history = [];
           // Initialize MoveTool
           this.moveTool = new MoveTool(this, this.scene, this.camera, this.renderer);
 
-          // Initialize mesh point overlay editor
-          this.meshPointEditTool = new MeshPointEditTool(this, this.scene, this.camera, this.renderer);
-    }
+// Initialize mesh point overlay editor
+           this.meshPointEditTool = new MeshPointEditTool(this, this.scene, this.camera, this.renderer);
+
+           // Initialize HoleTool
+           this.holeTool = new HoleTool(this, this.scene, this.camera, this.renderer);
+         }
 
     _setupEvents() {
         const canvas = this.renderer.domElement;
@@ -646,10 +650,12 @@ if (key) {
              this.undo();
            } else if (event.ctrlKey && key === 'y') {
              this.redo();
-           } else if (key === 'm') {
-             this.setTool('move');
-           }
-       }
+} else if (key === 'm') {
+              this.setTool('move');
+            } else if (key === 'h') {
+              this.setTool('hole');
+            }
+        }
         // ── Voxel operations ─────────────────────────────────────────
 
         addVoxel(pos, materialName, moduleId) {
@@ -880,18 +886,27 @@ const chunkKey = this._getChunkKey(pos);
                this.meshPointEditTool.deactivate();
              }
            }
-            // Activate/deactivate move tool
-            if (this.moveTool) {
-              if (tool === 'move') {
-                this.moveTool.activate();
-              } else {
-                this.moveTool.deactivate();
-              }
-            }
-            
-             const btns = document.querySelectorAll('.tool');
+// Activate/deactivate move tool
+             if (this.moveTool) {
+               if (tool === 'move') {
+                 this.moveTool.activate();
+               } else {
+                 this.moveTool.deactivate();
+               }
+             }
+
+             // Activate/deactivate hole tool
+             if (this.holeTool) {
+               if (tool === 'hole') {
+                 this.holeTool.activate();
+               } else {
+                 this.holeTool.deactivate();
+               }
+             }
+
+              const btns = document.querySelectorAll('.tool');
              for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-             const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', meshPointEdit: 'tool-mesh-point-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere', move: 'tool-move' };
+             const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', meshPointEdit: 'tool-mesh-point-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere', move: 'tool-move', hole: 'tool-hole' };
           const el = document.getElementById(btnMap[tool]);
           if (el) el.classList.add('active');
           window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));
@@ -955,22 +970,27 @@ const chunkKey = this._getChunkKey(pos);
                            this._worldPos({ x: action.x, y: action.y, z: action.z });
                        this._applyVoxelScaleToVoxel(voxel, action.oldScale[0], action.oldScale[1], action.oldScale[2], c);
                    }
-               } else if (action.type === 'move') {
-                   // Undo: remove from new pos, restore to old pos
-                   const moved = this.getVoxelAt(action.newX, action.newY, action.newZ);
-                   if (moved) this._removeVoxelSilently(action.newX, action.newY, action.newZ);
-                   this._addVoxelInternal(
-                     { x: action.oldX, y: action.oldY, z: action.oldZ },
-                     action.material, action.module
-                   );
-                   const restored = this.getVoxelAt(action.oldX, action.oldY, action.oldZ);
-                   if (restored && action.scale) {
-                       restored.scale = [...action.scale];
-                       this._applyVoxelScaleToVoxel(restored, action.scale[0], action.scale[1], action.scale[2],
-                         this._worldPos({ x: action.oldX, y: action.oldY, z: action.oldZ }));
-                   }
-               }
-              this._onVoxelChanged();
+} else if (action.type === 'move') {
+                    // Undo: remove from new pos, restore to old pos
+                    const moved = this.getVoxelAt(action.newX, action.newY, action.newZ);
+                    if (moved) this._removeVoxelSilently(action.newX, action.newY, action.newZ);
+                    this._addVoxelInternal(
+                      { x: action.oldX, y: action.oldY, z: action.oldZ },
+                      action.material, action.module
+                    );
+                    const restored = this.getVoxelAt(action.oldX, action.oldY, action.oldZ);
+                    if (restored && action.scale) {
+                        restored.scale = [...action.scale];
+                        this._applyVoxelScaleToVoxel(restored, action.scale[0], action.scale[1], action.scale[2],
+                          this._worldPos({ x: action.oldX, y: action.oldY, z: action.oldZ }));
+                    }
+                } else if (action.type === 'hole') {
+                    // Undo: restore removed voxels
+                    for (const voxel of action.removedVoxels) {
+                        this._addVoxelInternal({ x: voxel.x, y: voxel.y, z: voxel.z }, 'steel', null);
+                    }
+                }
+               this._onVoxelChanged();
           }
 
           redo() {
@@ -998,22 +1018,27 @@ const chunkKey = this._getChunkKey(pos);
                            this._worldPos({ x: action.x, y: action.y, z: action.z });
                        this._applyVoxelScaleToVoxel(voxel, action.newScale[0], action.newScale[1], action.newScale[2], c);
                    }
-               } else if (action.type === 'move') {
-                   // Redo: remove from old pos, re-add at new pos
-                   const atOld = this.getVoxelAt(action.oldX, action.oldY, action.oldZ);
-                   if (atOld) this._removeVoxelSilently(action.oldX, action.oldY, action.oldZ);
-                   this._addVoxelInternal(
-                     { x: action.newX, y: action.newY, z: action.newZ },
-                     action.material, action.module
-                   );
-                   const restored = this.getVoxelAt(action.newX, action.newY, action.newZ);
-                   if (restored && action.scale) {
-                       restored.scale = [...action.scale];
-                       this._applyVoxelScaleToVoxel(restored, action.scale[0], action.scale[1], action.scale[2],
-                         this._worldPos({ x: action.newX, y: action.newY, z: action.newZ }));
-                   }
-               }
-              this._onVoxelChanged();
+} else if (action.type === 'move') {
+                    // Redo: remove from old pos, re-add at new pos
+                    const atOld = this.getVoxelAt(action.oldX, action.oldY, action.oldZ);
+                    if (atOld) this._removeVoxelSilently(action.oldX, action.oldY, action.oldZ);
+                    this._addVoxelInternal(
+                      { x: action.newX, y: action.newY, z: action.newZ },
+                      action.material, action.module
+                    );
+                    const restored = this.getVoxelAt(action.newX, action.newY, action.newZ);
+                    if (restored && action.scale) {
+                        restored.scale = [...action.scale];
+                        this._applyVoxelScaleToVoxel(restored, action.scale[0], action.scale[1], action.scale[2],
+                          this._worldPos({ x: action.newX, y: action.newY, z: action.newZ }));
+                    }
+                } else if (action.type === 'hole') {
+                    // Redo: remove the voxels again
+                    for (const voxel of action.removedVoxels) {
+                        this._removeVoxelSilently(voxel.x, voxel.y, voxel.z);
+                    }
+                }
+               this._onVoxelChanged();
           }
 
        clearHistory() {

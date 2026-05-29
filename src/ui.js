@@ -110,20 +110,21 @@ runDeferred(() => {
               : 'Strumento: ' + (toolNames[self.voxelEngine.activeTool] || self.voxelEngine.activeTool);
       });
 
-      var toolNames = { 
-        add: 'Aggiungi (A)', 
-        remove: 'Rimuovi (R)', 
-        select: 'Seleziona (V)', 
-        fill: 'Riempimento (F)', 
-        scaling: 'Scala (S)', 
-        sculpt: 'Scultura (D)', 
-        vertexEdit: 'Vertice (E)',
-        meshPointEdit: 'Mesh punti (P)',
-        cylinder: 'Cilindro (CY)',
-        cone: 'Cono (CO)',
-        sphere: 'Sfera (SP)',
-        move: 'Sposta (M)'
-      };
+var toolNames = { 
+         add: 'Aggiungi (A)', 
+         remove: 'Rimuovi (R)', 
+         select: 'Seleziona (V)', 
+         fill: 'Riempimento (F)', 
+         scaling: 'Scala (S)', 
+         sculpt: 'Scultura (D)', 
+         vertexEdit: 'Vertice (E)',
+         meshPointEdit: 'Mesh punti (P)',
+         cylinder: 'Cilindro (CY)',
+         cone: 'Cono (CO)',
+         sphere: 'Sfera (SP)',
+         move: 'Sposta (M)',
+         hole: 'Foro (H)'
+       };
       window.addEventListener('tool-changed', function(e) {
           var hint = toolNames[e.detail] || e.detail;
           document.getElementById('tool-hint').textContent = 'Strumento: ' + hint;
