@@ -277,98 +277,96 @@ Euler: function(x,y,z){ this.x=x; this.y=y; this.z=z; this.set=_=>{}; },
      Box3: function(min,max){ this.min=min||{x:-1,y:-1,z:-1}; this.max=max||{x:1,y:1,z:1}; this.getCenter=_=>{return{set:_=>{}}}; this.getSize=_=>{return{set:_=>{}}}; },
      Vector3: Vec3,
      Vector2: Vec2,
-     BufferGeometry: function(){
-        this.attributes = {};
-        this.index = null;
-        this.morphAttributes = {};
-        this.groups = [];
-        this.boundingSphere = null;
-        this.boundingBox = null;
+BufferGeometry: function(){
+         this.attributes = {};
+         this.index = null;
+         this.morphAttributes = {};
+         this.groups = [];
+         this.boundingSphere = null;
+         this.boundingBox = null;
+         this.isBufferGeometry = true;
 
-       function _mkIndex(arr) {
-        // Wrap plain array so real THREE-like callers can call getX/i/i+1/i+2
-        const _arr = new Float32Array(arr);
-        const attr = { count: _arr.length, array: _arr,
-          getX: i => _arr[i], getY: i => i < _arr.length ? _arr[i+1] : 0, getZ: i => i < _arr.length ? _arr[i+2] : 0 };
-        return attr;
-      }
+        function _mkIndex(arr) {
+         const _arr = new Float32Array(arr);
+         const attr = { count: _arr.length, array: _arr,
+           getX: i => _arr[i], getY: i => i < _arr.length ? _arr[i+1] : 0, getZ: i => i < _arr.length ? _arr[i+2] : 0 };
+         return attr;
+       }
 
 this.setAttribute = (name, attr) => {
-         if (attr.count === undefined) attr.count = (attr.array ? attr.array.length / (attr.itemSize || 3) : 0);
-         this.attributes[name] = attr;
-         return attr;
-       };
-       this.getAttribute = (name) => this.attributes[name] || null;
-       this.setIndex = (idx) => { this.index = _mkIndex(idx); };
-       this.getIndex = () => this.index;
-       this.getnormal = () => null;
-       this.getuv = () => null;
+          if (attr.count === undefined) attr.count = (attr.array ? attr.array.length / (attr.itemSize || 3) : 0);
+          this.attributes[name] = attr;
+          return attr;
+        };
+        this.getAttribute = (name) => this.attributes[name] || null;
+        this.setIndex = (idx) => { this.index = _mkIndex(idx); };
+        this.getIndex = () => this.index;
+        this.getnormal = () => null;
+        this.getuv = () => null;
+        this.dispose = function(){};
+        this.computeVertexNormals = function(){};
+        this.computeBoundingBox = function(){};
 
- this.computeBoundingSphere = function(){ this.boundingSphere={ getCenter:_=>new Vec3(), radius:1 }; };
-this.clone = function(){
-              var c = Object.create(this);
-              c.attributes = {};
-              if (this.attributes) {
-                for (var k in this.attributes) {
-                  c.attributes[k] = Object.create(this.attributes[k]);
+this.computeBoundingSphere = function(){ this.boundingSphere={ getCenter:_=>new Vec3(), radius:1 }; };
+     this.clone = function(){
+                var c = Object.create(this);
+                c.attributes = {};
+                if (this.attributes) {
+                  for (var k in this.attributes) {
+                    c.attributes[k] = Object.create(this.attributes[k]);
+                  }
                 }
-              }
-              // Deep copy index with count property
-              if (this.index) {
-                c.index = {
-                  count: this.index.count,
-                  array: this.index.array,
-                  getX: this.index.getX,
-                  getY: this.index.getY,
-                  getZ: this.index.getZ
-                };
-              } else {
+                if (this.index) {
+                  c.index = {
+                    count: this.index.count,
+                    array: this.index.array,
+                    getX: this.index.getX,
+                    getY: this.index.getY,
+                    getZ: this.index.getZ
+                  };
+                } else {
+                  c.index = null;
+                }
+                c.morphAttributes = this.morphAttributes ? Object.create(this.morphAttributes) : {};
+                c.groups = this.groups ? this.groups.slice() : [];
+                c.isBufferGeometry = this.isBufferGeometry;
+                return c;
+              };
+    this.toNonIndexed = function(){
+                var c = Object.create(this);
+                c.attributes = {};
+                if (this.attributes) {
+                  for (var k in this.attributes) {
+                    c.attributes[k] = Object.create(this.attributes[k]);
+                  }
+                }
                 c.index = null;
-              }
-              c.morphAttributes = this.morphAttributes ? Object.create(this.morphAttributes) : {};
-              c.groups = this.groups ? this.groups.slice() : [];
-              // Preserve isBufferGeometry flag
-              c.isBufferGeometry = this.isBufferGeometry;
-              return c;
-            };
-this.toNonIndexed = function(){
-             var c = Object.create(this);
-             c.attributes = {};
-             if (this.attributes) {
-               for (var k in this.attributes) {
-                 c.attributes[k] = Object.create(this.attributes[k]);
-               }
-             }
-             c.index = null;
-             c.morphAttributes = this.morphAttributes ? Object.create(this.morphAttributes) : {};
-             c.groups = this.groups ? this.groups.slice() : [];
-             c.isBufferGeometry = this.isBufferGeometry;
-             return c;
-           };
-    Float32BufferAttribute: function(arr, itemSize){
-      this.array = Array.isArray(arr) ? new Float32Array(arr) : arr;
-      this.itemSize = itemSize;
-      this.count = this.array.length / itemSize;
-      this._needsUpdate = false;
-      const self = this;
-      Object.defineProperty(this, 'needsUpdate', {
-        get() { return self._needsUpdate; },
-        set(v) { self._needsUpdate = v; },
-      });
-
-      // Indexed accessor matching THREE.js BufferedAttribute API
-      function gx(i) { return self.array[i * self.itemSize]; }
-      function gy(i) { return i < self.array.length / self.itemSize ? self.array[i * self.itemSize + 1] : 0; }
-      function gz(i) { return i < self.array.length / self.itemSize ? self.array[i * self.itemSize + 2] : 0; }
-      this.getX = gx; this.getY = gy; this.getZ = gz;
-      this.setXYZ = function(i, x, y, z) {
-        self.array[i * self.itemSize] = x;
-        self.array[i * self.itemSize + 1] = y;
-        self.array[i * self.itemSize + 2] = z;
-      };
-
-      return this;
-    },
+                c.morphAttributes = this.morphAttributes ? Object.create(this.morphAttributes) : {};
+                c.groups = this.groups ? this.groups.slice() : [];
+                c.isBufferGeometry = this.isBufferGeometry;
+                return c;
+              };
+      },
+Float32BufferAttribute: function(arr, itemSize){
+               this.array = Array.isArray(arr) ? new Float32Array(arr) : arr;
+               this.itemSize = itemSize;
+               this.count = this.array.length / itemSize;
+               this._needsUpdate = false;
+               const self = this;
+               Object.defineProperty(this, 'needsUpdate', {
+                 get() { return self._needsUpdate; },
+                 set(v) { self._needsUpdate = v; },
+               });
+               this.getX = i => self.array[i * self.itemSize];
+               this.getY = i => i < self.array.length / self.itemSize ? self.array[i * self.itemSize + 1] : 0;
+               this.getZ = i => i < self.array.length / self.itemSize ? self.array[i * self.itemSize + 2] : 0;
+               this.setXYZ = function(i, x, y, z) {
+                 self.array[i * self.itemSize] = x;
+                 self.array[i * self.itemSize + 1] = y;
+                 self.array[i * self.itemSize + 2] = z;
+               };
+               return this;
+             },
 DoubleSide: 1, FrontSide: 0, BackSide: 2,
      PCFSoftShadowMap: 1, BasicShadowMap: 0,
      NoBlending: 0, AdditiveBlending: 1, NormalBlending: 2,

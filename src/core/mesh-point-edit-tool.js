@@ -169,28 +169,28 @@ commitEdits() {
   }
 
 finishEditing() {
-     if (!this.geometry || !this.mesh) return false;
-     this._flagGeometryChanged(true);
-     this._applyFinalMaterial();
-     this._isCommitted = true;
-     this.points.visible = false;
-     this.mesh.visible = true;
-     this._setVoxelLayerVisible(false);
-     this.isActive = false;
-     this.isDragging = false;
-     this.selectedVertexIndex = null;
-     this.linkedVertexIndices = [];
-     this.dragPlane = null;
-     this.dragStartWorld = null;
-     this.dragStartVertex = null;
-     this.startPositions = null;
-     if (this._label) this._label.style.display = 'none';
-     this._unbindEvents();
-     document.body.style.cursor = '';
-     this.voxelEngine?._notify?.('Mesh modificata salvata nella scena', 'success');
-     this.voxelEngine?.setTool('select');
-     return true;
-   }
+      if (!this.geometry || !this.mesh) return false;
+      this._flagGeometryChanged(true);
+      this._applyFinalMaterial();
+      this._isCommitted = true;
+      this.points.visible = false;
+      this.mesh.visible = true;
+      this._setVoxelLayerVisible(true);
+      this.isActive = false;
+      this.isDragging = false;
+      this.selectedVertexIndex = null;
+      this.linkedVertexIndices = [];
+      this.dragPlane = null;
+      this.dragStartWorld = null;
+      this.dragStartVertex = null;
+      this.startPositions = null;
+      if (this._label) this._label.style.display = 'none';
+      this._unbindEvents();
+      document.body.style.cursor = '';
+      this.voxelEngine?._notify?.('Mesh modificata salvata nella scena', 'success');
+      this.voxelEngine?.setTool('select');
+      return true;
+    }
 
 hasCommittedMesh() {
     return this._isCommitted && !!this.geometry && !!this.mesh;
@@ -257,40 +257,40 @@ restoreVertices(snapshot) {
      return true;
    }
 
-   deleteVertices(indices, linked = true) {
-     if (!this.geometry) return false;
-     const pos = this._positionAttr();
-     if (!pos || !indices?.length) return false;
-     
-     const toDelete = new Set();
-     for (const idx of indices) {
-       if (linked && this.selectedVertexIndex !== null) {
-         const linkedVerts = this._linkedVerticesAt(idx);
-         for (const lv of linkedVerts) toDelete.add(lv);
-       } else {
-         toDelete.add(idx);
-       }
-     }
-     
-     if (toDelete.size === 0 || toDelete.size >= pos.count) {
-       this._flagGeometryChanged();
-       return false;
-     }
-     
-     const newPositions = [];
-     for (let i = 0; i < pos.count; i++) {
-       if (!toDelete.has(i)) {
-         newPositions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
-       }
-     }
-     
-     this.geometry.setAttribute('position', 
-       new THREE.Float32BufferAttribute(newPositions, 3));
-     this._flagGeometryChanged(true);
-     this.selectedVertexIndex = null;
-     this.linkedVertexIndices = [];
-     return true;
-   }
+deleteVertices(indices, linked = true) {
+      if (!this.geometry) return false;
+      const pos = this._positionAttr();
+      if (!pos || !indices?.length) return false;
+      
+      const toDelete = new Set();
+      for (const idx of indices) {
+        if (linked && this.selectedVertexIndex !== null) {
+          const linkedVerts = this._linkedVerticesAt(idx);
+          for (const lv of linkedVerts) toDelete.add(lv);
+        } else {
+          toDelete.add(idx);
+        }
+      }
+      
+      if (toDelete.size === 0 || toDelete.size >= pos.count) {
+        this._flagGeometryChanged();
+        return false;
+      }
+      
+      const newPositions = [];
+      for (let i = 0; i < pos.count; i++) {
+        if (!toDelete.has(i)) {
+          newPositions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+        }
+      }
+      
+      this.geometry.setAttribute('position', 
+        new THREE.Float32BufferAttribute(newPositions, 3));
+      this._flagGeometryChanged(true);
+      this.selectedVertexIndex = null;
+      this.linkedVertexIndices = [];
+      return true;
+    }
 
    toJSON() {
     const pos = this._positionAttr();

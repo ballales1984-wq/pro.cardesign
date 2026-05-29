@@ -421,55 +421,63 @@ this._history = [];
    
        // ── Raycast with InstancedMesh and ground plane support ───────────────────────
    
-       _raycast(event) {
-         const canvas = this.renderer.domElement;
-         const rect = canvas.getBoundingClientRect();
-         this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-         this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-   
-         this.raycaster.setFromCamera(this.pointer, this.camera);
-   
-          // 1. Check voxels first (InstancedMesh)
-          const meshes = Array.from(this.instancedMeshes.values());
-          if (meshes.length > 0) {
-            const intersects = this.raycaster.intersectObjects(meshes, false);
-            if (intersects.length > 0) {
-              const hit = intersects[0];
-              if (hit.instanceId !== undefined) {
-                const materialName = hit.object.material.name;
-                const key = this.instanceToKey.get(materialName)?.[hit.instanceId];
+_raycast(event) {
+          const canvas = this.renderer.domElement;
+          const rect = canvas.getBoundingClientRect();
+          this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    
+          this.raycaster.setFromCamera(this.pointer, this.camera);
+    
+           // 1. Check voxels first (InstancedMesh)
+           const meshes = Array.from(this.instancedMeshes.values());
+           if (meshes.length > 0) {
+             const intersects = this.raycaster.intersectObjects(meshes, false);
+             if (intersects.length > 0) {
+               const hit = intersects[0];
+               if (hit.instanceId !== undefined) {
+                 const materialName = hit.object.material.name;
+                 const key = this.instanceToKey.get(materialName)?.[hit.instanceId];
 if (key) {
-                       const parts = key.split(',').map(Number);
-                       if (this.getVoxelAt(parts[0], parts[1], parts[2])) {
-                         // Extract face normal safely - InstancedMesh raycast may not provide it
-                         let faceNormal = new THREE.Vector3(0, 1, 0);
-                         if (hit.face && hit.face.normal) {
-                           faceNormal = hit.face.normal.clone();
-                         }
-                         return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal, isGround: false };
-                       }
-                     }
-              }
+                        const parts = key.split(',').map(Number);
+                        if (this.getVoxelAt(parts[0], parts[1], parts[2])) {
+                          // Extract face normal safely - InstancedMesh raycast may not provide it
+                          let faceNormal = new THREE.Vector3(0, 1, 0);
+                          if (hit.face && hit.face.normal) {
+                            faceNormal = hit.face.normal.clone();
+                          }
+                          return { key, x: parts[0], y: parts[1], z: parts[2], point: hit.point, faceNormal, isGround: false };
+                        }
+                      }
+               }
+             }
             }
+    
+           // 2. Check committed mesh for removal
+           if (this.meshPointEditTool?.hasCommittedMesh && this.meshPointEditTool.hasCommittedMesh()) {
+             const meshHits = this.raycaster.intersectObject(this.meshPointEditTool.mesh, false);
+             if (meshHits.length > 0) {
+               return { isMeshHit: true, point: meshHits[0].point, isGround: false };
+             }
            }
-   
-          // 2. If no voxel hit, check ground plane
-          // force recursive=false so ground plane is tested even if frustum-culled
-          const groundIntersects = this.raycaster.intersectObject(this.groundPlane, false);
-          if (groundIntersects.length > 0) {
-          const p = groundIntersects[0].point;
-          return {
-            x: Math.floor(p.x / this.voxelSize),
-            y: 0,
-            z: Math.floor(p.z / this.voxelSize),
-            point: p,
-            faceNormal: new THREE.Vector3(0, 1, 0),
-            isGround: true,
-          };
+    
+           // 3. If no voxel hit, check ground plane
+           // force recursive=false so ground plane is tested even if frustum-culled
+           const groundIntersects = this.raycaster.intersectObject(this.groundPlane, false);
+           if (groundIntersects.length > 0) {
+           const p = groundIntersects[0].point;
+           return {
+             x: Math.floor(p.x / this.voxelSize),
+             y: 0,
+             z: Math.floor(p.z / this.voxelSize),
+             point: p,
+             faceNormal: new THREE.Vector3(0, 1, 0),
+             isGround: true,
+           };
+         }
+    
+          return null;
         }
-   
-         return null;
-       }
    
         _onPointerMove(event) {
           if (this.cameraNavigationMode) {
@@ -556,8 +564,14 @@ if (key) {
                this._notify(`Voxel added: (${pos.x}, ${pos.y}, ${pos.z})`, 'success');
              }
 } else if (this.activeTool === 'remove') {
-            // When clicking ground, try y=0 first then fallback to y=1 for legacy voxels
-            if (hit.isGround) {
+             // Check for committed mesh hit first
+             if (hit.isMeshHit) {
+               this.meshPointEditTool?.clearLayer();
+               this._notify('Mesh point edit cancellata', 'success');
+               return;
+             }
+             // When clicking ground, try y=0 first then fallback to y=1 for legacy voxels
+             if (hit.isGround) {
               let removed = this.removeVoxel(hit.x, 0, hit.z);
               if (!removed) {
                 removed = this.removeVoxel(hit.x, 1, hit.z);

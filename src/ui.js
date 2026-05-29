@@ -565,17 +565,17 @@ _renderModuleTree() {
      voxelCountSmall.textContent = '(' + node.voxelCount + ')';
      row.appendChild(voxelCountSmall);
 
-     row.addEventListener('click', function() {
-       self.voxelEngine.activeModule = node.id;
-       var nodes = document.querySelectorAll('.module-node');
-       for (var i = 0; i < nodes.length; i++) nodes[i].classList.remove('selected');
-       row.classList.add('selected');
-       self._refreshProperties();
-     });
+row.addEventListener('click', function() {
+        self.voxelEngine.activeModule = node.id;
+        var nodes = document.querySelectorAll('.module-node');
+        for (var i = 0; i < nodes.length; i++) nodes[i].classList.remove('selected');
+        row.classList.add('selected');
+        self._refreshProperties();
+      });
 
-    parent.appendChild(row);
+      parent.appendChild(row);
 
-if (node.children && node.children.length > 0) {
+      if (node.children && node.children.length > 0) {
         for (var c = 0; c < node.children.length; c++) {
           this._renderModuleNode(parent, node.children[c], depth + 1);
         }
@@ -607,10 +607,10 @@ if (node.children && node.children.length > 0) {
         var hint = document.createElement('p');
         hint.className = 'hint';
         hint.textContent = 'Tipo di oggetto sconosciuto';
-        container.appendChild(hint);
+container.appendChild(hint);
       }
-    },
-    
+    }
+
     _showModuleProperties(module) {
       var container = document.getElementById('properties-panel');
       container.textContent = '';
@@ -638,19 +638,24 @@ if (node.children && node.children.length > 0) {
         }
       }
       
-      // We need to parse the HTML string into elements
+// We need to parse the HTML string into elements
       var temp = document.createElement('div');
       temp.innerHTML = moduleHtml;
       while (temp.firstChild) {
         container.appendChild(temp.firstChild);
       }
-    },
+    }
 
     // Properties Panel
     
-    _showVoxelProperties(voxel) {
+_showVoxelProperties(voxel) {
+      if (!voxel) {
+        this._showProperties(null);
+        return;
+      }
 
-     var mat = this.materialDB.get(voxel.material);
+      var container = document.getElementById('properties-panel');
+      var mat = this.materialDB.get(voxel.material);
      var matInfo = '';
      
      // Dimension display — use real scale from voxel data
@@ -1155,36 +1160,32 @@ document.getElementById('ex-ok').onclick = async () => {
       input.click();
     }
 
-  async _runImport(file) {
-    this._notify('Importazione ' + file.name + '...', 'info');
-    try {
-      const mod = await import('./core/stl-import.js');
-      const STLImporter = mod.STLImporter;
-      const QualityAnalyzer = mod.QualityAnalyzer;
-      const importer = new STLImporter(this.scene, this.camera, this.renderer);
-      const result = await importer.fitToScene(await importer.importFile(file), 24);
-      const analyzer = new QualityAnalyzer();
-      const analysis = analyzer.analyzeGeometry(result.geometry);
-      const voxels = importer.meshToVoxels(result.geometry, 1.0);
-      let added = 0;
-      for (const voxel of voxels) {
-        if (this.voxelEngine.addVoxel(voxel, 'steel', this.voxelEngine.activeModule)) added++;
-      }
-      this._showImportResults(analysis, result);
-      this.voxelEngine._onVoxelChanged();
-      this.voxelEngine.setTool('remove');
-      this.voxelEngine.resetCamera();
-      this._notify('Import completato: ' + added + ' voxel modificabili da ' + file.name, 'success');
-    } catch (err) {
-      this._notify('Errore import: ' + err.message, 'error');
-    }
-  }
+   async _runImport(file) {
+     this._notify('Importazione ' + file.name + '...', 'info');
+     try {
+       const mod = await import('./core/stl-import.js');
+       const STLImporter = mod.STLImporter;
+       const importer = new STLImporter(this.scene, this.camera, this.renderer);
+       const result = await importer.fitToScene(await importer.importFile(file), 24);
+       const qualityResult = importer.analyzeQuality(result.geometry);
+       const analysis = qualityResult.analysis;
+       const warnings = qualityResult.warnings;
+       const voxels = importer.meshToVoxels(result.geometry, 1.0);
+       let added = 0;
+       for (const voxel of voxels) {
+         if (this.voxelEngine.addVoxel(voxel, 'steel', this.voxelEngine.activeModule)) added++;
+       }
+       this._showImportResults(analysis, result, warnings);
+       this.voxelEngine._onVoxelChanged();
+       this.voxelEngine.setTool('remove');
+       this.voxelEngine.resetCamera();
+       this._notify('Import completato: ' + added + ' voxel modificabili da ' + file.name, 'success');
+     } catch (err) {
+       this._notify('Errore import: ' + err.message, 'error');
+     }
+   }
 
-  _showImportResults(analysis, importInfo) {
-    var panel = document.createElement('div');
-    panel.className = 'app-notification notification-success';
-    panel.style.zIndex = '10000';
-    panel.style.maxWidth = '400px';
+   _showImportResults(analysis, importInfo, warnings = []) {
      var panel = document.createElement('div');
      panel.className = 'app-notification notification-success';
      panel.style.zIndex = '10000';
@@ -1263,6 +1264,30 @@ document.getElementById('ex-ok').onclick = async () => {
      circularRow.appendChild(circularLabel);
      circularRow.appendChild(circularValue);
      
+     // Display warnings if any
+     if (warnings.length > 0) {
+       const warningsHeader = document.createElement('h4');
+       warningsHeader.style.margin = '12px 0 8px';
+       warningsHeader.style.color = '#ff9800';
+       warningsHeader.textContent = 'Avvisi Qualità';
+       innerDiv.appendChild(warningsHeader);
+       
+       const warningsList = document.createElement('ul');
+       warningsList.style.margin = '0 0 0 20px';
+       warningsList.style.padding = '0';
+       warningsList.style.fontSize = '14px';
+       
+       warnings.forEach(warning => {
+         const warningItem = document.createElement('li');
+         warningItem.style.margin = '4px 0';
+         warningItem.style.color = '#ff9800';
+         warningItem.textContent = warning;
+         warningsList.appendChild(warningItem);
+       });
+       
+       innerDiv.appendChild(warningsList);
+     }
+     
      const hr = document.createElement('hr');
      hr.style.borderColor = 'rgba(255,255,255,0.1)';
      hr.style.margin = '8px 0';
@@ -1322,11 +1347,10 @@ document.getElementById('ex-ok').onclick = async () => {
      
      panel.appendChild(innerDiv);
      document.body.appendChild(panel);
-    document.body.appendChild(panel);
-    
-    // Auto-remove after 15 seconds
-    setTimeout(() => { if (panel.parentNode) panel.remove(); }, 15000);
-  }
+     
+     // Auto-remove after 15 seconds
+     setTimeout(() => { if (panel.parentNode) panel.remove(); }, 15000);
+   }
 
    // Keyboard shortcuts
    _setupKeyboard() {
@@ -1374,18 +1398,23 @@ document.getElementById('ex-ok').onclick = async () => {
        self._showProperties(e.detail);
      });
 
-    window.addEventListener('tool-changed', function(e) {
-    // Show/hide sculpt panel
-    const sculptPanel = document.getElementById('sculpt-panel');
-    if (sculptPanel) {
-      sculptPanel.hidden = (e.detail !== 'sculpt');
-    }
-      self._showVoxelProperties(self.voxelEngine.getVoxelAt(
-        self.voxelEngine.selectedVoxel ? self.voxelEngine.selectedVoxel.x : undefined,
-        self.voxelEngine.selectedVoxel ? self.voxelEngine.selectedVoxel.y : undefined,
-        self.voxelEngine.selectedVoxel ? self.voxelEngine.selectedVoxel.z : undefined
-      ));
-    });
+window.addEventListener('tool-changed', function(e) {
+     // Show/hide sculpt panel
+     const sculptPanel = document.getElementById('sculpt-panel');
+     if (sculptPanel) {
+       sculptPanel.hidden = (e.detail !== 'sculpt');
+     }
+     // Show voxel properties for currently selected voxel (if any)
+     var sel = self.voxelEngine.selectedVoxel;
+     if (sel) {
+       const voxel = self.voxelEngine.getVoxelAt(sel.x, sel.y, sel.z);
+       if (voxel) {
+         self._showVoxelProperties(voxel);
+       }
+     } else {
+       self._showProperties(null);
+     }
+   });
   }
 
   _setupSculptPanelListeners() {
