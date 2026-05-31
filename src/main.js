@@ -182,7 +182,6 @@ const brickSystem = new BrickSystem(voxelEngine);
   function animate(time) {
     requestAnimationFrame(animate);
 
-    if (lastW < 16 || lastH < 16) resizeRenderer();
 
 controls.update();
       

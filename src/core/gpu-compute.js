@@ -68,7 +68,7 @@ export class GPUCompute {
       @group(0) @binding(2) var<storage, read> uniforms: Uniforms;
 
       @compute @workgroup_size(64)
-      fn main(@builtin(global_invocation_id) id: vec3<u32) {
+      fn main(@builtin(global_invocation_id) id: vec3u) {
         let i = id.x;
         if (i >= arrayLength(&voxels)) {
           return;
@@ -136,7 +136,7 @@ export class GPUCompute {
     // Read results (async would be better but keeping sync for simplicity)
     const resultBuffer = this.device.createBuffer({
       size: voxelData.byteLength,
-      usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_READ
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
     return this._cpuLODUpdate(voxels, cameraPosition); // Fallback until async read is stable
