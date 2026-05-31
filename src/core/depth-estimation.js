@@ -135,7 +135,15 @@ export class DepthEstimation {
     for (let y = 0; y < depthMap.height; y += step) {
       for (let x = 0; x < depthMap.width; x += step) {
         const d = depthMap.data[y * depthMap.width + x];
-        const normalizedDepth = (d - minDepth) / (maxDepth - minDepth + 0.001);
+        const depthRange = maxDepth - minDepth;
+        let normalizedDepth;
+        if (depthRange > 0.001) {
+          normalizedDepth = (d - minDepth) / depthRange;
+        } else if (maxDepth > 0.001) {
+          normalizedDepth = 1.0;
+        } else {
+          normalizedDepth = 0.0;
+        }
         
         if (normalizedDepth > 0.3) {
           const depthVoxels = Math.max(1, Math.floor(normalizedDepth * 20));
