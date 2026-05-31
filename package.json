@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "pro.cardesign-desktop",
   "version": "1.0.0",
   "description": "Hybrid 3D voxel CAD for vehicle design with real-world physics (mm scale, material properties, stress analysis)",
@@ -38,7 +39,7 @@
     "electron": "^27.3.11",
     "electron-builder": "^24.13.3",
     "electron-packager": "^17.1.2",
-    "vite": "^5.4.21",
+    "vite": "^4.5.14",
     "wait-on": "^7.2.0"
   },
   "dependencies": {
@@ -47,5 +48,8 @@
     "three": "^0.179.0",
     "three-bvh-csg": "^0.0.18",
     "three-mesh-bvh": "^0.9.10"
+  },
+  "overrides": {
+    "fs-extra": "11.1.0"
   }
 }
