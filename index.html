@@ -10,13 +10,18 @@
 </head>
 <body>
   <!-- Sidebar toggle button for mobile -->
-  <button id="sidebar-toggle" aria-label="Apri/Chiudi barra laterale" title="Menu">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <line x1="3" y1="12" x2="21" y2="12"></line>
-      <line x1="3" y1="6" x2="21" y2="6"></line>
-      <line x1="3" y1="18" x2="21" y2="18"></line>
-    </svg>
-  </button>
+<button id="sidebar-toggle" aria-label="Apri/Chiudi barra laterale" title="Menu">
+     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+       <line x1="3" y1="12" x2="21" y2="12"></line>
+       <line x1="3" y1="6" x2="21" y2="6"></line>
+       <line x1="3" y1="18" x2="21" y2="18"></line>
+     </svg>
+   </button>
+
+   <!-- Expand/Collapse all panels button -->
+   <button id="panels-toggle" aria-label="Espandi/Comprimi tutti i pannelli" title="Pannelli" style="position:fixed;top:12px;right:12px;z-index:1001;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s ease;">
+     <span style="font-size:14px;">📂</span>
+   </button>
   <div id="app">
 <!-- ═══════════════════════════════════════════════════
          TOOLBAR
@@ -39,71 +44,71 @@
 
        <!-- Tool Groups -->
        <div class="tools" role="group" aria-label="Strumenti">
-         <div id="tools-base" class="tool-group active" role="tabpanel">
-           <button id="tool-select" class="tool active" type="button" title="Seleziona (V)" aria-label="Strumento Seleziona, scorciatoia V" aria-pressed="true">
-             <span>Seleziona</span>
-           </button>
-           <button id="tool-add" class="tool" type="button" title="Aggiungi Voxel (A)" aria-label="Strumento Aggiungi voxel, scorciatoia A" aria-pressed="false">
-             <span>Aggiungi</span>
-           </button>
-           <button id="tool-remove" class="tool" type="button" title="Rimuovi Voxel (R)" aria-label="Strumento Rimuovi voxel, scorciatoia R" aria-pressed="false">
-             <span>Rimuovi</span>
-           </button>
-           <button id="tool-fill" class="tool" type="button" title="Riempimento (F)" aria-label="Strumento Riempimento livello Y, scorciatoia F" aria-pressed="false">
-             <span>Fill</span>
-           </button>
-           <button id="tool-move" class="tool" type="button" title="Sposta (M)" aria-label="Strumento Sposta brick, scorciatoia M" aria-pressed="false">
-             <span>Sposta</span>
-           </button>
-         </div>
+<div id="tools-base" class="tool-group active" role="tabpanel">
+            <button id="tool-select" class="tool active" type="button" title="Seleziona (V)" aria-label="Strumento Seleziona, scorciatoia V" aria-pressed="true">
+              <span>🔍 Seleziona</span>
+            </button>
+            <button id="tool-add" class="tool" type="button" title="Aggiungi Voxel (A)" aria-label="Strumento Aggiungi voxel, scorciatoia A" aria-pressed="false">
+              <span>➕ Aggiungi</span>
+            </button>
+            <button id="tool-remove" class="tool" type="button" title="Rimuovi Voxel (R)" aria-label="Strumento Rimuovi voxel, scorciatoia R" aria-pressed="false">
+              <span>❌ Rimuovi</span>
+            </button>
+            <button id="tool-fill" class="tool" type="button" title="Riempimento (F)" aria-label="Strumento Riempimento livello Y, scorciatoia F" aria-pressed="false">
+              <span>🧱 Fill</span>
+            </button>
+            <button id="tool-move" class="tool" type="button" title="Sposta (M)" aria-label="Strumento Sposta brick, scorciatoia M" aria-pressed="false">
+              <span>↔ Sposta</span>
+            </button>
+          </div>
 
-         <div id="tools-shapes" class="tool-group" role="tabpanel" hidden>
-           <button id="tool-cylinder" class="tool" type="button" title="Cilindro (CY)" aria-label="Strumento Cilindro, scorciatoia CY" aria-pressed="false">
-             <span>Cilindro</span>
-           </button>
-           <button id="tool-cone" class="tool" type="button" title="Cono (CO)" aria-label="Strumento Cono, scorciatoia CO" aria-pressed="false">
-             <span>Cono</span>
-           </button>
-           <button id="tool-sphere" class="tool" type="button" title="Sfera (SP)" aria-label="Strumento Sfera, scorciatoia SP" aria-pressed="false">
-             <span>Sfera</span>
-           </button>
-           <button id="tool-hole" class="tool" type="button" title="Foro (H)" aria-label="Strumento Fori, svasature e filettature, scorciatoia H" aria-pressed="false">
-             <span>Foro</span>
-           </button>
-         </div>
+          <div id="tools-shapes" class="tool-group" role="tabpanel" hidden>
+            <button id="tool-cylinder" class="tool" type="button" title="Cilindro (CY)" aria-label="Strumento Cilindro, scorciatoia CY" aria-pressed="false">
+              <span>🥫 Cilindro</span>
+            </button>
+            <button id="tool-cone" class="tool" type="button" title="Cono (CO)" aria-label="Strumento Cono, scorciatoia CO" aria-pressed="false">
+              <span>🍦 Cono</span>
+            </button>
+            <button id="tool-sphere" class="tool" type="button" title="Sfera (SP)" aria-label="Strumento Sfera, scorciatoia SP" aria-pressed="false">
+              <span>🔵 Sfera</span>
+            </button>
+            <button id="tool-hole" class="tool" type="button" title="Foro (H)" aria-label="Strumento Fori, svasature e filettature, scorciatoia H" aria-pressed="false">
+              <span>🕕 Foro</span>
+            </button>
+          </div>
 
-         <div id="tools-advanced" class="tool-group" role="tabpanel" hidden>
-           <button id="tool-scaling" class="tool" type="button" title="Scala (S)" aria-label="Strumento Scala voxel, scorciatoia S" aria-pressed="false">
-             <span>Scala</span>
-           </button>
-           <button id="tool-sculpt" class="tool" type="button" title="Scultura (D)" aria-label="Strumento Scultura voxel, scorciatoia D" aria-pressed="false">
-             <span>Scultura</span>
-           </button>
-           <button id="tool-vertex-edit" class="tool" type="button" title="Modifica Vertici (E)" aria-label="Strumento Modifica Vertici voxel, scorciatoia E" aria-pressed="false">
-             <span>Vertice</span>
-           </button>
-           <button id="tool-mesh-point-edit" class="tool" type="button" title="Mesh punti (P)" aria-label="Strumento Mesh punti sopra i voxel, scorciatoia P" aria-pressed="false">
-             <span>Mesh</span>
-           </button>
-         </div>
+          <div id="tools-advanced" class="tool-group" role="tabpanel" hidden>
+            <button id="tool-scaling" class="tool" type="button" title="Scala (S)" aria-label="Strumento Scala voxel, scorciatoia S" aria-pressed="false">
+              <span>📏 Scala</span>
+            </button>
+            <button id="tool-sculpt" class="tool" type="button" title="Scultura (D)" aria-label="Strumento Scultura voxel, scorciatoia D" aria-pressed="false">
+              <span>🗿 Scultura</span>
+            </button>
+            <button id="tool-vertex-edit" class="tool" type="button" title="Modifica Vertici (E)" aria-label="Strumento Modifica Vertici voxel, scorciatoia E" aria-pressed="false">
+              <span>🔺 Vertice</span>
+            </button>
+            <button id="tool-mesh-point-edit" class="tool" type="button" title="Mesh punti (P)" aria-label="Strumento Mesh punti sopra i voxel, scorciatoia P" aria-pressed="false">
+              <span>📐 Mesh</span>
+            </button>
+          </div>
 
-         <div id="tools-actions" class="tool-group" role="tabpanel" hidden>
-           <button id="btn-undo" title="Annulla (Ctrl+Z)" aria-label="Annulla, Ctrl+Z"><span>↩ Undo</span></button>
-           <button id="btn-redo" title="Ripristina (Ctrl+Y)" aria-label="Ripristina, Ctrl+Y"><span>↪ Redo</span></button>
-           <button id="btn-save" title="Salva progetto" aria-label="Salva progetto"><span>💾 Salva</span></button>
-           <button id="btn-load" title="Carica progetto" aria-label="Carica progetto"><span>📂 Carica</span></button>
-           <button id="btn-export" title="Esporta mesh STL/OBJ" aria-label="Esporta mesh"><span>📦 Esporta</span></button>
-           <button id="btn-import" title="Importa file STL/OBJ" aria-label="Importa STL/OBJ"><span>📥 Importa</span></button>
-           <button id="btn-sim" title="Simula dinamica e stress" aria-label="Simula fisica"><span>⚡ Simula</span></button>
-         </div>
+          <div id="tools-actions" class="tool-group" role="tabpanel" hidden>
+            <button id="btn-undo" title="Annulla (Ctrl+Z)" aria-label="Annulla, Ctrl+Z"><span>↩ Undo</span></button>
+            <button id="btn-redo" title="Ripristina (Ctrl+Y)" aria-label="Ripristina, Ctrl+Y"><span>↪ Redo</span></button>
+            <button id="btn-save" title="Salva progetto" aria-label="Salva progetto"><span>💾 Salva</span></button>
+            <button id="btn-load" title="Carica progetto" aria-label="Carica progetto"><span>📂 Carica</span></button>
+            <button id="btn-export" title="Esporta mesh STL/OBJ" aria-label="Esporta mesh"><span>📤 Esporta</span></button>
+            <button id="btn-import" title="Importa file STL/OBJ" aria-label="Importa STL/OBJ"><span>📥 Importa</span></button>
+            <button id="btn-sim" title="Simula dinamica e stress" aria-label="Simula fisica"><span>⚡ Simula</span></button>
+          </div>
        </div>
 
-<div class="actions" role="group" aria-label="Controlli viewport">
-          <button id="btn-reset-cam" title="Reset inquadratura" aria-label="Reset camera"><span>🎯 Reset Cam</span></button>
-          <button id="btn-surface" title="Mostra superficie esterna" aria-label="Mostra superficie esterna"><span>📐 Superficie</span></button>
-          <button id="btn-help" title="Guida e aiuto" aria-label="Guida e aiuto"><span>❓ Aiuto</span></button>
-          <button id="btn-clear" title="Cancella scena" aria-label="Pulisci tutti i voxel"><span>🗑️ Pulisci</span></button>
-        </div>
+      <div class="actions" role="group" aria-label="Controlli viewport">
+        <button id="btn-reset-cam" title="Reset inquadratura" aria-label="Reset camera"><span>🎯 Reset Cam</span></button>
+        <button id="btn-surface" title="Mostra superficie esterna" aria-label="Mostra superficie esterna"><span>📐 Superficie</span></button>
+        <button id="btn-help" title="Guida e aiuto" aria-label="Guida e aiuto"><span>❓ Aiuto</span></button>
+        <button id="btn-clear" title="Cancella scena" aria-label="Pulisci tutti i voxel"><span>🗑️ Pulisci</span></button>
+      </div>
      </header>
 
       <!-- ═══════════════════════════════════════════════════
@@ -353,8 +358,8 @@
          </div>
        </div>
 
-<!-- ── Operazioni Booleane ── -->
-        <div class="panel collapsed" id="panel-boolean">
+        <!-- ── Operazioni Booleane ── -->
+        <div class="panel" id="panel-boolean">
           <div
             class="panel-header"
             role="button"
@@ -365,85 +370,82 @@
             <span class="arrow" aria-hidden="true">▼</span>
           </div>
           <div class="panel-body" id="boolean-body">
-           <!-- Boolean operations controls -->
-           <div style="margin-bottom: 12px;">
-             <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Operazione:</div>
-             <div style="display: flex; gap: 8px;">
-               <button id="bool-union" class="btn-secondary boolean-op-btn">Unione (A ∪ B)</button>
-               <button id="bool-subtract" class="btn-secondary boolean-op-btn">Sottrazione (A - B)</button>
-               <button id="bool-intersect" class="btn-secondary boolean-op-btn">Intersezione (A ∩ B)</button>
-             </div>
-           </div>
-           
-           <!-- Object selection -->
-           <div style="margin-bottom: 12px;">
-             <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Oggetti:</div>
-             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-               <div style="flex: 1; min-width: 120px;">
-                 <label for="bool-object-a" class="sr-only">Oggetto A</label>
-                 <select id="bool-object-a" class="prop-input">
-                   <option value="">Seleziona oggetto A...</option>
-                 </select>
-               </div>
-               <div style="flex: 1; min-width: 120px;">
-                 <label for="bool-object-b" class="sr-only">Oggetto B</label>
-                 <select id="bool-object-b" class="prop-input">
-                   <option value="">Seleziona oggetto B...</option>
-                 </select>
-               </div>
-             </div>
-           </div>
-           
-           <!-- Result options -->
-           <div style="margin-bottom: 12px;">
-             <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Opzioni risultato:</div>
-             <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-               <div>
-                 <label for="bool-replace-a" class="prop-check">
-                   <input type="checkbox" id="bool-replace-a" checked>
-                   Sostituisci oggetto A con il risultato
-                 </label>
-               </div>
-               <div>
-                 <label for="bool-create-new" class="prop-check">
-                   <input type="checkbox" id="bool-create-new">
-                   Crea nuovo oggetto con il risultato
-                 </label>
-               </div>
-             </div>
-           </div>
-           
-           <!-- Action button -->
-           <div style="text-align: center; margin-top: 12px;">
-             <button id="bool-apply-btn" class="btn-primary">Applica Operazione Booleana</button>
-           </div>
-           
-           <!-- Status -->
-           <div id="bool-status" style="margin-top: 12px; min-height: 20px; font-size: 12px;"></div>
-         </div>
-       </div>
-
-<!-- ── Libreria Componenti ── -->
-       <div class="panel" id="panel-library">
-         <div
-           class="panel-header"
-           role="button"
-           tabindex="0"
-           aria-expanded="true"
-           aria-controls="library-body">
-           🧩 Libreria
-           <span class="arrow" aria-hidden="true">▼</span>
-         </div>
-         <div class="panel-body" id="library-body">
-            <div class="hint" style="margin-bottom:8px;">
-              Cerca componenti o filtra per categoria
+            <!-- Boolean operations controls -->
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Operazione:</div>
+              <div style="display: flex; gap: 8px;">
+                <button id="bool-union" class="btn-secondary boolean-op-btn">Unione (A ∪ B)</button>
+                <button id="bool-subtract" class="btn-secondary boolean-op-btn">Sottrazione (A - B)</button>
+                <button id="bool-intersect" class="btn-secondary boolean-op-btn">Intersezione (A ∩ B)</button>
+              </div>
             </div>
-            <div class="search-wrap" style="margin-bottom:8px;">
-              <input type="text" id="library-search" class="prop-input" placeholder="🔎 Cerca componenti..." autocomplete="off" />
+            
+            <!-- Object selection -->
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Oggetti:</div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 120px;">
+                  <label for="bool-object-a" class="sr-only">Oggetto A</label>
+                  <select id="bool-object-a" class="prop-input">
+                    <option value="">Seleziona oggetto A...</option>
+                  </select>
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                  <label for="bool-object-b" class="sr-only">Oggetto B</label>
+                  <select id="bool-object-b" class="prop-input">
+                    <option value="">Seleziona oggetto B...</option>
+                  </select>
+                </div>
+              </div>
             </div>
+            
+            <!-- Result options -->
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Opzioni risultato:</div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div>
+                  <label for="bool-replace-a" class="prop-check">
+                    <input type="checkbox" id="bool-replace-a" checked>
+                    Sostituisci oggetto A con il risultato
+                  </label>
+                </div>
+                <div>
+                  <label for="bool-create-new" class="prop-check">
+                    <input type="checkbox" id="bool-create-new">
+                    Crea nuovo oggetto con il risultato
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Action button -->
+            <div style="text-align: center; margin-top: 12px;">
+<button id="bool-apply-btn" class="btn-primary">Applica Operazione Booleana</button>
+            </div>
+            
+            <!-- Status -->
+            <div id="bool-status" style="margin-top: 12px; min-height: 20px; font-size: 12px;"></div>
+          </div>
+        </div>
+        
+        <!-- Visual separator -->
+        <div style="height: 1px; background: var(--border); margin: 16px 0;"></div>
+        
+        <!-- ── Libreria Componenti ── -->
+        <div class="panel" id="panel-library">
+          <div
+            class="panel-header"
+            role="button"
+            tabindex="0"
+            aria-expanded="false"
+            aria-controls="library-body">
+            🧩 Libreria
+            <span class="arrow" aria-hidden="true">▼</span>
+          </div>
+          <div class="panel-body" id="library-body">
             <div class="form-group">
               <label for="library-category" class="sr-only">Filtra per categoria</label>
-             <select id="library-category" class="prop-input">
+              <select id="library-category" class="prop-input">
                 <option value="all">Tutte le categorie</option>
                 <option value="wheels">⚫ Ruote</option>
                 <option value="frame">🔧 Telaio</option>
@@ -455,37 +457,40 @@
                 <option value="finiture">🎨 Finiture</option>
                 <option value="misc">📦 Altro</option>
               </select>
-           </div>
-           <div id="component-list"></div>
-         </div>
-       </div>
+            </div>
+            <div id="component-list"></div>
+          </div>
+        </div>
 
-      <!-- ── Editor Componente Selezionato ── -->
-      <div class="panel" id="panel-component-selected" style="display:none;">
-      <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;">
-        Modifica Componente
-        <button
-          id="close-component-editor"
-          class="btn-icon"
-          aria-label="Chiudi editor componente"
-          onclick="this.closest('.panel').style.display='none'"
-        >✕</button>
-      </div>
-        <div class="panel-body" id="component-editor"></div>
-      </div>
-
-<!-- ── AI Image Import ── -->
-         <div class="panel collapsed" id="panel-ai-import">
-           <div
-             class="panel-header"
-             role="button"
-             tabindex="0"
-             aria-expanded="false"
-             aria-controls="ai-import-body">
-             🤖 AI Import
-             <span class="arrow" aria-hidden="true">▼</span>
-           </div>
-           <div class="panel-body" id="ai-import-body">
+        <!-- ── Editor Componente Selezionato ── -->
+        <div class="panel" id="panel-component-selected" style="display:none;">
+          <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;">
+            Modifica Componente
+            <button
+              id="close-component-editor"
+              class="btn-icon"
+              aria-label="Chiudi editor componente"
+              onclick="this.closest('.panel').style.display='none'"
+            >✕</button>
+          </div>
+          <div class="panel-body" id="component-editor"></div>
+        </div>
+        
+        <!-- Visual separator -->
+        <div style="height: 1px; background: var(--border); margin: 16px 0;"></div>
+        
+        <!-- ── AI Image Import ── -->
+        <div class="panel" id="panel-ai-import">
+          <div
+            class="panel-header"
+            role="button"
+            tabindex="0"
+            aria-expanded="false"
+            aria-controls="ai-import-body">
+            🤖 AI Import
+            <span class="arrow" aria-hidden="true">▼</span>
+          </div>
+          <div class="panel-body" id="ai-import-body">
             <div class="hint" style="margin-bottom:8px;">
               Carica un'immagine 2D per generare voxel tramite depth estimation.
             </div>
@@ -493,22 +498,22 @@
               <input type="file" id="ai-image-input" accept="image/*" style="flex:1;"/>
               <button id="btn-ai-process" class="btn-primary" style="flex:0 0 auto;">Genera</button>
             </div>
-<div id="ai-status" style="font-size:11px;color:var(--text-dim);margin-top:6px;"></div>
+            <div id="ai-status" style="font-size:11px;color:var(--text-dim);margin-top:6px;"></div>
           </div>
         </div>
 
-<!-- ── Video Timeline ── -->
-         <div class="panel collapsed" id="panel-timeline">
-           <div
-             class="panel-header"
-             role="button"
-             tabindex="0"
-             aria-expanded="false"
-             aria-controls="timeline-body">
-             🎞️ Timeline Video
-             <span class="arrow" aria-hidden="true">▼</span>
-           </div>
-           <div class="panel-body" id="timeline-body">
+        <!-- ── Video Timeline ── -->
+        <div class="panel" id="panel-timeline">
+          <div
+            class="panel-header"
+            role="button"
+            tabindex="0"
+            aria-expanded="false"
+            aria-controls="timeline-body">
+            🎞️ Timeline Video
+            <span class="arrow" aria-hidden="true">▼</span>
+          </div>
+          <div class="panel-body" id="timeline-body">
             <div style="display:flex;gap:4px;margin-bottom:8px;align-items:center;">
               <input type="file" id="video-input" accept="video/*" style="flex:1;"/>
               <button id="btn-extract-keyframes" class="btn-primary" style="flex:0 0 auto;">Estrai</button>
@@ -525,8 +530,8 @@
             </div>
           </div>
         </div>
-
-     </aside>
+        
+      </aside>
 
     <!-- ═══════════════════════════════════════════════════
          VIEWPORT 3D
@@ -548,11 +553,16 @@
         <button id="cam-zoom-out" type="button" title="Zoom indietro (- / Page Down)" aria-label="Zoom indietro">-</button>
       </div>
 
-      <div id="viewport-info">
-        <span id="voxel-count" aria-live="polite">Voxel: 0</span>
-        <span id="fps-counter" aria-live="polite" aria-label="Framerate">FPS: --</span>
-        <span id="tool-hint">Strumento: Aggiungi (A)</span>
-      </div>
+<div id="viewport-info">
+         <span id="voxel-count" aria-live="polite">Voxel: 0</span>
+         <span id="fps-counter" aria-live="polite" aria-label="Framerate">FPS: --</span>
+         <span id="tool-hint">Strumento: Aggiungi (A)</span>
+       </div>
+
+       <!-- Quick hint overlay -->
+       <div id="quick-hint" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:var(--text-dim);padding:12px 20px;border-radius:8px;font-size:12px;pointer-events:none;opacity:0;transition:opacity 0.3s;">
+         Premi 1-2-3-4 per cambiare scheda | ESC per deselezionare | +/- per zoom
+       </div>
     </main>
 
   </div><!-- /#app -->
