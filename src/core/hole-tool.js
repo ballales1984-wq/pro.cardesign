@@ -251,10 +251,20 @@ export class HoleTool {
     if (panel) panel.style.display = 'block';
   }
 
-  _hidePanel() {
-const panel = document.getElementById('hole-panel');
+_hidePanel() {
+    const panel = document.getElementById('hole-panel');
     if (panel) panel.style.display = 'none';
     if (this.liveLabel) this.liveLabel.style.display = 'none';
+  }
+
+  _notify(message, type = 'info') {
+    if (typeof window._notify === 'function') {
+      window._notify(message, type);
+    } else if (window.toast) {
+      window.toast(message, type);
+    } else {
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
   }
 
   _applyHole() {
@@ -354,18 +364,8 @@ const panel = document.getElementById('hole-panel');
     for (const d of Object.keys(pitches).map(Number).sort((a, b) => a - b)) {
       if (d >= diameter) return pitches[d];
     }
-    return pitches[24] || 3.0;
+return pitches[24] || 3.0;
   }
-
-_notify(message, type = 'info') {
-     if (typeof window._notify === 'function') {
-       window._notify(message, type);
-     } else if (window.toast) {
-       window.toast(message, type);
-     } else {
-       console.log(`[${type.toUpperCase()}] ${message}`);
-     }
-   }
 
   destroy() {
     this.deactivate();

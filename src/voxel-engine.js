@@ -526,12 +526,17 @@ if (key) {
                 return;
               }
 
-              // In vertexEdit mode, let the vertexEdit tool handle click-selection
-              if (this.activeTool === 'vertexEdit' && this._vertexEditTool) {
-                return;
-              }
-    
-            if (this.activeTool === 'add') {
+// In vertexEdit mode, let the vertexEdit tool handle click-selection
+               if (this.activeTool === 'vertexEdit' && this._vertexEditTool) {
+                 return;
+               }
+
+               // In meshPointEdit mode, let the mesh point edit tool handle click-selection
+               if (this.activeTool === 'meshPointEdit' && this._meshPointEditTool) {
+                 return;
+               }
+     
+             if (this.activeTool === 'add') {
               let pos;
               if (hit.isGround) {
                 pos = { x: hit.x, y: 0, z: hit.z };
@@ -581,12 +586,15 @@ if (hit.isMeshHit) {
             const pos = hit.isGround ? { x: hit.x, y: 25, z: hit.z } : { x: hit.x, y: hit.y, z: hit.z };
             const count = this.addCone(pos, 20, 50, this.activeMaterial);
             this._notify(`Cono creato: ${count.length} voxel`, 'success');
-          } else if (this.activeTool === 'sphere') {
-            const pos = hit.isGround ? { x: hit.x, y: 20, z: hit.z } : { x: hit.x, y: hit.y, z: hit.z };
-            const count = this.addSphere(pos, 40, this.activeMaterial);
-            this._notify(`Sfera creata: ${count.length} voxel`, 'success');
-          }
-        }
+} else if (this.activeTool === 'sphere') {
+             const pos = hit.isGround ? { x: hit.x, y: 20, z: hit.z } : { x: hit.x, y: hit.y, z: hit.z };
+             const count = this.addSphere(pos, 40, this.activeMaterial);
+             this._notify(`Sfera creata: ${count.length} voxel`, 'success');
+           } else if (this.activeTool === 'hole') {
+             // Hole tool handles clicks via _onMouseDown binding - early exit
+             return;
+           }
+         }
    
        _onKeyDown(event) {
          const tag = event.target.tagName;
@@ -901,13 +909,15 @@ get holeTool() {
               this._vertexEditTool.deactivate();
             }
           }
-          if (this._meshPointEditTool) {
-            if (tool === 'meshPointEdit') {
-              this._meshPointEditTool.activate();
-            } else {
-              this._meshPointEditTool.deactivate();
-            }
-          }
+// Activate/deactivate mesh point edit tool
+           const meshTool = this.meshPointEditTool;
+           if (meshTool) {
+             if (tool === 'meshPointEdit') {
+               meshTool.activate();
+             } else {
+               meshTool.deactivate();
+             }
+           }
           if (this._moveTool) {
             if (tool === 'move') {
               this._moveTool.activate();

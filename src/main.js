@@ -15,6 +15,7 @@ import { StressAnalysis } from './core/stress-analysis.js';
 import { LODManager } from './core/lod-manager.js';
 import { CollisionDetection } from './core/collision-detection.js';
 import { PhysicsSignature } from './core/physics-signature.js';
+import { GPUCompute } from './core/gpu-compute.js';
 
 function showFatalError(message) {
   const box = document.createElement('div');
@@ -113,11 +114,21 @@ async function boot() {
       controls
     );
 const brickSystem = new BrickSystem(voxelEngine);
-     const proceduralEngine = new ProceduralEngine(voxelEngine);
-     const lodManager = new LODManager(camera, voxelEngine);
-     const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
-     const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis);
-     const collisionDetection = new CollisionDetection(voxelEngine);
+      const proceduralEngine = new ProceduralEngine(voxelEngine);
+      const gpuCompute = new GPUCompute();
+      const lodManager = new LODManager(camera, voxelEngine, { gpuCompute });
+      const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
+      const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis);
+      const collisionDetection = new CollisionDetection(voxelEngine);
+
+    // Initialize GPU compute (async, non-blocking)
+    gpuCompute.init(renderer).then(enabled => {
+      if (enabled) {
+        console.log('GPU Compute initialized successfully');
+      } else {
+        console.log('GPU Compute fallback to CPU (WebGPU not available)');
+      }
+    });
 
     try {
       new UI({

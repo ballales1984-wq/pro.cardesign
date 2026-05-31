@@ -362,14 +362,63 @@ body {
   font-weight: 500;
 }
 
+/* Toolbar Tabs */
+ .toolbar-tabs {
+   display: flex;
+   gap: 2px;
+   padding: 0 var(--gutter-sm);
+   border-bottom: 1px solid var(--border);
+ }
+
+ .tab-btn {
+   padding: 4px 10px;
+   background: transparent;
+   border: 1px solid transparent;
+   border-bottom: none;
+   color: var(--text-dim);
+   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+   cursor: pointer;
+   font-size: 10px;
+   line-height: 1.4;
+   transition: background 0.12s ease, color 0.12s ease;
+ }
+
+ .tab-btn:hover {
+   background: var(--hover);
+   color: var(--text);
+ }
+
+ .tab-btn.active {
+   background: var(--surface);
+   color: var(--accent2);
+   border-color: var(--accent2);
+   border-bottom: 1px solid var(--surface);
+ }
+
+ .tool-group {
+   display: flex;
+   gap: 2px;
+   align-items: center;
+   flex-shrink: 0;
+   flex-wrap: wrap;
+ }
+
+ .tool-group.active {
+   display: flex;
+ }
+
+ .tool-group:not(.active) {
+   display: none;
+ }
+
 /* Tool group */
-.tools {
-  display: flex;
-  gap: 2px;
-  align-items: center;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
+ .tools {
+   display: flex;
+   gap: 2px;
+   align-items: center;
+   flex-shrink: 0;
+   flex-wrap: wrap;
+ }
 
 .tool {
   display: inline-flex;
@@ -543,18 +592,24 @@ body {
 }
 
 .arrow {
-  font-size: 10px;
-  transition: transform 0.22s ease;
-  color: var(--text-dim);
-  flex-shrink: 0;
-}
+   font-size: 10px;
+   transition: transform 0.22s ease;
+   color: var(--text-dim);
+   flex-shrink: 0;
+ }
 
-/* Chevron rotation when panel is collapsed */
-.panel.collapsed .arrow {
-  transform: rotate(-90deg);
-}
+ /* Chevron rotation when panel is collapsed */
+ .panel.collapsed .arrow {
+   transform: rotate(-90deg);
+ }
 
-.panel-body {
+ /* Panel body when panel is collapsed */
+ .panel.collapsed .panel-body {
+   display: none;
+ }
+
+ /* Panel body normal state */
+ .panel-body {
    padding: var(--gutter-sm) var(--gutter-sm);
    overflow-y: auto;
    overflow-x: hidden;
@@ -574,9 +629,24 @@ body {
    background: var(--border);
    border-radius: 4px;
  }
-
- .panel.collapsed .panel-body {
+ #panel-materials.collapsed .panel-body,
+ #panel-modules.collapsed .panel-body,
+ #panel-procedural.collapsed .panel-body,
+ #panel-boolean.collapsed .panel-body,
+ #panel-library.collapsed .panel-body,
+ #panel-ai-import.collapsed .panel-body,
+ #panel-timeline.collapsed .panel-body {
    display: none;
+ }
+
+ #panel-materials .panel-body,
+ #panel-modules .panel-body {
+   display: block;
+ }
+
+/* Panel body max-height auto when not collapsed */
+ #sidebar:not(.collapsed) .panel-body {
+   max-height: none;
  }
 
 /* --------------------------------------------------------------------------

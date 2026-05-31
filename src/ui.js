@@ -70,22 +70,33 @@ runDeferred(() => {
     }, 2500);
   }
 
-  // Toolbar
-  _setupToolbar() {
-      var self = this;
-      document.getElementById('tool-select').addEventListener('click', function() { self.voxelEngine.setTool('select'); });
-      document.getElementById('tool-move').addEventListener('click', function() { self.voxelEngine.setTool('move'); });
-      document.getElementById('tool-add').addEventListener('click', function() { self.voxelEngine.setTool('add'); });
-      document.getElementById('tool-remove').addEventListener('click', function() { self.voxelEngine.setTool('remove'); });
-      document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
-      document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
-      document.getElementById('tool-sculpt').addEventListener('click', function() { self.voxelEngine.setTool('sculpt'); });
-      document.getElementById('tool-vertex-edit').addEventListener('click', function() { self.voxelEngine.setTool('vertexEdit'); });
-      document.getElementById('tool-mesh-point-edit').addEventListener('click', function() { self.voxelEngine.setTool('meshPointEdit'); });
-      document.getElementById('tool-cylinder').addEventListener('click', function() { self.voxelEngine.setTool('cylinder'); });
-      document.getElementById('tool-cone').addEventListener('click', function() { self.voxelEngine.setTool('cone'); });
-document.getElementById('tool-sphere').addEventListener('click', function() { self.voxelEngine.setTool('sphere'); });
-       document.getElementById('tool-hole').addEventListener('click', function() { self.voxelEngine.setTool('hole'); });
+// Toolbar
+   _setupToolbar() {
+       var self = this;
+
+       // Tab switching
+       document.querySelectorAll('.tab-btn').forEach(function(btn) {
+         btn.addEventListener('click', function() {
+           document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+           this.classList.add('active');
+           document.querySelectorAll('.tool-group').forEach(g => g.classList.remove('active'));
+           document.getElementById(this.dataset.tab).classList.add('active');
+         });
+       });
+
+       document.getElementById('tool-select').addEventListener('click', function() { self.voxelEngine.setTool('select'); });
+       document.getElementById('tool-move').addEventListener('click', function() { self.voxelEngine.setTool('move'); });
+       document.getElementById('tool-add').addEventListener('click', function() { self.voxelEngine.setTool('add'); });
+       document.getElementById('tool-remove').addEventListener('click', function() { self.voxelEngine.setTool('remove'); });
+       document.getElementById('tool-fill').addEventListener('click', function() { self._fillLayer(); });
+       document.getElementById('tool-scaling').addEventListener('click', function() { self.voxelEngine.setTool('scaling'); });
+       document.getElementById('tool-sculpt').addEventListener('click', function() { self.voxelEngine.setTool('sculpt'); });
+       document.getElementById('tool-vertex-edit').addEventListener('click', function() { self.voxelEngine.setTool('vertexEdit'); });
+       document.getElementById('tool-mesh-point-edit').addEventListener('click', function() { self.voxelEngine.setTool('meshPointEdit'); });
+       document.getElementById('tool-cylinder').addEventListener('click', function() { self.voxelEngine.setTool('cylinder'); });
+       document.getElementById('tool-cone').addEventListener('click', function() { self.voxelEngine.setTool('cone'); });
+       document.getElementById('tool-sphere').addEventListener('click', function() { self.voxelEngine.setTool('sphere'); });
+        document.getElementById('tool-hole').addEventListener('click', function() { self.voxelEngine.setTool('hole'); });
 
        document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
       document.getElementById('btn-import').addEventListener('click', function() { self._openImportModal(); });
@@ -1666,18 +1677,24 @@ window.addEventListener('tool-changed', function(e) {
   }
 
   // ── Component Library ───────────────────────────────────────────────
-  _setupLibrary() {
-    const self = this;
-    this.componentLibrary = new ComponentLibrary();
-    this._currentEditingComponent = null;
+_setupLibrary() {
+     const self = this;
+     this.componentLibrary = new ComponentLibrary();
+     this._currentEditingComponent = null;
 
-    // Category filter
-    document.getElementById('library-category').addEventListener('change', function() {
-      self._populateComponentList(this.value);
-    });
+     // Category filter
+     document.getElementById('library-category').addEventListener('change', function() {
+       self._populateComponentList(this.value, document.getElementById('library-search').value);
+     });
 
-    this._populateComponentList('all');
-  }
+     // Search filter
+     const searchInput = document.getElementById('library-search');
+     searchInput?.addEventListener('input', function() {
+       self._populateComponentList(document.getElementById('library-category').value, this.value);
+     });
+
+     this._populateComponentList('all', '');
+   }
 
   // Timeline Panel
   _setupTimelinePanel() {
@@ -1835,15 +1852,24 @@ this._timelineCurrentTime += 1;
     }
   }
 
-   _populateComponentList(category) {
-     const listEl = document.getElementById('component-list');
-     listEl.innerHTML = '';
+_populateComponentList(category, search = '') {
+      const listEl = document.getElementById('component-list');
+      listEl.innerHTML = '';
 
-     const components = category === 'all'
-       ? this.componentLibrary.getAll()
-       : this.componentLibrary.getByCategory(category);
+      let components = category === 'all'
+        ? this.componentLibrary.getAll()
+        : this.componentLibrary.getByCategory(category);
 
-     components.forEach(comp => {
+      // Filter by search term
+      if (search) {
+        const searchLower = search.toLowerCase();
+        components = components.filter(comp =>
+          comp.name.toLowerCase().includes(searchLower) ||
+          (comp.description || '').toLowerCase().includes(searchLower)
+        );
+      }
+
+      components.forEach(comp => {
        const item = document.createElement('div');
        item.className = 'component-item';
 

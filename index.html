@@ -29,134 +29,82 @@
         <span class="version" aria-label="Versione 0.1.0">v0.1.0</span>
       </div>
 
-      <div class="tools" role="group" aria-label="Strumenti">
-        <!-- Essential tools row 1 -->
-        <button id="tool-select" class="tool active" type="button" title="Seleziona (V)" aria-label="Strumento Seleziona, scorciatoia V" aria-pressed="true">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M1 1 L1.5 7.5 L6 3.5 L12 9 L8 13 L9.5 14.5 L6 16 L4.5 14.5 L6 8 L2 2 Z"/>
-          </svg>
-          <span>Seleziona</span>
-        </button>
-
-        <button id="tool-move" class="tool" type="button" title="Sposta (M)" aria-label="Strumento Sposta brick, scorciatoia M" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" stroke="none" aria-hidden="true">
-            <path d="M8 1L9 5L13 6L11 10L12 15L8 13L4 15L5 10L3 6L7 5Z"/>
-            <path d="M5 8L11 8" stroke="white" stroke-width="1"/>
-          </svg>
-          <span>Sposta</span>
-        </button>
-
-        <button id="tool-add" class="tool" type="button" title="Aggiungi Voxel (A)" aria-label="Strumento Aggiungi voxel, scorciatoia A" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <rect x="5" y="1" width="6" height="11" rx="1"/>
-            <rect x="1" y="5" width="14" height="4" rx="1"/>
-          </svg>
-          <span>Aggiungi</span>
-        </button>
-
-        <button id="tool-remove" class="tool" type="button" title="Rimuovi Voxel (R)" aria-label="Strumento Rimuovi voxel, scorciatoia R" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <rect x="4" y="1" width="8" height="14" rx="1"/>
-            <line x1="8" y1="4" x2="8" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-          <span>Rimuovi</span>
-        </button>
-
-        <!-- Tool: Fill -->
-        <button id="tool-fill" class="tool" type="button" title="Riempimento (F)" aria-label="Strumento Riempimento livello Y, scorciatoia F" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <polygon points="3,1 13,1 13,9 11,13 3,13"/>
-          </svg>
-          <span>Fill</span>
-        </button>
-
-        <!-- Tool: Scale -->
-        <button id="tool-scaling" class="tool" type="button" title="Scala (S)" aria-label="Strumento Scala voxel, scorciatoia S" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
-            <polyline points="2,2 5,2 5,1 6,1"/>
-            <rect x="6" y="1" width="9" height="5" rx="1"/>
-            <line x1="6.5" y1="7.5" x2="14.5" y2="14.5"/>
-            <line x1="14.5" y1="7.5" x2="6.5" y2="14.5"/>
-          </svg>
-          <span>Scala</span>
-        </button>
-
-        <!-- Tool: Sculpt -->
-        <button id="tool-sculpt" class="tool" type="button" title="Scultura (D)" aria-label="Strumento Scultura voxel, scorciatoia D" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
-            <path d="M8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0-2c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>
-          </svg>
-          <span>Scultura</span>
-        </button>
-
-        <!-- Tool: Vertex Edit -->
-        <button id="tool-vertex-edit" class="tool" type="button" title="Modifica Vertici (E)" aria-label="Strumento Modifica Vertici voxel, scorciatoia E" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 18 18" fill="currentColor" stroke="none" aria-hidden="true">
-            <polygon points="4,3 14,3 9,12"/>
-            <polygon points="4,6 14,6 9,15" fill="none" stroke="currentColor" stroke-width="1.2"/>
-          </svg>
-          <span>Vertice</span>
-        </button>
-
-        <!-- Tool: Mesh Point Edit -->
-        <button id="tool-mesh-point-edit" class="tool" type="button" title="Mesh punti (P)" aria-label="Strumento Mesh punti sopra i voxel, scorciatoia P" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 5h10M4 13h10M5 4l8 10M13 4L5 14"/>
-            <circle cx="4" cy="5" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="14" cy="5" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="4" cy="13" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="14" cy="13" r="1.5" fill="currentColor" stroke="none"/>
-          </svg>
-          <span>Mesh</span>
-        </button>
-
-        <!-- Shape tools -->
-        <button id="tool-cylinder" class="tool" type="button" title="Cilindro (CY)" aria-label="Strumento Cilindro, scorciatoia CY" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <ellipse cx="8" cy="3" rx="6" ry="2"/>
-            <path d="M2 3 v10 h12 V3 Z"/>
-          </svg>
-          <span>Cilindro</span>
-        </button>
-
-        <button id="tool-cone" class="tool" type="button" title="Cono (CO)" aria-label="Strumento Cono, scorciatoia CO" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <polygon points="8,2 2,14 14,14"/>
-          </svg>
-          <span>Cono</span>
-        </button>
-
-<button id="tool-sphere" class="tool" type="button" title="Sfera (SP)" aria-label="Strumento Sfera, scorciatoia SP" aria-pressed="false">
-           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-             <circle cx="8" cy="8" r="6"/>
-           </svg>
-           <span>Sfera</span>
-         </button>
-
-        <!-- Tool: Hole -->
-        <button id="tool-hole" class="tool" type="button" title="Foro (H)" aria-label="Strumento Fori, svasature e filettature, scorciatoia H" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
-            <circle cx="8" cy="8" r="4" fill="none"/>
-            <path d="M4 8h8M8 4v8"/>
-          </svg>
-          <span>Foro</span>
-        </button>
+<!-- Toolbar Tabs -->
+       <div class="toolbar-tabs" role="tablist">
+         <button class="tab-btn active" data-tab="tools-base" role="tab" aria-selected="true">Base</button>
+         <button class="tab-btn" data-tab="tools-shapes" role="tab">Forme</button>
+         <button class="tab-btn" data-tab="tools-advanced" role="tab">Avanzate</button>
+         <button class="tab-btn" data-tab="tools-actions" role="tab">Azioni</button>
        </div>
 
-      <div class="actions" role="group" aria-label="Azioni progetto">
-        <button id="btn-undo" title="Annulla (Ctrl+Z)" aria-label="Annulla, Ctrl+Z"><span>↩ Undo</span></button>
-        <button id="btn-redo" title="Ripristina (Ctrl+Y)" aria-label="Ripristina, Ctrl+Y"><span>↪ Redo</span></button>
-        <button id="btn-save" title="Salva progetto" aria-label="Salva progetto"><span>💾 Salva</span></button>
-        <button id="btn-load" title="Carica progetto" aria-label="Carica progetto"><span>📂 Carica</span></button>
-        <button id="btn-export" title="Esporta mesh STL/OBJ" aria-label="Esporta mesh"><span>📦 Esporta</span></button>
-        <button id="btn-import" title="Importa file STL/OBJ" aria-label="Importa STL/OBJ"><span>📥 Importa</span></button>
-        <button id="btn-sim" title="Simula dinamica e stress" aria-label="Simula fisica"><span>⚡ Simula</span></button>
-        <button id="btn-reset-cam" title="Reset inquadratura" aria-label="Reset camera"><span>🎯 Reset Cam</span></button>
-        <button id="btn-surface" title="Mostra superficie esterna" aria-label="Mostra superficie esterna"><span>📐 Superficie</span></button>
-        <button id="btn-help" title="Guida e aiuto" aria-label="Guida e aiuto"><span>❓ Aiuto</span></button>
-        <button id="btn-clear" title="Cancella scena" aria-label="Pulisci tutti i voxel"><span>🗑️ Pulisci</span></button>
-      </div>
-    </header>
+       <!-- Tool Groups -->
+       <div class="tools" role="group" aria-label="Strumenti">
+         <div id="tools-base" class="tool-group active" role="tabpanel">
+           <button id="tool-select" class="tool active" type="button" title="Seleziona (V)" aria-label="Strumento Seleziona, scorciatoia V" aria-pressed="true">
+             <span>Seleziona</span>
+           </button>
+           <button id="tool-add" class="tool" type="button" title="Aggiungi Voxel (A)" aria-label="Strumento Aggiungi voxel, scorciatoia A" aria-pressed="false">
+             <span>Aggiungi</span>
+           </button>
+           <button id="tool-remove" class="tool" type="button" title="Rimuovi Voxel (R)" aria-label="Strumento Rimuovi voxel, scorciatoia R" aria-pressed="false">
+             <span>Rimuovi</span>
+           </button>
+           <button id="tool-fill" class="tool" type="button" title="Riempimento (F)" aria-label="Strumento Riempimento livello Y, scorciatoia F" aria-pressed="false">
+             <span>Fill</span>
+           </button>
+           <button id="tool-move" class="tool" type="button" title="Sposta (M)" aria-label="Strumento Sposta brick, scorciatoia M" aria-pressed="false">
+             <span>Sposta</span>
+           </button>
+         </div>
+
+         <div id="tools-shapes" class="tool-group" role="tabpanel" hidden>
+           <button id="tool-cylinder" class="tool" type="button" title="Cilindro (CY)" aria-label="Strumento Cilindro, scorciatoia CY" aria-pressed="false">
+             <span>Cilindro</span>
+           </button>
+           <button id="tool-cone" class="tool" type="button" title="Cono (CO)" aria-label="Strumento Cono, scorciatoia CO" aria-pressed="false">
+             <span>Cono</span>
+           </button>
+           <button id="tool-sphere" class="tool" type="button" title="Sfera (SP)" aria-label="Strumento Sfera, scorciatoia SP" aria-pressed="false">
+             <span>Sfera</span>
+           </button>
+           <button id="tool-hole" class="tool" type="button" title="Foro (H)" aria-label="Strumento Fori, svasature e filettature, scorciatoia H" aria-pressed="false">
+             <span>Foro</span>
+           </button>
+         </div>
+
+         <div id="tools-advanced" class="tool-group" role="tabpanel" hidden>
+           <button id="tool-scaling" class="tool" type="button" title="Scala (S)" aria-label="Strumento Scala voxel, scorciatoia S" aria-pressed="false">
+             <span>Scala</span>
+           </button>
+           <button id="tool-sculpt" class="tool" type="button" title="Scultura (D)" aria-label="Strumento Scultura voxel, scorciatoia D" aria-pressed="false">
+             <span>Scultura</span>
+           </button>
+           <button id="tool-vertex-edit" class="tool" type="button" title="Modifica Vertici (E)" aria-label="Strumento Modifica Vertici voxel, scorciatoia E" aria-pressed="false">
+             <span>Vertice</span>
+           </button>
+           <button id="tool-mesh-point-edit" class="tool" type="button" title="Mesh punti (P)" aria-label="Strumento Mesh punti sopra i voxel, scorciatoia P" aria-pressed="false">
+             <span>Mesh</span>
+           </button>
+         </div>
+
+         <div id="tools-actions" class="tool-group" role="tabpanel" hidden>
+           <button id="btn-undo" title="Annulla (Ctrl+Z)" aria-label="Annulla, Ctrl+Z"><span>↩ Undo</span></button>
+           <button id="btn-redo" title="Ripristina (Ctrl+Y)" aria-label="Ripristina, Ctrl+Y"><span>↪ Redo</span></button>
+           <button id="btn-save" title="Salva progetto" aria-label="Salva progetto"><span>💾 Salva</span></button>
+           <button id="btn-load" title="Carica progetto" aria-label="Carica progetto"><span>📂 Carica</span></button>
+           <button id="btn-export" title="Esporta mesh STL/OBJ" aria-label="Esporta mesh"><span>📦 Esporta</span></button>
+           <button id="btn-import" title="Importa file STL/OBJ" aria-label="Importa STL/OBJ"><span>📥 Importa</span></button>
+           <button id="btn-sim" title="Simula dinamica e stress" aria-label="Simula fisica"><span>⚡ Simula</span></button>
+         </div>
+       </div>
+
+<div class="actions" role="group" aria-label="Controlli viewport">
+          <button id="btn-reset-cam" title="Reset inquadratura" aria-label="Reset camera"><span>🎯 Reset Cam</span></button>
+          <button id="btn-surface" title="Mostra superficie esterna" aria-label="Mostra superficie esterna"><span>📐 Superficie</span></button>
+          <button id="btn-help" title="Guida e aiuto" aria-label="Guida e aiuto"><span>❓ Aiuto</span></button>
+          <button id="btn-clear" title="Cancella scena" aria-label="Pulisci tutti i voxel"><span>🗑️ Pulisci</span></button>
+        </div>
+     </header>
 
       <!-- ═══════════════════════════════════════════════════
            SIDEBAR
@@ -235,94 +183,94 @@
         </div>
 
         <!-- ── Materiali ── -->
-       <div class="panel" id="panel-materials">
-        <div
-          class="panel-header"
-          role="button"
-          tabindex="0"
-          aria-expanded="true"
-          aria-controls="materials-list">
-          🎨 Materiali
-          <span class="arrow" aria-hidden="true">▼</span>
-        </div>
-        <div class="panel-body" id="materials-list"></div>
-      </div>
+        <div class="panel" id="panel-materials">
+         <div
+           class="panel-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="false"
+           aria-controls="materials-list">
+           🎨 Materiali
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body" id="materials-list"></div>
+       </div>
 
-      <!-- ── Moduli ── -->
-      <div class="panel" id="panel-modules">
-        <div
-          class="panel-header"
-          role="button"
-          tabindex="0"
-          aria-expanded="true"
-          aria-controls="modules-tree">
-          🧩 Moduli
-          <span class="arrow" aria-hidden="true">▼</span>
-        </div>
-        <div class="panel-body" id="modules-tree" aria-label="Albero moduli"></div>
-        <div
-          class="panel-body"
-          id="modules-actions"
-          style="padding:6px 8px;border-top:1px solid var(--border);"
-          aria-label="Azioni moduli"
-        >
-          <label for="new-module-name" class="sr-only">Nome nuovo modulo</label>
-          <input
-            type="text" id="new-module-name"
-            class="prop-input" placeholder="Nome modulo"
-            style="width:100%;margin-bottom:4px;"
-          />
-          <div style="display:flex;gap:4px;">
-            <button id="btn-add-module"    class="btn-primary" style="flex:1;">+ Aggiungi</button>
-            <button id="btn-remove-module" class="btn-secondary" style="flex:1;">− Rimuovi</button>
+       <!-- ── Moduli ── -->
+       <div class="panel" id="panel-modules">
+         <div
+           class="panel-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="false"
+           aria-controls="modules-tree">
+           🧩 Moduli
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body" id="modules-tree" aria-label="Albero moduli"></div>
+         <div
+           class="panel-body"
+           id="modules-actions"
+           style="padding:6px 8px;border-top:1px solid var(--border);"
+           aria-label="Azioni moduli"
+         >
+           <label for="new-module-name" class="sr-only">Nome nuovo modulo</label>
+           <input
+             type="text" id="new-module-name"
+             class="prop-input" placeholder="Nome modulo"
+             style="width:100%;margin-bottom:4px;"
+           />
+           <div style="display:flex;gap:4px;">
+             <button id="btn-add-module"    class="btn-primary" style="flex:1;">+ Aggiungi</button>
+             <button id="btn-remove-module" class="btn-secondary" style="flex:1;">− Rimuovi</button>
+           </div>
+         </div>
+       </div>
+
+       <!-- ── Proprietà (SEMPRE VISIBILE) ── -->
+       <div class="panel" id="panel-properties">
+         <div
+           class="panel-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="true"
+           aria-controls="properties-panel">
+           ⚙️ Proprietà
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body" id="properties-panel">
+           <p class="hint">Seleziona un voxel o un modulo</p>
+         </div>
+       </div>
+
+       <!-- ── Fisica ── -->
+       <div class="panel" id="panel-physics">
+         <div
+           class="panel-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="false"
+           aria-controls="physics-panel">
+           ⚡ Fisica
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+<div class="panel-body" id="physics-panel">
+            <p class="hint">Clicca ⚡ Simula per calcolare</p>
           </div>
         </div>
-      </div>
 
-      <!-- ── Proprietà ── -->
-      <div class="panel" id="panel-properties">
-        <div
-          class="panel-header"
-          role="button"
-          tabindex="0"
-          aria-expanded="true"
-          aria-controls="properties-panel">
-          ⚙️ Proprietà
-          <span class="arrow" aria-hidden="true">▼</span>
-        </div>
-        <div class="panel-body" id="properties-panel">
-          <p class="hint">Seleziona un voxel o un modulo</p>
-        </div>
-      </div>
-
-      <!-- ── Fisica ── -->
-      <div class="panel" id="panel-physics">
-        <div
-          class="panel-header"
-          role="button"
-          tabindex="0"
-          aria-expanded="true"
-          aria-controls="physics-panel">
-          ⚡ Fisica
-          <span class="arrow" aria-hidden="true">▼</span>
-        </div>
-        <div class="panel-body" id="physics-panel">
-          <p class="hint">Clicca ⚡ Simula per calcolare</p>
-        </div>
-      </div>
-
-      <!-- ── Materiale Custom ── -->
-      <div class="panel" id="panel-custom-material">
-        <div
-          class="panel-header"
-          role="button"
-          tabindex="0"
-          aria-expanded="true"
-          aria-controls="custom-material-panel">
-          ➕ Materiale Custom
-          <span class="arrow" aria-hidden="true">▼</span>
-        </div>
-        <div class="panel-body" id="custom-material-panel">
+        <!-- ── Materiale Custom ── -->
+       <div class="panel collapsed" id="panel-custom-material">
+         <div
+           class="panel-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="false"
+           aria-controls="custom-material-panel">
+           ➕ Materiale Custom
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body" id="custom-material-panel">
           <label for="custom-mat-name"     class="sr-only">Nome materiale</label>
           <input type="text"     id="custom-mat-name"     class="prop-input" placeholder="Nome (es: plastica)" />
           <label for="custom-mat-density"  class="sr-only">Densità</label>
@@ -338,18 +286,18 @@
         </div>
       </div>
 
-      <!-- ── Regole Procedurali ── -->
-      <div class="panel" id="panel-procedural">
-        <div
-          class="panel-header"
-          role="button"
-          tabindex="0"
-          aria-expanded="true"
-          aria-controls="procedural-panel">
-          ⚙️ Regole Procedurali
-          <span class="arrow" aria-hidden="true">▼</span>
-        </div>
-        <div class="panel-body" id="procedural-panel">
+<!-- ── Regole Procedurali ── -->
+       <div class="panel collapsed" id="panel-procedural">
+         <div
+           class="panel-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="false"
+           aria-controls="procedural-panel">
+           ⚙️ Regole Procedurali
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body" id="procedural-panel">
 
           <!-- Rules list -->
           <div
@@ -405,18 +353,18 @@
          </div>
        </div>
 
-       <!-- ── Operazioni Booleane ── -->
-       <div class="panel" id="panel-boolean">
-         <div
-           class="panel-header"
-           role="button"
-           tabindex="0"
-           aria-expanded="true"
-           aria-controls="boolean-body">
-           ➕ Operazioni Booleane
-           <span class="arrow" aria-hidden="true">▼</span>
-         </div>
-         <div class="panel-body" id="boolean-body">
+<!-- ── Operazioni Booleane ── -->
+        <div class="panel collapsed" id="panel-boolean">
+          <div
+            class="panel-header"
+            role="button"
+            tabindex="0"
+            aria-expanded="false"
+            aria-controls="boolean-body">
+            ➕ Operazioni Booleane
+            <span class="arrow" aria-hidden="true">▼</span>
+          </div>
+          <div class="panel-body" id="boolean-body">
            <!-- Boolean operations controls -->
            <div style="margin-bottom: 12px;">
              <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">Operazione:</div>
@@ -475,36 +423,42 @@
          </div>
        </div>
 
-       <!-- ── Libreria Componenti ── -->
-      <div class="panel" id="panel-library">
-        <div
-          class="panel-header"
-          role="button"
-          tabindex="0"
-          aria-expanded="true"
-          aria-controls="library-body">
-          🧩 Libreria
-          <span class="arrow" aria-hidden="true">▼</span>
-        </div>
-        <div class="panel-body" id="library-body">
-          <div class="form-group">
-            <label for="library-category" class="sr-only">Filtra per categoria</label>
-<select id="library-category" class="prop-input">
-               <option value="all">Tutte le categorie</option>
-               <option value="wheels">⚫ Ruote</option>
-               <option value="frame">🔧 Telaio</option>
-               <option value="interior">🪑 Interni</option>
-               <option value="body">🚗 Carrozzeria</option>
-               <option value="lego">🧱 Lego</option>
-               <option value="mattoncini">🧱 Mattoncini</option>
-               <option value="cantiere">🏗️ Cantiere</option>
-               <option value="finiture">🎨 Finiture</option>
-               <option value="misc">📦 Altro</option>
-             </select>
-          </div>
-          <div id="component-list"></div>
-        </div>
-      </div>
+<!-- ── Libreria Componenti ── -->
+       <div class="panel" id="panel-library">
+         <div
+           class="panel-header"
+           role="button"
+           tabindex="0"
+           aria-expanded="true"
+           aria-controls="library-body">
+           🧩 Libreria
+           <span class="arrow" aria-hidden="true">▼</span>
+         </div>
+         <div class="panel-body" id="library-body">
+            <div class="hint" style="margin-bottom:8px;">
+              Cerca componenti o filtra per categoria
+            </div>
+            <div class="search-wrap" style="margin-bottom:8px;">
+              <input type="text" id="library-search" class="prop-input" placeholder="🔎 Cerca componenti..." autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label for="library-category" class="sr-only">Filtra per categoria</label>
+             <select id="library-category" class="prop-input">
+                <option value="all">Tutte le categorie</option>
+                <option value="wheels">⚫ Ruote</option>
+                <option value="frame">🔧 Telaio</option>
+                <option value="interior">🪑 Interni</option>
+                <option value="body">🚗 Carrozzeria</option>
+                <option value="lego">🧱 Lego</option>
+                <option value="mattoncini">🧱 Mattoncini</option>
+                <option value="cantiere">🏗️ Cantiere</option>
+                <option value="finiture">🎨 Finiture</option>
+                <option value="misc">📦 Altro</option>
+              </select>
+           </div>
+           <div id="component-list"></div>
+         </div>
+       </div>
 
       <!-- ── Editor Componente Selezionato ── -->
       <div class="panel" id="panel-component-selected" style="display:none;">
@@ -521,17 +475,17 @@
       </div>
 
 <!-- ── AI Image Import ── -->
-        <div class="panel" id="panel-ai-import">
-          <div
-            class="panel-header"
-            role="button"
-            tabindex="0"
-            aria-expanded="true"
-            aria-controls="ai-import-body">
-            🤖 AI Import
-            <span class="arrow" aria-hidden="true">▼</span>
-          </div>
-          <div class="panel-body" id="ai-import-body">
+         <div class="panel collapsed" id="panel-ai-import">
+           <div
+             class="panel-header"
+             role="button"
+             tabindex="0"
+             aria-expanded="false"
+             aria-controls="ai-import-body">
+             🤖 AI Import
+             <span class="arrow" aria-hidden="true">▼</span>
+           </div>
+           <div class="panel-body" id="ai-import-body">
             <div class="hint" style="margin-bottom:8px;">
               Carica un'immagine 2D per generare voxel tramite depth estimation.
             </div>
@@ -543,18 +497,18 @@
           </div>
         </div>
 
-       <!-- ── Video Timeline ── -->
-        <div class="panel" id="panel-timeline">
-          <div
-            class="panel-header"
-            role="button"
-            tabindex="0"
-            aria-expanded="true"
-            aria-controls="timeline-body">
-            🎞️ Timeline Video
-            <span class="arrow" aria-hidden="true">▼</span>
-          </div>
-          <div class="panel-body" id="timeline-body">
+<!-- ── Video Timeline ── -->
+         <div class="panel collapsed" id="panel-timeline">
+           <div
+             class="panel-header"
+             role="button"
+             tabindex="0"
+             aria-expanded="false"
+             aria-controls="timeline-body">
+             🎞️ Timeline Video
+             <span class="arrow" aria-hidden="true">▼</span>
+           </div>
+           <div class="panel-body" id="timeline-body">
             <div style="display:flex;gap:4px;margin-bottom:8px;align-items:center;">
               <input type="file" id="video-input" accept="video/*" style="flex:1;"/>
               <button id="btn-extract-keyframes" class="btn-primary" style="flex:0 0 auto;">Estrai</button>
