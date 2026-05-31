@@ -7,19 +7,22 @@ import { ComponentLibrary } from './core/component-library.js';
 import { RuleEditorUI } from './core/rule-editor-ui.js';
 
 export class UI {
-      constructor(opts) {
-        this.voxelEngine = opts.voxelEngine;
-        this.materialDB = opts.materialDB;
-        this.moduleSystem = opts.moduleSystem;
-        this.physics = opts.physics;
-        this.meshExporter = opts.meshExporter;
-        this.proceduralEngine = opts.proceduralEngine;
-        this.controls = opts.controls;
-        this.camera = opts.camera;
-        this.renderer = opts.renderer;
-        this.scene = opts.scene;
-        this.physicsSignature = opts.physicsSignature;
-        this.collisionDetection = opts.collisionDetection;
+constructor(opts) {
+       this.voxelEngine = opts.voxelEngine;
+       this.materialDB = opts.materialDB;
+       this.moduleSystem = opts.moduleSystem;
+       this.physics = opts.physics;
+       this.meshExporter = opts.meshExporter;
+       this.proceduralEngine = opts.proceduralEngine;
+       this.controls = opts.controls;
+       this.camera = opts.camera;
+       this.renderer = opts.renderer;
+       this.scene = opts.scene;
+       this.physicsSignature = opts.physicsSignature;
+       this.collisionDetection = opts.collisionDetection;
+
+   // Expose _notify globally for tools (HoleTool, etc.)
+   window._notify = this._notify.bind(this);
 
       // Essential setup only - defer heavy work to avoid blocking main thread
       this._setupToolbar();
@@ -81,9 +84,10 @@ runDeferred(() => {
       document.getElementById('tool-mesh-point-edit').addEventListener('click', function() { self.voxelEngine.setTool('meshPointEdit'); });
       document.getElementById('tool-cylinder').addEventListener('click', function() { self.voxelEngine.setTool('cylinder'); });
       document.getElementById('tool-cone').addEventListener('click', function() { self.voxelEngine.setTool('cone'); });
-      document.getElementById('tool-sphere').addEventListener('click', function() { self.voxelEngine.setTool('sphere'); });
+document.getElementById('tool-sphere').addEventListener('click', function() { self.voxelEngine.setTool('sphere'); });
+       document.getElementById('tool-hole').addEventListener('click', function() { self.voxelEngine.setTool('hole'); });
 
-      document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
+       document.getElementById('btn-export').addEventListener('click', function() { self._openExportModal(); });
       document.getElementById('btn-import').addEventListener('click', function() { self._openImportModal(); });
       document.getElementById('btn-sim').addEventListener('click', function() { self._runSimulation(); });
       document.getElementById('btn-clear').addEventListener('click', function() { self._confirmClear(); });
@@ -615,7 +619,7 @@ var toolNames = {
                     }
                     
                     if (!replaceACheckbox.checked && !createNewCheckbox.checked) {
-                        setStatus('Seleziona almeno un'opzione di risultato', 'warn');
+                        setStatus('Seleziona almeno un\'opzione di risultato', 'warn');
                     }
                 } else {
                     setStatus('Operazione booleana fallita: risultato nullo', 'error');

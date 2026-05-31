@@ -2,7 +2,16 @@
  * DepthEstimation - AI-based 2D image to depth map conversion using ONNX Runtime
  * ObjectSegmentation - SAM-based object segmentation
  */
-import * as ort from 'onnxruntime-web';
+let ortPromise = null;
+try {
+  ortPromise = import('onnxruntime-web');
+} catch {
+  ortPromise = Promise.resolve(null);
+}
+
+function getOrt() {
+  return ortPromise;
+}
 
 export class DepthEstimation {
   constructor(voxelEngine) {
@@ -15,12 +24,17 @@ export class DepthEstimation {
   async loadModel() {
     if (this.modelLoaded) return true;
     try {
-      this.session = await ort.InferenceSession.create(this.modelPath, {
-        executionProviders: ['wasm'],
-        intraOpNumThreads: 1
-      });
-      this.modelLoaded = true;
-      return true;
+      const ort = await getOrt();
+      if (ort && ort.InferenceSession) {
+        this.session = await ort.InferenceSession.create(this.modelPath, {
+          executionProviders: ['wasm'],
+          intraOpNumThreads: 1
+        });
+        this.modelLoaded = true;
+        return true;
+      }
+      this.modelLoaded = false;
+      return false;
     } catch (err) {
       console.warn('ONNX model load failed, falling back to simple depth estimation:', err.message);
       this.modelLoaded = false;
@@ -51,7 +65,7 @@ export class DepthEstimation {
     });
   }
 
-  _imageToTensor(img, targetSize = 256) {
+  async _imageToTensor(img, targetSize = 256) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = targetSize;
@@ -67,7 +81,8 @@ export class DepthEstimation {
       data[2 * targetSize * targetSize + i] = imageData.data[i * 4 + 2] / 255; // B
     }
     
-    return new ort.Tensor('float32', data, [1, 3, targetSize, targetSize]);
+    const ort = await ortPromise;
+    return ort.Tensor('float32', data, [1, 3, targetSize, targetSize]);
   }
 
   async _runONNXModel(inputTensor, origW, origH) {

@@ -26,6 +26,13 @@ Module.prototype.require = function(id) {
       }
     };
   }
+  if (id.includes('onnxruntime-web')) {
+    // Return mock for onnxruntime-web
+    return {
+      InferenceSession: { create: async () => null },
+      env: { wasm: { wasmBinary: null } }
+    };
+  }
   return originalRequire.apply(this, arguments);
 };
 

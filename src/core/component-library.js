@@ -77,22 +77,89 @@ export class ComponentLibrary {
        }
      });
 
-     // MTB Wheel 29"
-     this.components.push({
-       id: 2,
-       name: 'Ruota MTB 29"',
-       type: 'wheel',
-       category: 'wheels',
-       icon: '',
-       color: '#555',
-       description: 'Ruota MTB 29" con pneumatico 2.35"',
-       parameters: {
-         outer_radius: { value: 380, min: 350, max: 420, unit: 'mm' },
-         inner_radius: { value: 305, min: 280, max: 330, unit: 'mm' },
-         width: { value: 60, min: 40, max: 80, unit: 'mm' },
-         rim_width: { value: 30, min: 20, max: 40, unit: 'mm' }
-       }
-     });
+      // MTB Wheel 29"
+      this.components.push({
+        id: 2,
+        name: 'Ruota MTB 29"',
+        type: 'wheel',
+        category: 'wheels',
+        icon: '',
+        color: '#555',
+        description: 'Ruota MTB 29" con pneumatico 2.35"',
+        parameters: {
+          outer_radius: { value: 380, min: 350, max: 420, unit: 'mm' },
+          inner_radius: { value: 305, min: 280, max: 330, unit: 'mm' },
+          width: { value: 60, min: 40, max: 80, unit: 'mm' },
+          rim_width: { value: 30, min: 20, max: 40, unit: 'mm' }
+        }
+      });
+
+      // Pedal
+      this.components.push({
+        id: 30,
+        name: 'Pedale',
+        type: 'pedal',
+        category: 'interior',
+        icon: '🦶',
+        color: '#999',
+        description: 'Pedale della bici',
+        parameters: {
+          length: { value: 100, min: 80, max: 120, unit: 'mm' },
+          width: { value: 50, min: 40, max: 70, unit: 'mm' },
+          height: { value: 20, min: 10, max: 30, unit: 'mm' },
+          spindle_diameter: { value: 9, min: 8, max: 12, unit: 'mm' }
+        }
+      });
+
+      // Crank Arm
+      this.components.push({
+        id: 31,
+        name: 'Manovella',
+        type: 'crank_arm',
+        category: 'frame',
+        icon: '',
+        color: '#777',
+        description: 'Manovella della bici',
+        parameters: {
+          length: { value: 175, min: 150, max: 200, unit: 'mm' },
+          diameter: { value: 25, min: 20, max: 35, unit: 'mm' },
+          spindle_diameter: { value: 24, min: 20, max: 28, unit: 'mm' }
+        }
+      });
+
+      // Chainring
+      this.components.push({
+        id: 32,
+        name: 'Corona',
+        type: 'chainring',
+        category: 'frame',
+        icon: '',
+        color: '#555',
+        description: 'Corona della catena',
+        parameters: {
+          bolt_circle_diameter: { value: 110, min: 90, max: 130, unit: 'mm' },
+          teeth_count: { value: 42, min: 20, max: 60, unit: '' },
+          thickness: { value: 4, min: 2, max: 8, unit: 'mm' },
+          inner_diameter: { value: 80, min: 60, max: 100, unit: 'mm' }
+        }
+      });
+
+      // Brake Caliper
+      this.components.push({
+        id: 33,
+        name: 'Freno a Pinza',
+        type: 'brake_caliper',
+        category: 'frame',
+        icon: '',
+        color: '#333',
+        description: 'Freno a pinza della bici',
+        parameters: {
+          reach: { value: 47, min: 30, max: 60, unit: 'mm' },
+          pad_width: { value: 20, min: 10, max: 30, unit: 'mm' },
+          pad_height: { value: 30, min: 20, max: 40, unit: 'mm' },
+          body_width: { value: 60, min: 40, max: 80, unit: 'mm' }
+        }
+      });
 
      // Top Tube
      this.components.push({

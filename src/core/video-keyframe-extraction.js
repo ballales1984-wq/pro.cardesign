@@ -263,10 +263,11 @@ export class VideoKeyframeExtraction {
   }
 
   _lerpCamera(cam1, cam2, t) {
+    if (!cam1) return cam2 || {};
     return {
-      position: cam1.position.map((v, i) => v + (cam2.position[i] - v) * t),
-      rotation: cam1.rotation.map((v, i) => v + (cam2.rotation[i] - v) * t),
-      fov: cam1.fov + (cam2.fov - cam1.fov) * t
+      position: cam1.position?.map((v, i) => v + ((cam2?.position?.[i] || 0) - v) * t) || [],
+      rotation: cam1.rotation?.map((v, i) => v + ((cam2?.rotation?.[i] || 0) - v) * t) || [],
+      fov: cam1.fov + ((cam2?.fov || 0) - cam1.fov) * t
     };
   }
 

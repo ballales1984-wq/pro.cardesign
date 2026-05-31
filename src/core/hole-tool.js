@@ -3,7 +3,7 @@
  * Real measurements in millimeters
  */
 
-const THREE = await import('three');
+import * as THREE from 'three';
 
 export class HoleTool {
   constructor(voxelEngine, scene, camera, renderer) {
@@ -252,7 +252,7 @@ export class HoleTool {
   }
 
   _hidePanel() {
-    const panel = document.getElementById('hole-panel');
+const panel = document.getElementById('hole-panel');
     if (panel) panel.style.display = 'none';
     if (this.liveLabel) this.liveLabel.style.display = 'none';
   }
@@ -357,13 +357,15 @@ export class HoleTool {
     return pitches[24] || 3.0;
   }
 
-  _notify(message, type = 'info') {
-    if (window.toast) {
-      window.toast(message, type);
-    } else {
-      console.log(`[${type.toUpperCase()}] ${message}`);
-    }
-  }
+_notify(message, type = 'info') {
+     if (typeof window._notify === 'function') {
+       window._notify(message, type);
+     } else if (window.toast) {
+       window.toast(message, type);
+     } else {
+       console.log(`[${type.toUpperCase()}] ${message}`);
+     }
+   }
 
   destroy() {
     this.deactivate();

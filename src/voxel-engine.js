@@ -97,34 +97,13 @@ this._history = [];
         this._maxRedo = 50;
         
         this._chunkUpdateFrame = 0;
-        this._chunkUpdateInterval = 10;
-        this.chunkLoadRadius = 3;
+this._chunkUpdateInterval = 10;
+this.chunkLoadRadius = 3;
         this.chunkUnloadRadius = 4;
 
-// Initialize LOD Manager
-         this.lodManager = new LODManager(this.camera, this);
-
-        this._setupEvents();
-         this._setupScalePanelListeners();
-          
-          // Initialize ScalingTool
-         this.scalingTool = new ScalingTool(this, this.scene, this.camera, this.renderer);
-         
-         // Initialize SculptTool
-         this.sculptTool = new SculptTool(this, this.scene, this.camera, this.renderer);
-         
-          // Initialize VertexEditTool
-          this.vertexEditTool = new VertexEditTool(this, this.scene, this.camera, this.renderer);
-
-          // Initialize MoveTool
-          this.moveTool = new MoveTool(this, this.scene, this.camera, this.renderer);
-
-// Initialize mesh point overlay editor
-           this.meshPointEditTool = new MeshPointEditTool(this, this.scene, this.camera, this.renderer);
-
-           // Initialize HoleTool
-           this.holeTool = new HoleTool(this, this.scene, this.camera, this.renderer);
-         }
+this._setupEvents();
+        this._setupScalePanelListeners();
+    }
 
     _setupEvents() {
         const canvas = this.renderer.domElement;
@@ -457,9 +436,9 @@ if (key) {
              }
             }
     
-           // 2. Check committed mesh for removal
-           if (this.meshPointEditTool?.hasCommittedMesh && this.meshPointEditTool.hasCommittedMesh()) {
-             const meshHits = this.raycaster.intersectObject(this.meshPointEditTool.mesh, false);
+// 2. Check committed mesh for removal
+            if (this._meshPointEditTool?.hasCommittedMesh && this._meshPointEditTool.hasCommittedMesh()) {
+              const meshHits = this.raycaster.intersectObject(this._meshPointEditTool.mesh, false);
              if (meshHits.length > 0) {
                return { isMeshHit: true, point: meshHits[0].point, isGround: false };
              }
@@ -537,20 +516,20 @@ if (key) {
              const hit = this._raycast(event);
              if (!hit) return;
 
-              // In move mode, let the move tool handle everything
-              if (this.activeTool === 'move') {
-                if (!this.moveTool.isDragging) return; // button release not handled by engine
+// In move mode, let the move tool handle everything
+               if (this.activeTool === 'move') {
+                 if (!this._moveTool?.isDragging) return;
+               }
+
+               // In scaling mode, let the scaling tool handle click-selection
+              if (this.activeTool === 'scaling' && this._scalingTool) {
+                return;
               }
 
-              // In scaling mode, let the scaling tool handle click-selection
-             if (this.activeTool === 'scaling') {
-               return; // Scaling tool handles click directly
-             }
-
-             // In vertexEdit mode, let the vertexEdit tool handle click-selection
-             if (this.activeTool === 'vertexEdit') {
-               return; // VertexEdit tool handles click directly
-             }
+              // In vertexEdit mode, let the vertexEdit tool handle click-selection
+              if (this.activeTool === 'vertexEdit' && this._vertexEditTool) {
+                return;
+              }
     
             if (this.activeTool === 'add') {
               let pos;
@@ -569,8 +548,8 @@ if (key) {
              }
 } else if (this.activeTool === 'remove') {
              // Check for committed mesh hit first
-             if (hit.isMeshHit) {
-               this.meshPointEditTool?.clearLayer();
+if (hit.isMeshHit) {
+                this._meshPointEditTool?.clearLayer();
                this._notify('Mesh point edit cancellata', 'success');
                return;
              }
@@ -845,74 +824,116 @@ const chunkKey = this._getChunkKey(pos);
              this.surfaceMesh = null;
            }
            this.selectedVoxel = null;
-          this.clearHistory();
-          this._onVoxelChanged();
+this.clearHistory();
+           this._onVoxelChanged();
+         }
+    
+// Lazy getters for heavy tools (use already-imported classes)
+        get scalingTool() {
+          if (!this._scalingTool) {
+            this._scalingTool = new ScalingTool(this, this.scene, this.camera, this.renderer);
+          }
+          return this._scalingTool;
         }
-   
+
+        get sculptTool() {
+          if (!this._sculptTool) {
+            this._sculptTool = new SculptTool(this, this.scene, this.camera, this.renderer);
+          }
+          return this._sculptTool;
+        }
+
+        get vertexEditTool() {
+          if (!this._vertexEditTool) {
+            this._vertexEditTool = new VertexEditTool(this, this.scene, this.camera, this.renderer);
+          }
+          return this._vertexEditTool;
+        }
+
+        get moveTool() {
+          if (!this._moveTool) {
+            this._moveTool = new MoveTool(this, this.scene, this.camera, this.renderer);
+          }
+          return this._moveTool;
+        }
+
+        get meshPointEditTool() {
+          if (!this._meshPointEditTool) {
+            this._meshPointEditTool = new MeshPointEditTool(this, this.scene, this.camera, this.renderer);
+          }
+          return this._meshPointEditTool;
+        }
+
+get holeTool() {
+           if (!this._holeTool) {
+             this._holeTool = new HoleTool(this, this.scene, this.camera, this.renderer);
+           }
+           return this._holeTool;
+         }
+
         setTool(tool) {
           this.setCameraNavigationMode(false);
           this.activeTool = tool;
-          
+            
           // Activate/deactivate scaling tool
-          if (this.scalingTool) {
+          if (this._scalingTool) {
             if (tool === 'scaling') {
-              this.scalingTool.activate();
+              this._scalingTool.activate();
             } else {
-              this.scalingTool.deactivate();
+              this._scalingTool.deactivate();
             }
           }
-          
+            
           // Activate/deactivate sculpt tool
-          if (this.sculptTool) {
+          if (this._sculptTool) {
             if (tool === 'sculpt') {
-              this.sculptTool.activate();
+              this._sculptTool.activate();
             } else {
-              this.sculptTool.deactivate();
+              this._sculptTool.deactivate();
             }
           }
-          
-           // Activate/deactivate vertex edit tool
-           if (this.vertexEditTool) {
-             if (tool === 'vertexEdit') {
-               this.vertexEditTool.activate();
-             } else {
-               this.vertexEditTool.deactivate();
-             }
-           }
-           if (this.meshPointEditTool) {
-             if (tool === 'meshPointEdit') {
-               this.meshPointEditTool.activate();
-             } else {
-               this.meshPointEditTool.deactivate();
-             }
-           }
-// Activate/deactivate move tool
-             if (this.moveTool) {
-               if (tool === 'move') {
-                 this.moveTool.activate();
-               } else {
-                 this.moveTool.deactivate();
-               }
-             }
+            
+          // Activate/deactivate vertex edit tool
+          if (this._vertexEditTool) {
+            if (tool === 'vertexEdit') {
+              this._vertexEditTool.activate();
+            } else {
+              this._vertexEditTool.deactivate();
+            }
+          }
+          if (this._meshPointEditTool) {
+            if (tool === 'meshPointEdit') {
+              this._meshPointEditTool.activate();
+            } else {
+              this._meshPointEditTool.deactivate();
+            }
+          }
+          if (this._moveTool) {
+            if (tool === 'move') {
+              this._moveTool.activate();
+            } else {
+              this._moveTool.deactivate();
+            }
+          }
 
-             // Activate/deactivate hole tool
-             if (this.holeTool) {
-               if (tool === 'hole') {
-                 this.holeTool.activate();
-               } else {
-                 this.holeTool.deactivate();
-               }
-             }
+          // Activate/deactivate hole tool
+          if (this._holeTool) {
+            if (tool === 'hole') {
+              this._holeTool.activate();
+            } else {
+              this._holeTool.deactivate();
+            }
+          }
 
-              const btns = document.querySelectorAll('.tool');
-             for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-             const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', meshPointEdit: 'tool-mesh-point-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere', move: 'tool-move', hole: 'tool-hole' };
+          const btns = document.querySelectorAll('.tool');
+          for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+          const btnMap = { select: 'tool-select', add: 'tool-add', remove: 'tool-remove', fill: 'tool-fill', scaling: 'tool-scaling', sculpt: 'tool-sculpt', vertexEdit: 'tool-vertex-edit', meshPointEdit: 'tool-mesh-point-edit', cylinder: 'tool-cylinder', cone: 'tool-cone', sphere: 'tool-sphere', move: 'tool-move', hole: 'tool-hole' };
           const el = document.getElementById(btnMap[tool]);
           if (el) el.classList.add('active');
           window.dispatchEvent(new CustomEvent('tool-changed', { detail: tool }));
         }
 
-       setCameraNavigationMode(enabled) {
+        setCameraNavigationMode(enabled) {
          this.cameraNavigationMode = !!enabled;
 
          if (this.controls) {
@@ -1071,9 +1092,9 @@ toJSON() {
           }
         }
        
-       const meshData = this.meshPointEditTool?.hasCommittedMesh() 
-         ? this.meshPointEditTool.toJSON() 
-         : null;
+const meshData = this._meshPointEditTool?.hasCommittedMesh() 
+          ? this._meshPointEditTool.toJSON() 
+          : null;
        
        return {
          voxels,
@@ -1146,13 +1167,13 @@ fromJSON(data) {
         loaded++;
       }
       
-      // Restore mesh edit if present
-      if (data.meshEdit && this.meshPointEditTool) {
-        this.meshPointEditTool.fromJSON(data.meshEdit);
-        this.meshPointEditTool.mesh.visible = true;
-        const voxelGroup = this.voxelEngine?.voxelGroup || this.voxelGroup;
-        if (voxelGroup) voxelGroup.visible = false;
-      }
+// Restore mesh edit if present
+if (data.meshEdit && this._meshPointEditTool) {
+         this._meshPointEditTool.fromJSON(data.meshEdit);
+         this._meshPointEditTool.mesh.visible = true;
+         const voxelGroup = this.voxelGroup;
+         if (voxelGroup) voxelGroup.visible = false;
+       }
       
       this._onVoxelChanged();
       console.log(`[VoxelEngine] Loaded ${loaded} voxels from JSON`);

@@ -11,13 +11,10 @@ import { MeshExporter } from './mesh-exporter.js';
 import { UI } from './ui.js';
 import { BrickSystem } from './core/brick-system.js';
 import { ProceduralEngine } from './core/procedural-engine.js';
-import { DepthEstimation, ObjectSegmentation } from './core/depth-estimation.js';
 import { StressAnalysis } from './core/stress-analysis.js';
-import { Aerodynamics } from './core/aerodynamics.js';
-import { PhysicsSignature } from './core/physics-signature.js';
 import { LODManager } from './core/lod-manager.js';
-import { GPUCompute } from './core/gpu-compute.js';
 import { CollisionDetection } from './core/collision-detection.js';
+import { PhysicsSignature } from './core/physics-signature.js';
 
 function showFatalError(message) {
   const box = document.createElement('div');
@@ -116,15 +113,10 @@ async function boot() {
       controls
     );
 const brickSystem = new BrickSystem(voxelEngine);
-    const proceduralEngine = new ProceduralEngine(voxelEngine);
-    const depthEstimation = new DepthEstimation(voxelEngine);
-    const objectSegmentation = new ObjectSegmentation();
-    const gpuCompute = new GPUCompute();
-    await gpuCompute.init(renderer);
-    const lodManager = new LODManager(camera, voxelEngine, { gpuCompute });
-    const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
-    const aerodynamics = new Aerodynamics(meshExporter);
-     const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis, aerodynamics);
+     const proceduralEngine = new ProceduralEngine(voxelEngine);
+     const lodManager = new LODManager(camera, voxelEngine);
+     const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
+     const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis);
      const collisionDetection = new CollisionDetection(voxelEngine);
 
     try {

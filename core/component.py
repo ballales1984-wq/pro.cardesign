@@ -229,13 +229,80 @@ class ComponentLibrary:
              type="fork",
              category="frame",
              icon="",
-            color="#666",
-            description="Front bike fork",
+             color="#666",
+             description="Front bike fork",
+             parameters={
+                 "length": 380,
+                 "offset": 45,            # mm offset from fork head
+                 "crown_diameter": 40,
+                 "blade_width": 30
+             }
+         )
+
+        # Pedal
+        self.definitions[30] = ComponentDefinition(
+            id=30,
+            name="Pedal",
+            type="pedal",
+            category="interior",
+            icon="🦶",
+            color="#999",
+            description="Bike pedal",
             parameters={
-                "length": 380,
-                "offset": 45,            # mm offset from fork head
-                "crown_diameter": 40,
-                "blade_width": 30
+                "length": 100,          # mm pedal length
+                "width": 50,            # mm pedal width
+                "height": 20,           # mm pedal height
+                "spindle_diameter": 9   # mm
+            }
+        )
+
+        # Crank Arm
+        self.definitions[31] = ComponentDefinition(
+            id=31,
+            name="Crank Arm",
+            type="crank_arm",
+            category="frame",
+            icon="",
+            color="#777",
+            description="Bike crank arm",
+            parameters={
+                "length": 175,          # mm crank length
+                "diameter": 25,         # mm crank diameter
+                "spindle_diameter": 24  # mm
+            }
+        )
+
+        # Chainring
+        self.definitions[32] = ComponentDefinition(
+            id=32,
+            name="Chainring",
+            type="chainring",
+            category="frame",
+            icon="",
+            color="#555",
+            description="Bike chainring",
+            parameters={
+                "bolt_circle_diameter": 110,  # mm
+                "teeth_count": 42,
+                "thickness": 4,               # mm
+                "inner_diameter": 80          # mm
+            }
+        )
+
+        # Brake Caliper
+        self.definitions[33] = ComponentDefinition(
+            id=33,
+            name="Brake Caliper",
+            type="brake_caliper",
+            category="frame",
+            icon="",
+            color="#333",
+            description="Bike brake caliper",
+            parameters={
+                "reach": 47,              # mm
+                "pad_width": 20,          # mm
+                "pad_height": 30,         # mm
+                "body_width": 60          # mm
             }
         )
         
