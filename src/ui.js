@@ -84,6 +84,19 @@ runDeferred(() => {
          });
        });
 
+       // Panels toggle - expand/collapse all
+       var panelsExpanded = false;
+       document.getElementById('panels-toggle')?.addEventListener('click', function() {
+         panelsExpanded = !panelsExpanded;
+         document.querySelectorAll('#sidebar .panel').forEach(p => {
+           if (panelsExpanded) {
+             p.classList.remove('collapsed');
+           } else {
+             p.classList.add('collapsed');
+           }
+         });
+       });
+
        document.getElementById('tool-select').addEventListener('click', function() { self.voxelEngine.setTool('select'); });
        document.getElementById('tool-move').addEventListener('click', function() { self.voxelEngine.setTool('move'); });
        document.getElementById('tool-add').addEventListener('click', function() { self.voxelEngine.setTool('add'); });

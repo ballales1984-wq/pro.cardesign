@@ -3265,6 +3265,56 @@ assert.strictEqual(result[1].lod, 'hidden');
       });
     } catch(e) { failed++; console.log('  [FAIL] Video playback integration: ' + e.message); }
 
+    // ── LODManager + GPUCompute Integration ─────────────────────────────────────
+    try {
+      const { LODManager } = await loadESM('src/core/lod-manager.js');
+      const { GPUCompute, LODWorker } = await loadESM('src/core/gpu-compute.js');
+
+      runTest('LODManager uses CPU when gpuCompute disabled', () => {
+        const mockCamera = { position: { x: 0, y: 0, z: 0 } };
+        const mockVoxelEngine = {
+          chunks: new Map([['chunk1', { voxelsIterator: function*(){ yield {x:0,y:0,z:0,voxelData:{}}; } }]]),
+          _getChunkKey: () => 'chunk1'
+        };
+        const lodMgr = new LODManager(mockCamera, mockVoxelEngine, { gpuCompute: null });
+        lodMgr.update();
+      });
+
+      runTest('LODManager falls back CPU when voxelCount < 5000', () => {
+        const mockCamera = { position: { x: 0, y: 0, z: 0 } };
+        const smallChunks = new Map();
+        const smallVoxelEngine = {
+          chunks: smallChunks,
+          _getChunkKey: () => 'chunk1'
+        };
+        const gpu = new GPUCompute();
+        const lodMgr = new LODManager(mockCamera, smallVoxelEngine, { gpuCompute: gpu });
+        lodMgr.update();
+      });
+
+      runTest('GPUCompute LOD levels default values', () => {
+        const gpu = new GPUCompute();
+        assert.strictEqual(gpu.lodLevels.near.distance, 5);
+        assert.strictEqual(gpu.lodLevels.medium.distance, 20);
+        assert.strictEqual(gpu.lodLevels.far.distance, 50);
+      });
+
+      runTest('LODWorker threshold for large scenes', () => {
+        const worker = new LODWorker();
+        assert.strictEqual(worker.threshold, 10000);
+        assert.strictEqual(worker.shouldUseWorker(9999), false);
+        assert.strictEqual(worker.shouldUseWorker(10001), false);
+      });
+
+      runTest('LODWorker._cpuUpdate delegates to GPUCompute._cpuLODUpdate', () => {
+        const worker = new LODWorker();
+        const voxels = [{ x: 0, y: 0, z: 0 }, { x: 100, y: 0, z: 0 }];
+        const result = worker.update(voxels, { x: 0, y: 0, z: 0 });
+        assert.strictEqual(result[0].lod, 'full');
+        assert.strictEqual(result[1].lod, 'hidden');
+      });
+    } catch(e) { failed++; console.log('  [FAIL] LODManager GPU integration: ' + e.message); }
+
     console.log(`\nResults: ${passed}/${passed + failed} passed, ${failed} failed`);
   console.log('─'.repeat(50));
 
