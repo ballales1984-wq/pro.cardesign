@@ -17,17 +17,18 @@ export class SculptTool {
 
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
-    this._plane = new THREE.Plane(); // Reused plane to reduce allocations
+    this._plane = new THREE.Plane();
 
     // Drag state
     this.selectedVoxel = null;
     this.dragStartPoint = null;
+    this.dragStartPointer = null;
     this.dragNormal = null;
     this.startVoxelData = null;
 
     // Strength settings
-    this.strength = 0.5; // mm per drag pixel
-    this.sensitivity = 100; // pixels per mm of strength effect
+    this.strength = 2;
+    this.sensitivity = 20;
 
     // Live label
     this.liveLabel = null;
@@ -60,42 +61,39 @@ export class SculptTool {
         'border-radius:6px;font-family:sans-serif;font-size:13px;' +
         'z-index:10000;pointer-events:none;opacity:0.9;';
       document.body.appendChild(hint);
-     }
-     hint.textContent = '';
-     // Title
-     const titleDiv = document.createElement('div');
-     titleDiv.style.fontWeight = 'bold';
-     titleDiv.style.marginBottom = '4px';
-     titleDiv.textContent = '🗿 Sculpt Tool';
-     hint.appendChild(titleDiv);
-     
-     // Drag description
-     const dragDiv = document.createElement('div');
-     dragDiv.style.fontSize = '12px';
-     dragDiv.style.color = '#aaa';
-     const pushSpan = document.createElement('span');
-     pushSpan.style.color = '#4caf50';
-     pushSpan.textContent = '↑ Push';
-     const pullSpan = document.createElement('span');
-     pullSpan.style.color = '#f44336';
-     pullSpan.textContent = '↓ Pull';
-     dragDiv.textContent = 'Drag: ';
-     dragDiv.appendChild(pushSpan);
-     dragDiv.appendChild(document.createTextNode(' / '));
-     dragDiv.appendChild(pullSpan);
-     hint.appendChild(dragDiv);
-     
-     // Shift hint
-     const shiftDiv = document.createElement('div');
-     shiftDiv.style.fontSize = '11px';
-     shiftDiv.style.color = '#888';
-     shiftDiv.style.marginTop = '2px';
-     const shiftB = document.createElement('b');
-     shiftB.textContent = 'Shift';
-     shiftDiv.textContent = 'Hold ';
-     shiftDiv.appendChild(shiftB);
-     shiftDiv.appendChild(document.createTextNode(' to invert'));
-     hint.appendChild(shiftDiv);
+    }
+    hint.textContent = '';
+    const titleDiv = document.createElement('div');
+    titleDiv.style.fontWeight = 'bold';
+    titleDiv.style.marginBottom = '4px';
+    titleDiv.textContent = '🗿 Sculpt Tool';
+    hint.appendChild(titleDiv);
+
+    const dragDiv = document.createElement('div');
+    dragDiv.style.fontSize = '12px';
+    dragDiv.style.color = '#aaa';
+    const pushSpan = document.createElement('span');
+    pushSpan.style.color = '#4caf50';
+    pushSpan.textContent = '↑ Push';
+    const pullSpan = document.createElement('span');
+    pullSpan.style.color = '#f44336';
+    pullSpan.textContent = '↓ Pull';
+    dragDiv.textContent = 'Drag: ';
+    dragDiv.appendChild(pushSpan);
+    dragDiv.appendChild(document.createTextNode(' / '));
+    dragDiv.appendChild(pullSpan);
+    hint.appendChild(dragDiv);
+
+    const shiftDiv = document.createElement('div');
+    shiftDiv.style.fontSize = '11px';
+    shiftDiv.style.color = '#888';
+    shiftDiv.style.marginTop = '2px';
+    const shiftB = document.createElement('b');
+    shiftB.textContent = 'Shift';
+    shiftDiv.textContent = 'Hold ';
+    shiftDiv.appendChild(shiftB);
+    shiftDiv.appendChild(document.createTextNode(' to invert'));
+    hint.appendChild(shiftDiv);
   }
 
   _showHint() {
@@ -107,6 +105,16 @@ export class SculptTool {
   _hideHint() {
     const hint = document.getElementById('sculpt-hint');
     if (hint) hint.style.display = 'none';
+  }
+
+  _getFaceIndexForIntersection(point, center, scale) {
+    const dx = Math.abs(point.x - center.x) / scale[0];
+    const dy = Math.abs(point.y - center.y) / scale[1];
+    const dz = Math.abs(point.z - center.z) / scale[2];
+    const max = Math.max(dx, dy, dz);
+    if (max === dx) return point.x < center.x ? 0 : 2;
+    if (max === dy) return point.y < center.y ? 4 : 6;
+    return point.z < center.z ? 8 : 10;
   }
 
   activate() {
@@ -121,6 +129,7 @@ export class SculptTool {
     this.isDragging = false;
     this.selectedVoxel = null;
     this.dragStartPoint = null;
+    this.dragStartPointer = null;
     this.dragNormal = null;
     this.startVoxelData = null;
     if (this.liveLabel) this.liveLabel.style.display = 'none';
@@ -157,27 +166,64 @@ export class SculptTool {
   }
 
   _onMouseDown(event) {
-    console.log('[SculptTool._onMouseDown] isActive:', this.isActive, 'button:', event.button);
     if (!this.isActive || event.button !== 0) return;
 
     const mouse = this._getMousePos(event);
-    console.log('[SculptTool._onMouseDown] pointer:', mouse.x.toFixed(3), mouse.y.toFixed(3));
     this.raycaster.setFromCamera(mouse, this.camera);
 
-    // Intersect with voxel group children (InstancedMeshes)
     const voxelGroup = this.voxelEngine.voxelGroup;
-    console.log('[SculptTool._onMouseDown] voxelGroup children:', voxelGroup?.children?.length ?? 'none');
-    const intersections = this.raycaster.intersectObjects(
-      voxelGroup.children, true
-    );
-    console.log('[SculptTool] Intersections found:', intersections.length);
-
-    // Find first InstancedMesh hit
     let hit = null;
-    for (const intr of intersections) {
-      if (intr.object.isInstancedMesh && intr.instanceId !== undefined) {
-        hit = intr;
-        break;
+    let intersections = [];
+
+    for (const mesh of voxelGroup.children) {
+      if (!mesh.isInstancedMesh) continue;
+      const materialName = mesh.material.name;
+      const instMap = this.voxelEngine.keyToInstance.get(materialName);
+      if (!instMap) continue;
+
+      for (const [key, instanceId] of instMap) {
+        const voxel = this.voxelEngine.getVoxelAt(
+          ...key.split(',').map(v => parseInt(v, 10))
+        );
+        if (!voxel) continue;
+
+        const scale = voxel.scale || [1, 1, 1];
+        const position = this.voxelEngine._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z });
+
+        const min = new THREE.Vector3(
+          position.x - scale[0] * 0.5,
+          position.y - scale[1] * 0.5,
+          position.z - scale[2] * 0.5
+        );
+        const max = new THREE.Vector3(
+          position.x + scale[0] * 0.5,
+          position.y + scale[1] * 0.5,
+          position.z + scale[2] * 0.5
+        );
+
+        const box = new THREE.Box3(min, max);
+        const inter = new THREE.Vector3();
+        const intersected = this.raycaster.ray.intersectBox(box, inter);
+        if (intersected) {
+          hit = {
+            object: mesh,
+            instanceId: instanceId,
+            point: inter.clone(),
+            faceIndex: this._getFaceIndexForIntersection(inter, position, scale)
+          };
+          break;
+        }
+      }
+      if (hit) break;
+    }
+
+    if (!hit) {
+      intersections = this.raycaster.intersectObjects(voxelGroup.children, true);
+      for (const intr of intersections) {
+        if (intr.object.isInstancedMesh && intr.instanceId !== undefined) {
+          hit = intr;
+          break;
+        }
       }
     }
 
@@ -187,26 +233,31 @@ export class SculptTool {
       const keyObj = this.voxelEngine.instanceToKey.get(materialName);
       const key = keyObj ? keyObj[instanceId] : null;
 
-      console.log('[SculptTool] Hit key:', key, 'instanceId:', instanceId);
-
       if (key) {
-         const parts = key.split(',');
-         const x = parseInt(parts[0], 10);
-         const y = parseInt(parts[1], 10);
-         const z = parseInt(parts[2], 10);
-         this.isDragging = true;
-         this.selectedVoxel = { x, y, z };
-         this.dragStartPoint = hit.point.clone();
-         // Handle InstancedMesh raycast which may not have face.normal
-         this.dragNormal = (hit.face && hit.face.normal) ? hit.face.normal.clone() : new THREE.Vector3(0, 1, 0);
+        const parts = key.split(',');
+        const x = parseInt(parts[0], 10);
+        const y = parseInt(parts[1], 10);
+        const z = parseInt(parts[2], 10);
+        this.isDragging = true;
+        this.selectedVoxel = { x, y, z };
+        this.dragStartPoint = hit.point ? hit.point.clone() : this.voxelEngine._worldPos({ x, y, z });
+        this.dragStartPointer = this.pointer.clone();
 
-        // Store original voxel data
+        if (hit.face && hit.face.normal) {
+          this.dragNormal = hit.face.normal.clone();
+        } else {
+          const faceIndex = hit.faceIndex !== undefined ? hit.faceIndex : 0;
+          const axis = Math.floor(faceIndex / 2);
+          const sign = faceIndex % 2 === 0 ? -1 : 1;
+          this.dragNormal = axis === 0 ? new THREE.Vector3(sign, 0, 0) :
+                           axis === 1 ? new THREE.Vector3(0, sign, 0) :
+                           new THREE.Vector3(0, 0, sign);
+        }
+
         const voxel = this.voxelEngine.getVoxelAt(x, y, z);
         if (voxel) {
           this.startVoxelData = {
-            x: voxel.x,
-            y: voxel.y,
-            z: voxel.z,
+            x: voxel.x, y: voxel.y, z: voxel.z,
             material: voxel.material,
             scale: voxel.scale ? [...voxel.scale] : [1, 1, 1]
           };
@@ -219,75 +270,42 @@ export class SculptTool {
   }
 
   _onMouseMove(event) {
-    if (!this.isActive) return;
-    if (!this.isDragging) return;
+    if (!this.isDragging || !this.selectedVoxel || !this.dragStartPoint) return;
 
     const mouse = this._getMousePos(event);
-    console.log('[Sculpt._onMouseMove] dragging, pointer:', mouse.x.toFixed(3), mouse.y.toFixed(3));
+    this.raycaster.setFromCamera(mouse, this.camera);
 
-    if (this.isDragging && this.selectedVoxel && this.dragStartPoint) {
-      this.raycaster.setFromCamera(mouse, this.camera);
+    // Calculate pixel movement distance (screen space)
+    const deltaPixels = Math.sqrt(
+      Math.pow(mouse.x - this.dragStartPointer.x, 2) +
+      Math.pow(mouse.y - this.dragStartPointer.y, 2)
+    );
 
-      // Create plane perpendicular to drag normal at start point
-      this._plane.normal.copy(this.dragNormal);
-      this._plane.setFromNormalAndCoplanarPoint(this._plane.normal, this.dragStartPoint);
+    // Apply deformation based on pixel movement
+    const dragDistance = deltaPixels;
+    const deformation = dragDistance * (this.strength / this.sensitivity);
+    const isPull = event.shiftKey;
+    const finalDeformation = isPull ? -deformation : deformation;
 
-      const intersection = new THREE.Vector3();
-      this.raycaster.ray.intersectPlane(this._plane, intersection);
+    const voxel = this.voxelEngine.getVoxelAt(
+      this.selectedVoxel.x,
+      this.selectedVoxel.y,
+      this.selectedVoxel.z
+    );
 
-      if (intersection) {
-        const currentPoint = intersection;
-        const startPoint = this.dragStartPoint;
+    if (voxel) {
+      if (!voxel.scale) voxel.scale = [1, 1, 1];
 
-        // Calculate drag distance along normal direction
-        let dragDistance = 0;
-        if (this.dragNormal.x !== 0) dragDistance = (currentPoint.x - startPoint.x) / this.dragNormal.x;
-        else if (this.dragNormal.y !== 0) dragDistance = (currentPoint.y - startPoint.y) / this.dragNormal.y;
-        else if (this.dragNormal.z !== 0) dragDistance = (currentPoint.z - startPoint.z) / this.dragNormal.z;
+      const normalAxis = Math.abs(this.dragNormal.x) > 0.5 ? 0 :
+                       Math.abs(this.dragNormal.y) > 0.5 ? 1 : 2;
 
-        // Apply strength and sensitivity
-        const deformation = dragDistance * (this.strength / this.sensitivity);
+      const baseScale = this.startVoxelData ? this.startVoxelData.scale[normalAxis] : 1;
+      const newScale = Math.max(0.1, baseScale + finalDeformation);
 
-        // Determine if we're pushing (positive) or pulling (negative)
-        // Shift key = pull (remove material), default = push (add material)
-        const isPull = event.shiftKey;
-        const finalDeformation = isPull ? -deformation : deformation;
+      voxel.scale[normalAxis] = newScale;
 
-        // Apply deformation to voxel scale along normal axis
-        const voxel = this.voxelEngine.getVoxelAt(
-          this.selectedVoxel.x,
-          this.selectedVoxel.y,
-          this.selectedVoxel.z
-        );
-
-        console.log('[Sculpt._onMouseMove] voxel found:', !!voxel,
-                    'dragDist:', dragDistance.toFixed(4),
-                    'deformation:', deformation.toFixed(4),
-                    'finalDeform:', finalDeformation.toFixed(4));
-
-        if (voxel) {
-          if (!voxel.scale) voxel.scale = [1, 1, 1];
-
-          // Calculate new scale based on normal direction
-          const normalAxis = Math.abs(this.dragNormal.x) > 0.5 ? 0 :
-                           Math.abs(this.dragNormal.y) > 0.5 ? 1 : 2;
-
-          const baseScale = this.startVoxelData ? this.startVoxelData.scale[normalAxis] : 1;
-          const newScale = Math.max(0.1, baseScale + finalDeformation); // Minimum 0.1 to prevent collapsing
-
-          console.log('[Sculpt._onMouseMove] normalAxis:', normalAxis,
-                      'baseScale:', baseScale.toFixed(3),
-                      'newScale:', newScale.toFixed(3));
-
-          voxel.scale[normalAxis] = newScale;
-
-          // Update live label
-          this._updateDeformationLabel(finalDeformation, voxel.scale[normalAxis], isPull ? 'Pull' : 'Push');
-
-          // Apply the scale change to the voxel
-          this._applyVoxelScale(voxel);
-        }
-      }
+      this._updateDeformationLabel(finalDeformation, voxel.scale[normalAxis], isPull ? 'Pull' : 'Push');
+      this._applyVoxelScale(voxel);
     }
   }
 
@@ -303,7 +321,6 @@ export class SculptTool {
         );
 
         if (voxel) {
-          // Record in history for undo/redo
           const endScale = voxel.scale ? [...voxel.scale] : [1, 1, 1];
           this.voxelEngine._pushHistory({
             type: 'sculpt',
@@ -326,14 +343,12 @@ export class SculptTool {
 
   _applyVoxelScale(voxel) {
     const key = voxel.x + ',' + voxel.y + ',' + voxel.z;
-    console.log('[Sculpt._applyVoxelScale] key:', key, 'scale:', voxel.scale?.join(','));
     const materialName = voxel.material;
     const mesh = this.voxelEngine.instancedMeshes.get(materialName);
 
     if (mesh) {
       const instMap = this.voxelEngine.keyToInstance.get(materialName);
       const instanceId = instMap ? instMap.get(key) : undefined;
-      console.log('[Sculpt._applyVoxelScale] instMap exists:', !!instMap, 'instanceId:', instanceId);
       if (instanceId !== undefined) {
         const scale = voxel.scale || [1, 1, 1];
         this.voxelEngine._setInstanceMatrix(
@@ -342,19 +357,13 @@ export class SculptTool {
           this.voxelEngine._worldPos({ x: voxel.x, y: voxel.y, z: voxel.z }),
           new THREE.Vector3(scale[0], scale[1], scale[2])
         );
-        console.log('[Sculpt._applyVoxelScale] _setInstanceMatrix DONE, newScale:', scale.join(','));
-      } else {
-        console.warn('[Sculpt._applyVoxelScale] instanceId is undefined for key:', key);
       }
-    } else {
-      console.warn('[Sculpt._applyVoxelScale] No mesh for material:', materialName);
     }
   }
 
   _createDragHighlight(point, normal) {
     this._removeHighlight();
 
-    // Create a larger, more visible indicator for drag plane
     const geo = new THREE.RingGeometry(0.25, 0.35, 16);
     const mat = new THREE.MeshBasicMaterial({
       color: 0xff6b6b,
@@ -364,19 +373,16 @@ export class SculptTool {
       depthTest: false
     });
 
-    // Orient the highlight to face the camera (billboard) but aligned with drag normal
     const highlight = new THREE.Mesh(geo, mat);
     highlight.position.copy(point);
-    highlight.position.add(normal.clone().multiplyScalar(0.02)); // Slight offset
+    highlight.position.add(normal.clone().multiplyScalar(0.02));
 
-    // Make it face the camera
     const lookAtPoint = point.clone().add(normal);
     highlight.lookAt(lookAtPoint);
 
     this.dragHighlight = highlight;
-    this.scene.add(highlight);
+    this.scene.add(this.dragHighlight);
 
-    // Add a visual "DRAG" label
     const label = document.createElement('div');
     label.id = 'sculpt-drag-label';
     label.style.cssText =
@@ -386,7 +392,7 @@ export class SculptTool {
       'pointer-events:none;z-index:10001;white-space:nowrap;';
     label.textContent = 'DRAG ↑↓';
     this._dragLabel = label;
-    document.body.appendChild(label);
+    document.body.appendChild(this._dragLabel);
   }
 
   _removeHighlight() {
@@ -402,41 +408,37 @@ export class SculptTool {
     }
   }
 
-   _updateDeformationLabel(deformation, currentScale, mode) {
-     if (!this.liveLabel) return;
+  _updateDeformationLabel(deformation, currentScale, mode) {
+    if (!this.liveLabel) return;
 
-     const absDeformation = Math.abs(deformation);
-     const direction = deformation >= 0 ? '+' : '-';
+    const absDeformation = Math.abs(deformation);
+    const direction = deformation >= 0 ? '+' : '-';
 
-     this.liveLabel.textContent = '';
+    this.liveLabel.textContent = '';
 
-     // Title
-     const titleDiv = document.createElement('div');
-     titleDiv.style.fontWeight = 'bold';
-     titleDiv.style.marginBottom = '8px';
-     titleDiv.textContent = 'Sculpting';
-     this.liveLabel.appendChild(titleDiv);
+    const titleDiv = document.createElement('div');
+    titleDiv.style.fontWeight = 'bold';
+    titleDiv.style.marginBottom = '8px';
+    titleDiv.textContent = 'Sculpting';
+    this.liveLabel.appendChild(titleDiv);
 
-     // Mode
-     const modeDiv = document.createElement('div');
-     modeDiv.textContent = `Mode: ${mode}`;
-     this.liveLabel.appendChild(modeDiv);
+    const modeDiv = document.createElement('div');
+    modeDiv.textContent = `Mode: ${mode}`;
+    this.liveLabel.appendChild(modeDiv);
 
-     // Current scale
-     const scaleDiv = document.createElement('div');
-     scaleDiv.textContent = `Current scale: ${currentScale.toFixed(2)} mm`;
-     this.liveLabel.appendChild(scaleDiv);
+    const scaleDiv = document.createElement('div');
+    scaleDiv.textContent = `Current scale: ${currentScale.toFixed(2)} mm`;
+    this.liveLabel.appendChild(scaleDiv);
 
-     // Deformation
-     const defDiv = document.createElement('div');
-     defDiv.style.marginTop = '4px';
-     const defSpan = document.createElement('span');
-     defSpan.style.color = deformation >= 0 ? '#4caf50' : '#f44336';
-     defSpan.textContent = `${direction}${absDeformation.toFixed(2)} mm`;
-     defDiv.textContent = 'Deformation: ';
-     defDiv.appendChild(defSpan);
-     this.liveLabel.appendChild(defDiv);
-   }
+    const defDiv = document.createElement('div');
+    defDiv.style.marginTop = '4px';
+    const defSpan = document.createElement('span');
+    defSpan.style.color = deformation >= 0 ? '#4caf50' : '#f44336';
+    defSpan.textContent = `${direction}${absDeformation.toFixed(2)} mm`;
+    defDiv.textContent = 'Deformation: ';
+    defDiv.appendChild(defSpan);
+    this.liveLabel.appendChild(defDiv);
+  }
 
   destroy() {
     this.deactivate();
