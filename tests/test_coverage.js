@@ -7,7 +7,7 @@ require('./three-mock-provider.cjs');
 
 const assert = require('assert');
 const { pathToFileURL } = require('url');
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
 // ── Full DOM & browser-API Mock (no JSDOM needed) ───────────────────────────
@@ -380,6 +380,15 @@ async function runAll() {
       }
     }
   }
+
+  // ── 0. Static layout regressions ──────────────────────────────────────────
+  runTest('App shell prevents page scroll so camera controls stay visible', () => {
+    const css = readFileSync('D:/pro.cardesign/styles/main.css', 'utf8');
+    assert.match(css, /html,\s*[\r\n]+body\s*\{[\s\S]*overflow:\s*hidden;/);
+    assert.match(css, /#app\s*\{[\s\S]*height:\s*100vh;/);
+    assert.match(css, /#sidebar\s*\{[\s\S]*overflow-y:\s*auto;/);
+    assert.match(css, /#camera-controls\s*\{[\s\S]*position:\s*absolute;/);
+  });
 
   // ── 1. MaterialSystem ──────────────────────────────────────────────────────
   try {

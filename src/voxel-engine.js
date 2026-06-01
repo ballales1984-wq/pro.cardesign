@@ -247,19 +247,18 @@ this._setupEvents();
          return map ? map.size : 0;
        }
    
-          _setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
+_setInstanceMatrix(mesh, instanceId, position, scale = new THREE.Vector3(1, 1, 1)) {
                 const normalizedScale = Array.isArray(scale)
                   ? new THREE.Vector3(scale[0] || 1, scale[1] || 1, scale[2] || 1)
                   : new THREE.Vector3(scale?.x || 1, scale?.y || 1, scale?.z || 1);
                 const matrix = new THREE.Matrix4();
                 matrix.makeScale(normalizedScale.x, normalizedScale.y, normalizedScale.z);
-               // Apply translation after scale
-               matrix.elements[12] = position.x;
-               matrix.elements[13] = position.y;
-               matrix.elements[14] = position.z;
-               mesh.setMatrixAt(instanceId, matrix);
-               mesh.instanceMatrix.needsUpdate = true;
-           }
+                matrix.elements[12] = position.x;
+                matrix.elements[13] = position.y;
+                matrix.elements[14] = position.z;
+                mesh.setMatrixAt(instanceId, matrix);
+                mesh.instanceMatrix.needsUpdate = true;
+            }
 
         _applyVoxelScaleToVoxel(voxel, scaleX, scaleY, scaleZ, newCenter) {
               // Update voxel data

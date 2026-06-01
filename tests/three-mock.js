@@ -67,8 +67,43 @@ export class PerspectiveCamera extends Camera {
   }
 }
 
+export class Ray {
+  constructor(origin = new Vector3(), direction = new Vector3(0, 0, -1)) {
+    this.origin = origin;
+    this.direction = direction;
+  }
+  intersectBox3(box, target) {
+    // Simple AABB raycast - returns true if ray hits box
+    const invDir = new Vector3(1 / (this.direction.x || 0.0001), 1 / (this.direction.y || 0.0001), 1 / (this.direction.z || 0.0001));
+    const tMin = new Vector3(
+      (box.min.x - this.origin.x) * invDir.x,
+      (box.min.y - this.origin.y) * invDir.y,
+      (box.min.z - this.origin.z) * invDir.z
+    );
+    const tMax = new Vector3(
+      (box.max.x - this.origin.x) * invDir.x,
+      (box.max.y - this.origin.y) * invDir.y,
+      (box.max.z - this.origin.z) * invDir.z
+    );
+    const t1 = new Vector3(Math.min(tMin.x, tMax.x), Math.min(tMin.y, tMax.y), Math.min(tMin.z, tMax.z));
+    const t2 = new Vector3(Math.max(tMin.x, tMax.x), Math.max(tMin.y, tMax.y), Math.max(tMin.z, tMax.z));
+    const tNear = Math.max(t1.x, t1.y, t1.z);
+    const tFar = Math.min(t2.x, t2.y, t2.z);
+    if (tNear <= Math.max(0, tFar)) {
+      const t = Math.max(0, tNear);
+      target.set(
+        this.origin.x + this.direction.x * t,
+        this.origin.y + this.direction.y * t,
+        this.origin.z + this.direction.z * t
+      );
+      return true;
+    }
+    return false;
+  }
+}
+
 export class Raycaster {
-  constructor() { this.ray = {}; this.linePrecision = 1; }
+  constructor() { this.ray = new Ray(); this.linePrecision = 1; }
   setFromCamera() {}
   intersectObjects() { return []; }
   intersectObject() { return []; }
@@ -158,6 +193,8 @@ export class InstancedMesh {
     this.frustumCulled = true;
     this.castShadow = false;
     this.receiveShadow = false;
+    this.isInstancedMesh = true;
+    this.boundingSphere = new Sphere(new Vector3(), 9999999);
     this.instanceMatrix = { array: new Float32Array(count * 16), needsUpdate: false, setUsage: () => {} };
     this._dummy = new Object3D();
   }
@@ -196,6 +233,7 @@ export class Color {
 export const DoubleSide = 1, FrontSide = 0, BackSide = 2;
 export const PCFSoftShadowMap = 1, BasicShadowMap = 0;
 export const NoBlending = 0, AdditiveBlending = 1, NormalBlending = 2;
+export { Ray };
 
 // ── Misc ───────────────────────────────────────────────────────────────────────
 export class Plane { constructor() {} }

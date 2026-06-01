@@ -51,6 +51,12 @@
     BODY / APP SHELL
     -------------------------------------------------------------------------- */
 
+html,
+body {
+   height: 100%;
+   overflow: hidden;
+}
+
 body {
    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
    background: var(--bg-dark);
@@ -64,6 +70,7 @@ body {
    display: grid;
    grid-template-rows: auto 1fr;
    grid-template-columns: 260px 1fr;
+   height: 100vh;
    min-height: 100vh;
    background: var(--border);
    gap: 0;

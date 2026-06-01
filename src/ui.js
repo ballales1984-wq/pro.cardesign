@@ -1604,43 +1604,62 @@ window.addEventListener('tool-changed', function(e) {
   }
 
 // ── AI Import Panel ───────────────────────────────────────────────
-   async _setupAIImportPanel() {
-     const self = this;
-     const imageInput = document.getElementById('ai-image-input');
-     const processBtn = document.getElementById('btn-ai-process');
-     const statusEl = document.getElementById('ai-status');
+    async _setupAIImportPanel() {
+      console.log('[UI] _setupAIImportPanel called');
+      const self = this;
+      const imageInput = document.getElementById('ai-image-input');
+      const processBtn = document.getElementById('btn-ai-process');
+      const statusEl = document.getElementById('ai-status');
 
-     if (!imageInput || !processBtn) return;
+      if (!imageInput || !processBtn) {
+        console.warn('[UI] AI Import elements not found', {imageInput, processBtn});
+        return;
+      }
+      console.log('[UI] AI Import elements found, attaching click listener');
 
-     processBtn.addEventListener('click', async function() {
-       const file = imageInput.files && imageInput.files[0];
-       if (!file) {
-         self._notify('Seleziona un\'immagine prima', 'warn');
-         return;
-       }
 
-       statusEl.textContent = 'Elaborazione in corso...';
-       try {
-         const { DepthEstimation } = await import('./core/depth-estimation.js');
-         const depthEstimator = new DepthEstimation(self.voxelEngine);
-         const voxels = await depthEstimator.buildFromImage(file);
+      processBtn.addEventListener('click', async function() {
+        console.log('[AI Import] Click handler started');
+        const file = imageInput.files && imageInput.files[0];
+        if (!file) {
+          self._notify('Seleziona un\'immagine prima', 'warn');
+          return;
+        }
 
-         let added = 0;
-         for (const v of voxels) {
-           self.voxelEngine.addVoxel(v, v.material || 'steel', self.voxelEngine.activeModule);
-           added++;
-         }
+        statusEl.textContent = 'Elaborazione in corso...';
+        try {
+          console.log('[AI Import] Loading DepthEstimation');
+          const { DepthEstimation } = await import('./core/depth-estimation.js');
+          const depthEstimator = new DepthEstimation(self.voxelEngine);
+          console.log('[AI Import] Calling buildFromImage');
+          const voxels = await depthEstimator.buildFromImage(file);
+          console.log('[AI Import] buildFromImage returned', voxels.length, 'voxels');
 
-         self.voxelEngine._onVoxelChanged();
-         self.voxelEngine.setTool('remove');
-         self.voxelEngine.resetCamera();
-         statusEl.textContent = `Generati ${voxels.length} voxel`;
-         self._notify(`AI Import completato: ${added} voxel da ${file.name}`, 'success');
-       } catch (err) {
-         statusEl.textContent = '';
-         self._notify('Errore AI Import: ' + err.message, 'error');
-       }
-     });
+          let added = 0;
+          for (const v of voxels) {
+            const success = self.voxelEngine.addVoxel(v, v.material || 'steel', self.voxelEngine.activeModule);
+            if (success) added++;
+            else {
+              console.warn('Failed to add voxel', v);
+            }
+          }
+          console.log('[AI Import] Added', added, 'voxels to engine');
+
+          self.voxelEngine._onVoxelChanged();
+          self.voxelEngine.setTool('remove');
+          self.voxelEngine.resetCamera();
+          statusEl.textContent = `Generati ${voxels.length} voxel`;
+          if (added === 0) {
+            self._notify('Attenzione: nessun voxel aggiunto alla scena', 'warn');
+          } else {
+            self._notify(`AI Import completato: ${added} voxel da ${file.name}`, 'success');
+          }
+        } catch (err) {
+          console.error('[AI Import] Error:', err);
+          statusEl.textContent = '';
+          self._notify('Errore AI Import: ' + err.message, 'error');
+        }
+      });
    }
 
    // Random color

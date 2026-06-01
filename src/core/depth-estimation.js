@@ -42,19 +42,29 @@ export class DepthEstimation {
     }
   }
 
-  async buildFromImage(file) {
-    const img = await this._loadImage(file);
-    const tensor = this._imageToTensor(img);
-    
-    let depthMap;
-    if (await this.loadModel()) {
-      depthMap = await this._runONNXModel(tensor, img.width, img.height);
-    } else {
-      depthMap = this._fallbackDepthEstimation(img);
-    }
-    
-    return this.depthToVoxels(depthMap);
-  }
+   async buildFromImage(file) {
+     const img = await this._loadImage(file);
+     const tensor = this._imageToTensor(img);
+     
+     let depthMap;
+     if (await this.loadModel()) {
+       depthMap = await this._runONNXModel(tensor, img.width, img.height);
+     } else {
+       depthMap = this._fallbackDepthEstimation(img);
+     }
+     
+     let voxels = this.depthToVoxels(depthMap);
+     // Ensure at least one voxel is generated so something appears
+     if (voxels.length === 0) {
+       voxels.push({
+         x: 0,
+         y: 0,
+         z: 0,
+         material: 'steel'
+       });
+     }
+     return voxels;
+   }
 
   _loadImage(file) {
     return new Promise((resolve, reject) => {

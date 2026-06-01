@@ -213,16 +213,16 @@ export class VertexEditTool {
   }
 
   _screenDeltaAlongFaceNormal(dpScreen, faceIdx) {
-    const axisIdx = this._axisIndexForFace(faceIdx);
-    const screenAxis = this._axesScreen?.[axisIdx];
-    if (!screenAxis || screenAxis.lengthSq() <= 0.0001) {
-      return new THREE.Vector3();
-    }
+     const axisIdx = this._axisIndexForFace(faceIdx);
+     const screenAxis = this._axesScreen?.[axisIdx];
+     if (!screenAxis || screenAxis.lengthSq() <= 0.0001) {
+       return new THREE.Vector3();
+     }
 
-    const normal = this._extrudeDragNormal(faceIdx);
-    const scalar = dpScreen.dot(screenAxis) / screenAxis.lengthSq();
-    return normal.multiplyScalar(scalar);
-  }
+     const normal = this._extrudeDragNormal(faceIdx);
+     const scalar = dpScreen.dot(screenAxis) / screenAxis.lengthSq();
+     return normal.clone().multiplyScalar(scalar);
+   }
 
   _previewExtrudePositions(dpScreen) {
     const preview = this._clonePositions(this.dragStartPositions || []);
@@ -380,13 +380,11 @@ export class VertexEditTool {
     this.liveLabel = el;
   }
 
-   _updateLiveLabel(axisName, newSize) {
-     if (!this.liveLabel) return;
-     const modeTag = this._extrudeMode
-       ? '<span style="color:#fbbf24">[ESTRUSIONE]</span>'
-       : '<span style="color:#00d2ff">[VERTICE]</span>';
-     // Calculate progressive delta from original scale
-     let deltaText = '';
+    _updateLiveLabel(axisName, newSize) {
+      if (!this.liveLabel) return;
+      
+      // Calculate progressive delta from original scale
+      let deltaText = null;
       if (this.originalScale) {
         const deltaX = (newSize.sx - this.originalScale[0]).toFixed(1);
         const deltaY = (newSize.sy - this.originalScale[1]).toFixed(1);
@@ -394,8 +392,9 @@ export class VertexEditTool {
         deltaText = document.createElement('div');
         deltaText.textContent = `ΔW: ${deltaX} | ΔH: ${deltaY} | ΔD: ${deltaZ}`;
       }
+      
       // Clear liveLabel
-       this.liveLabel.textContent = '';
+      this.liveLabel.textContent = '';
       
       // Create vertex edit content
       const titleDiv = document.createElement('div');
@@ -404,9 +403,11 @@ export class VertexEditTool {
       titleDiv.textContent = 'Vertex Edit';
       this.liveLabel.appendChild(titleDiv);
       
-      if (modeTag) {
-        this.liveLabel.appendChild(modeTag);
-      }
+      // Mode tag (vertex or extrude)
+      const modeSpan = document.createElement('span');
+      modeSpan.textContent = this._extrudeMode ? '[ESTRUSIONE]' : '[VERTICE]';
+      modeSpan.style.color = this._extrudeMode ? '#fbbf24' : '#00d2ff';
+      this.liveLabel.appendChild(modeSpan);
       
       const axisDiv = document.createElement('div');
       axisDiv.textContent = `Asse: ${axisName.toUpperCase()}`;
@@ -427,7 +428,7 @@ export class VertexEditTool {
       if (deltaText) {
         this.liveLabel.appendChild(deltaText);
       }
-   }
+    }
 
   // ═══════════════════════════════════════════════════════════════════════
   //  ACTIVATE / DEACTIVATE
@@ -476,12 +477,12 @@ export class VertexEditTool {
     return this.pointer;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
   //  MOUSE HANDLERS
   // ═══════════════════════════════════════════════════════════════════════
 
-  _cornerAxisLabel(idx) {
-    return ['X','Y','Z'][idx] || '?';
+  _axisLabel(axIdx) {
+    return ['X','Y','Z'][Math.max(0, Math.min(2, axIdx))] || '?';
   }
 
   _onMouseDown(event) {
@@ -515,32 +516,32 @@ export class VertexEditTool {
       return;   // selection click — no drag
     }
 
-     // ── Already selected brick: click on a handle → start drag ───────
-     const handleIdx = this._findClosestHandleByRay(mouse);
-     if (handleIdx === null) return;
+    // ── Already selected brick: click on a handle → start drag ───────
+    const handleIdx = this._findClosestHandleByRay(mouse);
+    if (handleIdx === null) return;
 
-     this.isDragging   = true;
-     this._extruding   = false;          // reset extrude state
-     this.dragHandleIdx = handleIdx;
-     const positions   = this._getVertexWorldPositions(voxel);
-     this.dragStartPositions = positions.map(p => p.clone());
-     this.dragPreviewPositions = positions.map(p => p.clone());
-     this.dragStartMouse     = mouse.clone();
-     this._axesWorld  = this._axisWorld();
-     this._axesScreen = this._axisScreen();
-     this.originalScale = voxel.scale ? [...voxel.scale] : [1, 1, 1];
+    this.isDragging   = true;
+    this._extruding   = false;          // reset extrude state
+    this.dragHandleIdx = handleIdx;
+    const positions   = this._getVertexWorldPositions(voxel);
+    this.dragStartPositions = positions.map(p => p.clone());
+    this.dragPreviewPositions = positions.map(p => p.clone());
+    this.dragStartMouse     = mouse.clone();
+    this._axesWorld  = this._axisWorld();
+    this._axesScreen = this._axisScreen();
+    this.originalScale = voxel.scale ? [...voxel.scale] : [1, 1, 1];
 
-     const picked = this._handleAt(handleIdx);
-     if (picked) { picked.material.color.set(0xff6b6b); picked.material.opacity = 1.0; }
+    const picked = this._handleAt(handleIdx);
+    if (picked) { picked.material.color.set(0xff6b6b); picked.material.opacity = 1.0; }
 
-     if (this._extrudeMode) {
-       // ── EXTRUDE PATH ──────────────────────────────────────────────
-       const worldPos   = positions[handleIdx];
-       const faceIdx    = this._resolveExtrudeFaceAndDir(worldPos, voxel);
-       this._extruding        = true;
-       this._extrudeFaceIdx   = faceIdx;
-       this._faceDragAxisIdx  = null;   // determined on first mouse-move delta
-     }
+    if (!this._extrudeMode) {
+      // ── VERTEX SCALE PATH ───────────────────────────────────────────
+      // Use camera-forward plane (like MeshPointEditTool) for reliable dragging
+      const camDir = new THREE.Vector3();
+      this.camera.getWorldDirection(camDir);
+      const dragPos = positions[handleIdx];
+      this._plane.setFromNormalAndCoplanarPoint(camDir, dragPos);
+    }
 
     this.liveLabel.style.display = 'block';
   }
@@ -561,7 +562,26 @@ export class VertexEditTool {
         this._faceDragAxisIdx = this._dominantAxis(dp, this._axesScreen);
       }
 
-      this.dragPreviewPositions = this._previewExtrudePositions(dp);
+      // Use plane intersection for proper 3D drag
+      this.raycaster.setFromCamera(mouse, this.camera);
+      const intersection = new THREE.Vector3();
+      const hasIntersection = this.raycaster.ray.intersectPlane(this._plane, intersection);
+
+      if (hasIntersection && this.dragStartPositions) {
+        const startPos = this.dragStartPositions[this.dragHandleIdx];
+        const normal = this._extrudeDragNormal(this._extrudeFaceIdx);
+        // Signed distance along the face normal
+        const dist = (intersection.x - startPos.x) * normal.x +
+                     (intersection.y - startPos.y) * normal.y +
+                     (intersection.z - startPos.z) * normal.z;
+        const offset = normal.clone().multiplyScalar(dist);
+        this.dragPreviewPositions = this._clonePositions(this.dragStartPositions);
+        for (const fv of this._faceVertexIndices(this._extrudeFaceIdx)) {
+          this.dragPreviewPositions[fv].add(offset);
+        }
+      } else {
+        this.dragPreviewPositions = this._previewExtrudePositions(dp);
+      }
 
       for (let i = 0; i < this.dragPreviewPositions.length; i++) {
         const h = this._handleAt(i);
@@ -572,27 +592,38 @@ export class VertexEditTool {
         this.dragPreviewPositions, this.dragHandleIdx,
         this.dragPreviewPositions[this.dragHandleIdx]
       );
-      this._updateLiveLabel(this._cornerAxisLabel(this._axisIndexForFace(this._extrudeFaceIdx)), newSize);
+      this._updateLiveLabel(this._axisLabel(this._axisIndexForFace(this._extrudeFaceIdx)), newSize);
       return;
     }
 
     // ── VERTEX SCALE PATH ───────────────────────────────────────────
-    const axIdx  = this._dominantAxis(dp, this._axesScreen);
-    const wdp    = this._screenDeltaToWorld(dp, this._axesWorld, this._axesScreen);
-    const origV  = this.dragStartPositions[this.dragHandleIdx];
-    const vNew   = origV.clone().add(wdp);
+    // For vertex scaling, drag one corner vertex to resize the brick
+    const dragPos = this.dragStartPositions[this.dragHandleIdx];
 
-    // Preview: update handle mesh
-    const h = this._handleAt(this.dragHandleIdx);
-    if (h) h.position.copy(vNew);
-    this.dragPreviewPositions = this._clonePositions(this.dragStartPositions);
-    this.dragPreviewPositions[this.dragHandleIdx] = vNew.clone();
+    this.raycaster.setFromCamera(mouse, this.camera);
+    const intersection = new THREE.Vector3();
+    const hasIntersection = this.raycaster.ray.intersectPlane(this._plane, intersection);
 
-    // Preview label
+    if (hasIntersection) {
+      const delta = intersection.clone().sub(dragPos);
+      this.dragPreviewPositions = this._clonePositions(this.dragStartPositions);
+      this.dragPreviewPositions[this.dragHandleIdx] = dragPos.clone().add(delta);
+    } else {
+      this.dragPreviewPositions = this._clonePositions(this.dragStartPositions);
+    }
+
+    // Preview: update handle meshes
+    for (let i = 0; i < this.dragPreviewPositions.length; i++) {
+      const h = this._handleAt(i);
+      if (h) h.position.copy(this.dragPreviewPositions[i]);
+    }
+
+    // Compute new size from all 8 vertices
     const newSize = this._computeBrickFromVertices(
-      this.dragStartPositions, this.dragHandleIdx, vNew
+      this.dragPreviewPositions, this.dragHandleIdx, this.dragPreviewPositions[this.dragHandleIdx]
     );
-    this._updateLiveLabel(this._cornerAxisLabel(this.dragHandleIdx), newSize);
+    const axIdx = this._dominantAxis(dp, this._axesScreen);
+    this._updateLiveLabel(this._axisLabel(axIdx), newSize);
   }
 
   _onMouseUp(event) {
@@ -609,16 +640,15 @@ export class VertexEditTool {
     );
     if (!voxel) { this._resetDragState(); return; }
 
-    // ── Determine the "updated" vertex for dimension computation ──────
+// ── Determine the "updated" vertex for dimension computation ──────
     let vUpdated = null;
     let finalPositions = this.dragStartPositions;
     if (this._extruding && this._extrudeFaceIdx !== null) {
       finalPositions = this.dragPreviewPositions || this.dragStartPositions;
       vUpdated = finalPositions[this.dragHandleIdx];
     } else {
-      const h = this._handleAt(this.dragHandleIdx);
-      vUpdated = h ? h.position.clone() : null;
       finalPositions = this.dragPreviewPositions || this.dragStartPositions;
+      vUpdated = finalPositions[this.dragHandleIdx] || this.dragStartPositions[this.dragHandleIdx];
     }
 
     const brickDims = this._computeBrickFromVertices(

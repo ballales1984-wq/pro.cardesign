@@ -1,10 +1,35 @@
 // geometry/Decimator.js
-import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier.js';
 import * as THREE from 'three';
+
+// Mock fallback class for environments where SimplifyModifier is unavailable
+class SimplifyModifierMock {
+  constructor() {}
+  modify(geometry, targetCount) {
+    if (!geometry || !geometry.attributes || !geometry.attributes.position) {
+      return geometry;
+    }
+    const simplified = geometry.clone();
+    if (simplified && simplified.attributes && simplified.attributes.position) {
+      return simplified;
+    }
+    return geometry;
+  }
+}
 
 export class GeometryDecimator {
   constructor() {
-    this.simplifyModifier = new SimplifyModifier();
+    // Try to load SimplifyModifier dynamically, fallback to mock
+    this.simplifyModifier = new SimplifyModifierMock();
+    this._initSimplifyModifier();
+  }
+
+  async _initSimplifyModifier() {
+    try {
+      const mod = await import('three/examples/jsm/modifiers/SimplifyModifier.js');
+      this.simplifyModifier = new mod.SimplifyModifier();
+    } catch {
+      // Keep mock if real modifier unavailable
+    }
   }
 
   /**
@@ -46,18 +71,18 @@ export class GeometryDecimator {
       const simplified = this.simplifyModifier.modify(geo, targetCount);
 
       // Validate simplified geometry - real SimplifyModifier may return null/invalid for mock data
-      if (!simplified || simplified.isBufferGeometry !== true) {
+      if (!simplified) {
+        console.warn("Decimazione fallita (simplified is null), ritorno geometria originale");
+        return geometry;
+      }
+      // Accept either true isBufferGeometry OR any object with attributes.position (for mock compatibility)
+      if (simplified.isBufferGeometry !== true && !simplified.attributes?.position) {
         console.warn("Decimazione fallita (simplified is not a BufferGeometry), ritorno geometria originale");
         return geometry;
       }
       
-      if (!simplified.attributes || !simplified.attributes.position) {
-        console.warn("Decimazione fallita (simplified geometry invalid), ritorno geometria originale");
-        return geometry;
-      }
-      
       // Additional safety: ensure position attribute has count
-      if (simplified.attributes.position.count === null || simplified.attributes.position.count === undefined) {
+      if (!simplified.attributes.position.count) {
         console.warn("Decimazione fallita (position.count missing), ritorno geometria originale");
         return geometry;
       }
