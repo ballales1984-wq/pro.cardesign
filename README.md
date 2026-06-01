@@ -1,144 +1,206 @@
-# Pro.Cardesign - VoxelCAD ⚡
+# pro.cardesign 🚗
 
-> **Hybrid 3D modeling software** for vehicle design using voxel-based engineering with real-world physics (mm scale, material properties, stress analysis).
+**Tool for digital car design** — A professional-grade parametric car design system with real-world measurements, brick-based geometry, and advanced material properties.
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ballales1984-wq/pro.cardesign)
-[![Tests](https://img.shields.io/badge/tests-47/47%20passing-success)](https://github.com/ballales1984-wq/pro.cardesign)
-[![Version](https://img.shields.io/badge/v0.7.0-blue)](https://github.com/ballales1984-wq/pro.cardesign)
+## 📋 Features
 
-## 🎯 Quick Start
+- 🧱 **Brick System** — Independent X/Y/Z sizing (not just cubes)
+- 📏 **Real Measurements** — 1 Three.js unit = 1mm
+- ⚙️ **Physics Engine** — Mass, center of mass, inertia calculations
+- 🎨 **Material System** — 8 physical materials (steel, aluminum, titanium, etc.)
+- 📦 **Export** — OBJ, STL mesh export with quality analysis
+- 🔄 **Undo/Redo** — Full project history management
+- 💾 **Save/Load** — JSON project persistence with scaling
+- 🎯 **Interactive Scaling** — Drag-to-scale tool for real-time adjustment
 
-```bash
-npm install && npm run dev
-# → http://localhost:5176
-```
-
-## ✨ Features
-
-- [x] **Brick System** — Bricks with real dimensions in mm (e.g. 200×20×20mm bars)
-- [x] **Scaling Tool** — Click & drag on faces to resize with live dimensions (pixel-sensitive)
-- [x] **Vertex Edit Tool** — Direct manipulation of vertices for precise shape editing
-- [x] **Material Database** — 8 materials with density, Young's modulus, cost (kg/m³)
-- [x] **Component Library** — 6 predefined parametric components (wheels, tubes, brick, saddle, handlebar)
-- [x] **Project Management** — Save/load JSON, export STL/OBJ
-- [x] **STL/OBJ Import + Quality Check** — Import scanned parts, analyze ovality/deformations with proper normal handling
-- [ ] Aerodynamics (in development)
-
-## 📊 Architecture
-
-```
-src/ - JavaScript (Three.js)
-├── main.js                    # Entry point
-├── voxel-engine.js           # Core engine (InstancedMesh, raycasting)
-├── material-system.js        # 8 materials with physical properties
-├── module-system.js          # Functional module hierarchy
-├── physics-calc.js           # Mass, COM, inertia calculations
-├── mesh-exporter.js          # OBJ, STL export
-├── ui.js                     # Toolbar, panels, DOM events
-└── core/
-    ├── brick-system.js     # Brick frontend
-    ├── component-library.js # Parametric components
-    ├── scaling-tool.js     # Drag-to-scale tool
-    ├── stl-import.js       # STL parser + QualityAnalyzer
-    └── vertex-edit-tool.js # Vertex editing
-
-core/ - Python
-├── brick.py          # Brick dataclass (mm, volume, overlap)
-└── component.py      # ComponentDefinition/Instance/Library
-```
-
-## Installation
+## 🚀 Quick Start
 
 ### Prerequisites
+- Node.js ≥16
+- Python ≥3.9
+- npm or yarn
 
-- Node.js 14+ and npm
-- Python 3.8+ (optional, for server-side analysis)
-
-### Quick Setup
+### Installation
 
 ```bash
-# 1. Install Node dependencies
+# Clone repository
+git clone https://github.com/ballales1984-wq/pro.cardesign.git
+cd pro.cardesign
+
+# Install dependencies
 npm install
-
-# 2. Install Python dependencies (optional)
 pip install -r requirements.txt
+```
 
-# 3. Start development
+### Development
+
+```bash
+# Start dev server (Vite + Electron)
 npm run dev
-```
 
-### Production Build
+# Run tests
+npm run test:js          # JavaScript tests
+python -m pytest         # Python tests
+python -m pytest --cov   # Coverage report
 
-```bash
-npm run build   # Output in dist/
-```
-
-## Usage
-
-### From Command Line (Python)
-
-```bash
-# Brick system info
+# Get brick system info
 python cli.py info
-
-# Create example brick
-python cli.py create
-
-# Calculate mass and center of mass
-python cli.py mass
-
-# List available components
-python cli.py components
 ```
 
-### Graphical Interface
+### Production
 
 ```bash
-npm run dev   # Starts Vite + Electron
+# Build
+npm run build
+
+# Package application
+npm run package
 ```
 
-**Keyboard Shortcuts:**
-| Key | Action |
-|-----|--------|
-| `A` | Add voxel |
-| `V` | Select |
-| `R` | Remove |
-| `S` | Scale |
-| `F` | Fill level |
-| `Ctrl+Z` | Undo |
-| `Ctrl+Y` | Redo |
+## 📁 Project Structure
 
-## Testing
+```
+pro.cardesign/
+├── core/                          # Python backend
+│   ├── brick.py                  # Brick dataclass (position, size, volume)
+│   ├── component.py              # ComponentDefinition/Instance/Library
+│   ├── factory.py                # Factory functions
+│   └── __init__.py
+├── src/                           # JavaScript frontend
+│   ├── core/
+│   │   ├── brick-system.js       # Brick core with SCALE=1.0
+│   │   ├── component-library.js  # UI component library
+│   │   ├── scaling-tool.js       # Interactive drag scaling
+│   │   └── stl-import.js         # STL parser + quality analyzer
+│   ├── voxel-engine.js           # InstancedMesh, raycasting, undo/redo
+│   ├── material-system.js        # 8 materials with physical properties
+│   ├── module-system.js          # Functional module hierarchy
+│   ├── physics-calc.js           # Mass, COM, inertia
+│   ├── mesh-exporter.js          # OBJ/STL export
+│   ├── ui.js                     # Toolbar, panels, DOM events
+│   └── main.js                   # Entry point (Three.js)
+├── tests/                         # Test suite
+│   ├── test_coverage.py          # Python tests
+│   └── test_coverage.js          # JavaScript tests
+├── dist/                          # Build output (generated)
+├── node_modules/                  # npm dependencies (generated)
+├── .github/
+│   └── workflows/                # CI/CD pipelines
+├── AGENTS.md                      # AI assistant guidelines
+├── README.md                      # This file
+├── package.json                   # npm configuration
+├── pyproject.toml                 # Python configuration
+├── requirements.txt               # Python dependencies
+└── .gitignore                     # Git ignore rules
+```
+
+## 🏗️ Architecture
+
+### Python Backend (`core/`)
+- **Brick System** — Real-world measurements (mm), independent dimensions
+- **Components** — Parametric, reusable definitions and instances
+- **Factory Functions** — `create_brick()`, `create_cube()`, `create_bar()`
+
+### JavaScript Frontend (`src/`)
+- **Three.js Rendering** — InstancedMesh for performance
+- **Physics Engine** — Real-time mass, COM, inertia calculations
+- **Material System** — 8 materials with physical properties (density, elasticity)
+- **STL Import/Export** — Quality analysis (ovality, deviation)
+- **Scaling Tool** — Interactive drag-to-scale with live dimensions
+- **Undo/Redo** — Full project history
+
+## 📊 Code Quality
+
+- **Tests** — Every change requires passing tests
+- **Coverage** — Python + JavaScript test coverage reports
+- **Linting** — ESLint (JavaScript), black/flake8 (Python)
+- **Git Hooks** — Pre-commit validation
+
+## 📝 Conventions
+
+| Aspect | Convention |
+|--------|-------------|
+| File names (JS) | `kebab-case` |
+| File names (Python) | `snake_case` |
+| Brick size | Array `[width, height, depth]` in mm |
+| Voxel scale | Default `[1,1,1]`, modifiable |
+| JSON format | `toJSON()` = data, `fromJSON()` = full restoration |
+| Materials | Lowercase keys (`steel`, `aluminum`, etc.) |
+| Constants | UPPERCASE_WITH_UNDERSCORES |
+
+## 🎯 Development Priorities
+
+1. **Brick System** — Size, position, overlap detection
+2. **Scaling Tool** — Drag face, live dimensions
+3. **Component Library** — Parametric wheels, tubes, custom parts
+4. **Project Save/Load** — Scale included in JSON
+5. **Import STL + Quality** — Ovality, deviation analysis
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Before Committing
 
 ```bash
-# Python — 43 tests
-python -m pytest tests/test_coverage.py -v
+# Run all tests
+npm run test:js
+python -m pytest
 
-# Python coverage
-python -m pytest tests/test_coverage.py --cov=core --cov-report=html
-
-# JavaScript — 4 structural tests
-node tests/test_coverage.js
-
-# Full coverage report
-cat tests/COVERAGE_REPORT.md
+# Check code quality
+npm run lint
 ```
 
-**Current status:** 84/84 Python ✅ | ~50/~50 JavaScript ✅
+### Git Workflow
 
-## Documentation
+```bash
+git status
+git diff
+git commit -m "type(scope): clear description"
+git push
+```
 
-See [DOCUMENTAZIONE_UNIFICATA.md](./DOCUMENTAZIONE_UNIFICATA.md) for complete documentation.
+### Do's ✅
+- Write tests for every change
+- Use meaningful commit messages
+- Test both Python and JavaScript changes
+- Document parametric components
 
-## Technologies
+### Don'ts ❌
+- Use native alerts (use toast notifications)
+- Add dependencies without discussion
+- Modify `package.json` without consent
+- Remove existing tests
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Three.js + Vite + Electron |
-| Backend | Python 3 + NumPy |
-| Build | Vite + npm scripts |
-| Test | pytest (Python) + Node assert (JS) |
+## 📚 API Reference
 
-## License
+### Python CLI
 
-MIT — See `LICENSE`
+```bash
+python cli.py info              # Brick system info
+python cli.py create-brick      # Create new brick
+python cli.py export-json       # Export project
+```
+
+### JavaScript Classes
+
+- `VoxelEngine` — Core rendering + physics
+- `BrickSystem` — Brick management (SCALE=1.0)
+- `MaterialSystem` — Material library
+- `PhysicsCalculator` — Mass, inertia, COM
+- `STLImporter` — Parse + analyze STL files
+- `ScalingTool` — Interactive scaling UI
+
+## 📄 License
+
+MIT License — See LICENSE file for details
+
+## 👤 Author
+
+**ballales1984-wq** — Digital car design tool creator
+
+---
+
+**Last Updated:** 2026-06-01  
+**Status:** Active Development  
+**Version:** 1.0.0-beta

@@ -1,81 +1,83 @@
-# dependencies
-node_modules/
-.pnp
-.pnp.js
-
-# testing
-.coverage
-coverage/
-
-# production
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+ENV/
+env/
+.venv
+.env
+*.egg-info
 
-# misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Node.js
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.npm
 
-# IDE
-.idea/
+# IDE & Editor
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
+.DS_Store
+.env.local
+.env.*.local
 
-# Python
-__pycache__/
-*.pyc
-*.pyd
-.env
-venv/
+# Build & Dist
+dist/
+build/
+*.tsbuildinfo
+.cache/
+.parcel-cache/
 
-# Data files - exclude large generated files
-*.json
-!package.json
-!package-lock.json
-!geo_def.json
-!datasets/**/*.json
-!data/**/*.json
+# Test Coverage
+coverage/
+.coverage
+.pytest_cache/
+htmlcov/
 
-# Test files
-!test_model.json
+# Electron
+electron/
+main.js
+preload.js
 
-# Exclude full_model.json (2.7MB) - too large for git
-full_model.json
+# System
+Thumbs.db
+*.log
+*.pid
+*.seed
 
-# Debug files — Electron js2c investigation
-check-electron-type.js
-check-checksums.js
-check-electron.js
-debug-electron.cjs
-debug.js
-electron_debug.log
-electron-launcher.cmd
-stderr.log
-stderr.txt
-stdout.log
-stdout.txt
-vite_err.log
-vite_out.log
-vite_running.log
-electron_test.txt
+# Project Specific
+*.tmp
+temp/
+.temp/
+exports/
+*.bak
+.DS_Store
 
-# Temp test projects
-temp_electron_test/
-
-# Temp JS files (debug, generated)
-tmp-*.mjs
-tmp-*.js
-temp_debug.js
-temp*.js
-vite*.log
-
-# ONNX models - large AI model files (download from releases)
-*.onnx
-public/models/*.onnx
+# Lock files (optional - uncomment if not using)
+# package-lock.json
+# yarn.lock
