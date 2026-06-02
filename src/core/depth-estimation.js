@@ -4,9 +4,16 @@
  */
 let ortModule = null;
 let ortPromise = import('onnxruntime-web')
-  .then(m => { ortModule = m; return m; })
+  .then(async m => {
+    ortModule = m;
+    // Configure WASM paths for proper loading
+    if (m.env && typeof m.env.wasm.setPath === 'function') {
+      m.env.wasm.setPath('https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/');
+    }
+    return m;
+  })
   .catch(err => {
-    console.warn('onnxruntime-web import failed:', err.message);
+    console.warn('onnxruntime-web import failed:', err.message || err);
     return null;
   });
 

@@ -9,21 +9,26 @@ export class DepthPipeline {
   }
 
   async processImage(file, options = {}) {
+    const defaults = this._defaultsForDomain(options.domain);
+    const opts = { ...defaults, ...options };
     const image = await this._loadImage(file);
-    const { depthMap, meta } = await this.depthEstimator.estimateDepthFromImage(file, options.depthTargetSize);
+    const { depthMap, meta } = await this.depthEstimator.estimateDepthFromImage(file, opts.depthTargetSize);
     const normalizedDepth = this._normalizeDepthMap(depthMap);
 
     const objects = await this._segmentImage(image);
     const mask = this._createMaskFromObjects(objects, normalizedDepth.width, normalizedDepth.height);
 
-    const filteredDepth = this._filterDepth(normalizedDepth, options);
+    const filteredDepth = this._filterDepth(normalizedDepth, opts);
     const maskedDepth = this._applyMask(filteredDepth, mask);
 
+    const width = maskedDepth.width;
+    const height = maskedDepth.height;
+
     const camera = {
-      fx: options.fx || maskedDepth.width,
-      fy: options.fy || maskedDepth.height,
-      cx: options.cx ?? maskedDepth.width / 2,
-      cy: options.cy ?? maskedDepth.height / 2
+      fx: opts.fx ?? Math.max(width, 256),
+      fy: opts.fy ?? Math.max(height, 256),
+      cx: opts.cx ?? width / 2,
+      cy: opts.cy ?? height / 2
     };
 
     const pointCloud = this._depthToPointCloud(maskedDepth, {
@@ -31,31 +36,71 @@ export class DepthPipeline {
       fy: camera.fy,
       cx: camera.cx,
       cy: camera.cy,
-      scale: options.pointScale || 1
+      scale: opts.pointScale || 1
     });
 
-    const voxels = options.mode === 'tsdf'
+    const voxels = opts.mode === 'tsdf'
       ? this._buildSurfaceVoxels(maskedDepth, mask, {
-          gridResolution: options.gridResolution || 16,
-          voxelSize: options.voxelSize || this.voxelEngine?.voxelSize || 1,
-          surfaceThreshold: options.surfaceThreshold ?? 0.18,
+          gridResolution: opts.gridResolution || 64,
+          voxelSize: opts.voxelSize || 5,
+          surfaceThreshold: opts.surfaceThreshold ?? 0.15,
           fx: camera.fx,
           fy: camera.fy,
           cx: camera.cx,
           cy: camera.cy,
-          fallbackOnEmpty: options.fallbackOnEmpty !== false,
-          maxDepthVoxels: options.maxDepthVoxels || 18,
-          minThreshold: options.minThreshold ?? 0.15
+          fallbackOnEmpty: opts.fallbackOnEmpty !== false,
+          maxDepthVoxels: opts.maxDepthVoxels || 40,
+          minThreshold: opts.minThreshold ?? 0.03
         })
       : this._depthMapToVoxels(maskedDepth, mask, {
-          gridResolution: options.gridResolution || Math.min(maskedDepth.width, maskedDepth.height, 16),
-          maxDepthVoxels: options.maxDepthVoxels || 18,
-          minThreshold: options.minThreshold ?? 0.15,
-          voxelSize: options.voxelSize || this.voxelEngine?.voxelSize || 1
+          gridResolution: opts.gridResolution || 64,
+          maxDepthVoxels: opts.maxDepthVoxels || 40,
+          minThreshold: opts.minThreshold ?? 0.03,
+          voxelSize: opts.voxelSize || 5
         });
 
-    const cleaned = this._cleanVoxels(voxels, options);
+    const cleaned = this._cleanVoxels(voxels, opts);
     return { voxels: cleaned, depthMap: maskedDepth, mask, pointCloud, meta };
+  }
+
+  _defaultsForDomain(domain) {
+    if (domain === 'vehicle' || domain === 'car') {
+      return {
+        voxelSize: 5,
+        gridResolution: 64,
+        maxDepthVoxels: 40,
+        minThreshold: 0.03,
+        surfaceThreshold: 0.12,
+        depthTargetSize: 512,
+        filterDepth: true,
+        smooth: true,
+        minNeighbors: 2
+      };
+    }
+    if (domain === 'building') {
+      return {
+        voxelSize: 10,
+        gridResolution: 48,
+        maxDepthVoxels: 60,
+        minThreshold: 0.02,
+        surfaceThreshold: 0.15,
+        depthTargetSize: 512,
+        filterDepth: true,
+        smooth: true,
+        minNeighbors: 3
+      };
+    }
+    return {
+      voxelSize: 5,
+      gridResolution: 48,
+      maxDepthVoxels: 30,
+      minThreshold: 0.04,
+      surfaceThreshold: 0.18,
+      depthTargetSize: 256,
+      filterDepth: true,
+      smooth: true,
+      minNeighbors: 2
+    };
   }
 
   async _loadImage(file) {

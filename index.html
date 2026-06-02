@@ -18,10 +18,10 @@
      </svg>
    </button>
 
-   <!-- Expand/Collapse all panels button -->
-   <button id="panels-toggle" aria-label="Espandi/Comprimi tutti i pannelli" title="Pannelli" style="position:fixed;top:12px;right:12px;z-index:1001;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s ease;">
-     <span style="font-size:14px;">📂</span>
-   </button>
+<!-- Expand/Collapse all panels button -->
+    <button id="panels-toggle" aria-label="Espandi/Comprimi tutti i pannelli" title="Pannelli">
+      <span>📂</span>
+    </button>
   <div id="app">
 <!-- ═══════════════════════════════════════════════════
          TOOLBAR
@@ -135,9 +135,9 @@
              <label for="scale-z">Scala Z</label>
              <input type="number" id="scale-z" step="0.1" value="1.0" />
            </div>
-           <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-             <button id="apply-scale" class="btn-primary">Applica Scala</button>
-           </div>
+<div class="scale-row-button">
+              <button id="apply-scale" class="btn-primary">Applica Scala</button>
+            </div>
          </div>
         </div>
 
@@ -147,20 +147,20 @@
            🔧 Modifica Vertici
            <span class="arrow" aria-hidden="true">▼</span>
          </div>
-         <div class="panel-body">
-           <div class="hint" style="margin-bottom:8px;">
-             1. Seleziona un brick, poi clicca un vertice per trascinarlo.<br/>
-             Handle per vertice: 8 bordi dorati ai vertici del cubo.<br/>
-             Le modifiche sono applicate direttamente.
-           </div>
-           <div id="vertex-handle-info" style="font-family:monospace;font-size:12px;color:#00d2ff;">
-             <span id="vertex-corner-label">—</span><br/>
-             <span id="vertex-size-label">W: — | H: — | D: —</span>
-           </div>
-           <button id="btn-vertex-apply" class="btn-primary" style="width:100%;margin-top:6px;">
-             Conferma Modifiche
-           </button>
-         </div>
+<div class="panel-body">
+            <div class="hint vertex-edit-hint">
+              1. Seleziona un brick, poi clicca un vertice per trascinarlo.<br/>
+              Handle per vertice: 8 bordi dorati ai vertici del cubo.<br/>
+              Le modifiche sono applicate direttamente.
+            </div>
+            <div id="vertex-handle-info">
+              <span id="vertex-corner-label">—</span><br/>
+              <span id="vertex-size-label">W: — | H: — | D: —</span>
+            </div>
+            <button id="btn-vertex-apply" class="btn-primary">
+              Conferma Modifiche
+            </button>
+          </div>
         </div>
 
         <!-- Sculpt panel (shown by JS when sculpt tool active) -->
@@ -170,19 +170,19 @@
             <span class="arrow" aria-hidden="true">▼</span>
           </div>
           <div class="panel-body">
-            <div class="hint" style="margin-bottom:8px;">
+            <div class="hint">
               Trascina sulla superficie per <b>spingere</b> (default) o <b>tirare</b> (Shift).<br/>
               Regola i parametri qui sotto.
             </div>
-            <div style="margin-bottom:6px;">
+            <div class="sculpt-param">
               <label for="sculpt-strength">Forza (mm/pixel)</label>
-              <input type="range" id="sculpt-strength" min="0.01" max="5" step="0.01" value="0.5" style="width:100%;" />
-              <span id="sculpt-strength-val" style="font-size:11px;color:var(--text-dim);">0.50</span>
+              <input type="range" id="sculpt-strength" min="0.01" max="5" step="0.01" value="0.5" class="sculpt-param-slider" />
+              <span id="sculpt-strength-val" class="sculpt-param-val">0.50</span>
             </div>
-            <div>
+            <div class="sculpt-param">
               <label for="sculpt-sensitivity">Sensibilità (px/mm)</label>
-              <input type="range" id="sculpt-sensitivity" min="10" max="500" step="1" value="100" style="width:100%;" />
-              <span id="sculpt-sensitivity-val" style="font-size:11px;color:var(--text-dim);">100</span>
+              <input type="range" id="sculpt-sensitivity" min="10" max="500" step="1" value="100" class="sculpt-param-slider" />
+              <span id="sculpt-sensitivity-val" class="sculpt-param-val">100</span>
             </div>
           </div>
         </div>
@@ -477,7 +477,7 @@
         </div>
         
         <!-- Visual separator -->
-        <div style="height: 1px; background: var(--border); margin: 16px 0;"></div>
+        <div class="panel-separator"></div>
         
         <!-- ── AI Image Import ── -->
         <div class="panel" id="panel-ai-import">
@@ -491,14 +491,14 @@
             <span class="arrow" aria-hidden="true">▼</span>
           </div>
           <div class="panel-body" id="ai-import-body">
-            <div class="hint" style="margin-bottom:8px;">
+            <div class="hint">
               Carica un'immagine 2D per generare voxel tramite depth estimation.
             </div>
             <div class="ai-import-row">
-              <input type="file" id="ai-image-input" accept="image/*" />
+              <input type="file" id="ai-image-input" accept="image/*" aria-label="Seleziona immagine per importazione AI" title="Seleziona immagine" />
               <button id="btn-ai-process" class="btn-primary">Genera</button>
             </div>
-            <div id="ai-status" style="font-size:11px;color:var(--text-dim);margin-top:6px;"></div>
+            <div id="ai-status"></div>
           </div>
         </div>
 
@@ -514,19 +514,19 @@
             <span class="arrow" aria-hidden="true">▼</span>
           </div>
           <div class="panel-body" id="timeline-body">
-            <div style="display:flex;gap:4px;margin-bottom:8px;align-items:center;">
-              <input type="file" id="video-input" accept="video/*" style="flex:1;"/>
-              <button id="btn-extract-keyframes" class="btn-primary" style="flex:0 0 auto;">Estrai</button>
+            <div class="video-import-row">
+              <input type="file" id="video-input" accept="video/*" aria-label="Seleziona video per timeline" title="Seleziona video"/>
+              <button id="btn-extract-keyframes" class="btn-primary">Estrai</button>
             </div>
-            <div id="timeline-container" style="height:60px;background:#1a1a2e;border:1px solid #334455;border-radius:4px;position:relative;overflow:hidden;">
-              <div id="timeline-progress" style="position:absolute;top:0;left:0;height:100%;width:0;background:#00d2ff;opacity:0.3;"></div>
-              <div id="keyframe-markers" style="position:relative;height:100%;display:flex;align-items:center;padding:0 8px;gap:4px;"></div>
+            <div id="timeline-container">
+              <div id="timeline-progress"></div>
+              <div id="keyframe-markers"></div>
             </div>
-            <div style="display:flex;gap:4px;margin-top:8px;align-items:center;">
-              <button id="btn-timeline-play" class="btn-secondary" style="flex:0 0 auto;">▶ Play</button>
-              <button id="btn-timeline-pause" class="btn-secondary" style="flex:0 0 auto;">⏸ Pause</button>
-              <button id="btn-timeline-stop" class="btn-secondary" style="flex:0 0 auto;">⏹ Stop</button>
-              <span id="timeline-time" style="font-size:11px;color:var(--text-dim);margin-left:auto;">0:00 / 0:00</span>
+            <div class="timeline-controls">
+              <button id="btn-timeline-play" class="btn-secondary">▶ Play</button>
+              <button id="btn-timeline-pause" class="btn-secondary">⏸ Pause</button>
+              <button id="btn-timeline-stop" class="btn-secondary">⏹ Stop</button>
+              <span id="timeline-time" class="timeline-time">0:00 / 0:00</span>
             </div>
           </div>
         </div>
