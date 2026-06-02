@@ -918,17 +918,18 @@ _showVoxelProperties(voxel) {
 
     // ── Stress Analysis ──────────────────────────────────────────
     try {
-      const { StressAnalysis } = await import('./core/stress-analysis.js');
-      const sa = new StressAnalysis(this.voxelEngine, this.materialDB);
-      sa.analyze(allVoxels);
-      const sf = sa.getSafetyFactor();
-      const crit = sa.getCriticalZones();
-      const maxS = crit.length > 0 ? crit[0].stress : 0;
-      html += '<hr style="border-color:var(--border);margin:8px 0;">' +
-        '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">🔬 Stress Strutturale:</div>' +
-        '<div class="prop-row"><span class="prop-label">Stress max</span><span class="prop-value" style="color:var(--orange);">' + (maxS / 1e6).toFixed(2) + ' MPa</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Zone critiche</span><span class="prop-value">' + crit.length + '</span></div>' +
-        '<div class="prop-row"><span class="prop-label">Safety Factor</span><span class="prop-value" style="color:' + (sf >= 2 ? 'var(--accent)' : 'var(--orange)') + ';">' + sf.toFixed(2) + '</span></div>';
+      const sa = this.physicsSignature?.stressAnalysis;
+      if (sa) {
+        sa.analyze(allVoxels);
+        const sf = sa.getSafetyFactor();
+        const crit = sa.getCriticalZones();
+        const maxS = crit.length > 0 ? crit[0].stress : 0;
+        html += '<hr style="border-color:var(--border);margin:8px 0;">' +
+          '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">🔬 Stress Strutturale:</div>' +
+          '<div class="prop-row"><span class="prop-label">Stress max</span><span class="prop-value" style="color:var(--orange);">' + (maxS / 1e6).toFixed(2) + ' MPa</span></div>' +
+          '<div class="prop-row"><span class="prop-label">Zone critiche</span><span class="prop-value">' + crit.length + '</span></div>' +
+          '<div class="prop-row"><span class="prop-label">Safety Factor</span><span class="prop-value" style="color:' + (sf >= 2 ? 'var(--accent)' : 'var(--orange)') + ';">' + sf.toFixed(2) + '</span></div>';
+      }
     } catch(e) { /* modulo non disponibile */ }
 
     // ── Aerodynamics ─────────────────────────────────────────────
@@ -944,7 +945,7 @@ _showVoxelProperties(voxel) {
         '<div class="prop-row"><span class="prop-label">Drag a 10 m/s</span><span class="prop-value">' + drag10.toFixed(2) + ' N</span></div>' +
         '<div class="prop-row"><span class="prop-label">Drag a 30 m/s</span><span class="prop-value">' + drag30.toFixed(2) + ' N</span></div>' +
         '<div class="prop-row"><span class="prop-label">Cd stimato</span><span class="prop-value">0.30</span></div>';
-      } catch(e) { /* modulo non disponibile */ }
+    } catch(e) { /* modulo non disponibile */ }
       
       // ── Collision Detection ────────────────────────
       try {

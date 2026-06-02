@@ -35,6 +35,16 @@ class PointCloud:
     source_shape: Tuple[int, int] = (0, 0)
     camera_params: dict = field(default_factory=dict)
 
+    def __post_init__(self):
+        self.camera_params.setdefault("fx", 500.0)
+        self.camera_params.setdefault("fy", 500.0)
+        if "cx" not in self.camera_params and self.source_shape != (0, 0):
+            self.camera_params["cx"] = self.source_shape[1] / 2.0
+        self.camera_params.setdefault("cx", 0.0)
+        if "cy" not in self.camera_params and self.source_shape != (0, 0):
+            self.camera_params["cy"] = self.source_shape[0] / 2.0
+        self.camera_params.setdefault("cy", 0.0)
+
     @property
     def num_points(self) -> int:
         return int(self.points.shape[0])
@@ -44,11 +54,7 @@ class PointCloud:
         max_b = self.points.max(axis=0)
         return min_b, max_b
 
-    def save_ply(self, path: str | Path) -> Path:
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        n = self.num_points
-        colors_uint8 = (self.colors * 255).astype(np.uint8)
+    def _ply_header(self, n: int) -> bytes:
         lines = [
             "ply",
             "format binary_little_endian 1.0",
@@ -59,9 +65,17 @@ class PointCloud:
             "property uchar red",
             "property uchar green",
             "property uchar blue",
-            "end_header\n",
+            "end_header",
+            "",
         ]
-        header = "\n".join(lines).encode()
+        return "\n".join(lines).encode()
+
+    def save_ply(self, path: str | Path) -> Path:
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        n = self.num_points
+        colors_uint8 = (self.colors * 255).astype(np.uint8)
+        header = self._ply_header(n)
         vertex_data = np.hstack([self.points.astype(np.float32),
                                   colors_uint8.astype(np.uint8)]).tobytes()
         path.write_bytes(header + vertex_data)
