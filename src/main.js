@@ -116,8 +116,9 @@ async function boot() {
 const brickSystem = new BrickSystem(voxelEngine);
       const proceduralEngine = new ProceduralEngine(voxelEngine);
       const gpuCompute = new GPUCompute();
-      const lodManager = new LODManager(camera, voxelEngine, { gpuCompute });
-      const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
+const lodManager = new LODManager(camera, voxelEngine, { gpuCompute });
+       voxelEngine.lodManager = lodManager;
+       const stressAnalysis = new StressAnalysis(voxelEngine, materialDB);
       const physicsSignature = new PhysicsSignature(voxelEngine, materialDB, physics, stressAnalysis);
       const collisionDetection = new CollisionDetection(voxelEngine);
 

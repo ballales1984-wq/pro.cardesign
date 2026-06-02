@@ -668,20 +668,21 @@ if (hit.isMeshHit) {
 
            const key = this._gridKey(pos);
 const voxelData = {
-              x: pos.x, y: pos.y, z: pos.z,
-              material: materialName,
-              module: moduleId,
-              density: material.density,
-              temperature: 293,
-              damage: 0,
-              scale: [1, 1, 1],
-              localDensity: null,
-              localTemperature: null,
-              localStress: 0,
-              localStrain: 0,
-              fillCoefficient: material.fillCoefficient ?? 0.707,
-              localFillCoefficient: null
-            };
+               x: pos.x, y: pos.y, z: pos.z,
+               material: materialName,
+               module: moduleId,
+               density: material.density,
+               temperature: 293,
+               damage: 0,
+               scale: [1, 1, 1],
+               localDensity: null,
+               localTemperature: null,
+               localStress: 0,
+               localStrain: 0,
+               fillCoefficient: material.fillCoefficient ?? 0.707,
+               localFillCoefficient: null,
+               lod: 'full'
+             };
 
 const chunkKey = this._getChunkKey(pos);
             const chunk = this._getOrCreateChunk(chunkKey);

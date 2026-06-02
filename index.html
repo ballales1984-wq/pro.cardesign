@@ -485,7 +485,7 @@
             class="panel-header"
             role="button"
             tabindex="0"
-            aria-expanded="false"
+            aria-expanded="true"
             aria-controls="ai-import-body">
             🤖 AI Import
             <span class="arrow" aria-hidden="true">▼</span>
@@ -494,9 +494,9 @@
             <div class="hint" style="margin-bottom:8px;">
               Carica un'immagine 2D per generare voxel tramite depth estimation.
             </div>
-            <div style="display:flex;gap:4px;align-items:center;">
-              <input type="file" id="ai-image-input" accept="image/*" style="flex:1;"/>
-              <button id="btn-ai-process" class="btn-primary" style="flex:0 0 auto;">Genera</button>
+            <div class="ai-import-row">
+              <input type="file" id="ai-image-input" accept="image/*" />
+              <button id="btn-ai-process" class="btn-primary">Genera</button>
             </div>
             <div id="ai-status" style="font-size:11px;color:var(--text-dim);margin-top:6px;"></div>
           </div>

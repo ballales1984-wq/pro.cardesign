@@ -74,4 +74,5 @@
 - **Physics**: Stress analysis, aerodynamics, signature aggregation, collision detection
 - **Materials**: Extended metadata (friction, fatigue, thermal, porosity)
 - **Components**: wheel_26/27/28, beam_200/400
-- **Test Coverage**: 93/93 Python, 243/243 JavaScript
+- **Tools**: Scaling, Vertex Edit, Sculpt, Hole, Move, Mesh Point Edit
+- **Test Coverage**: 93/93 Python, 244/244 JavaScript

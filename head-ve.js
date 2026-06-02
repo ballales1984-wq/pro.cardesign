@@ -530,10 +530,11 @@ _addVoxelInternal(pos, materialName, moduleId) {
              density: material.density,
              temperature: 293,
              damage: 0,
-             scale: [1, 1, 1]
+             scale: [1, 1, 1],
+             lod: 'full'
            };
 
-const chunkKey = this._getChunkKey(pos);
+           const chunkKey = this._getChunkKey(pos);
             const chunk = this._getOrCreateChunk(chunkKey);
            chunk.addVoxel(pos.x, pos.y, pos.z, voxelData);
 

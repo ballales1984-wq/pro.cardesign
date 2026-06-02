@@ -10,6 +10,10 @@ export default defineConfig({
     host: '0.0.0.0',
   },
 
+  optimizeDeps: {
+    exclude: ['onnxruntime-web'],
+  },
+
   build: {
     target: 'esnext',
     outDir: 'dist',

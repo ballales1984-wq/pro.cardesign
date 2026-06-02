@@ -390,6 +390,11 @@ async function runAll() {
     assert.match(css, /#camera-controls\s*\{[\s\S]*position:\s*absolute;/);
   });
 
+  runTest('Vite serves onnxruntime-web outside optimizeDeps', () => {
+    const config = readFileSync('D:/pro.cardesign/vite.config.js', 'utf8');
+    assert.match(config, /optimizeDeps\s*:\s*\{[\s\S]*exclude\s*:\s*\[[\s\S]*['"]onnxruntime-web['"][\s\S]*\]/);
+  });
+
   // ── 1. MaterialSystem ──────────────────────────────────────────────────────
   try {
     const { MaterialSystem } = await loadESM('src/material-system.js');
@@ -3065,6 +3070,15 @@ runTest('QualityAnalyzer: oval shape reports non-zero ovality and isCircular=fal
        assert.strictEqual(de.modelLoaded, false);
        assert.strictEqual(de.modelPath, '/models/midas_small.onnx');
      });
+
+runTest('DepthEstimation builds ONNX tensor only after model load succeeds', () => {
+        const source = readFileSync('D:/pro.cardesign/src/core/depth-estimation.js', 'utf8');
+        assert.ok(source.includes("if (await this.loadModel())"));
+        assert.ok(source.includes("modelUsed = 'onnx'"));
+        assert.ok(source.includes("const tensor = await this._imageToTensor"));
+        assert.ok(source.includes("ort.Tensor('float32'"));
+        assert.ok(!source.includes("const tensor = this._imageToTensor(img)"));
+      });
      
      runTest('DepthEstimation _fallbackDepthEstimation returns depthMap', () => {
        const mockEngine = {};

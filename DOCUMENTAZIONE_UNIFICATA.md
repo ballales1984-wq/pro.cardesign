@@ -136,50 +136,72 @@ Voxel 1×1×1 (8 nodi)
 
 ```
 pro.cardesign/
-├── src/                    # Codice sorgente JavaScript
+├── src/                    # Codice sorgente JavaScript (ES Modules)
 │   ├── main.js            # Entry point (init scena, camera, UI)
+│   ├── vite.config.js     # Configurazione Vite + module type
 │   ├── voxel-engine.js    # Motore voxel principale
 │   ├── material-system.js # Database materiali
 │   ├── module-system.js   # Gerarchia moduli
 │   ├── physics-calc.js    # Calcoli fisici
 │   ├── mesh-exporter.js   # Export OBJ/STL
 │   ├── ui.js              # UI pannelli e toolbar
-│   └── core/
-│       ├── scaling-tool.js      # Strumento ridimensionamento
-│       ├── vertex-edit-tool.js  # Modifica vertici
-│       ├── hole-tool.js         # Strumento fori
-│       ├── move-tool.js         # Sposta voxel
-│       ├── sculpt-tool.js       # Sculpt voxel
-│       ├── stl-import.js        # Import STL + QualityAnalyzer
-│       ├── chunk-system.js      # Sistema chunk
-│       ├── lod-manager.js       # LOD dinamico
-│       ├── sphere-system.js       # Rappresentazione sfere
-│       ├── tetrahedral-mesh.js    # Decomposizione tetraedri
-│       ├── stress-analysis.js     # Analisi stress FEM
-│       ├── aerodynamics.js        # Cd/Cl/Reynolds
-│       ├── physics-signature.js   # Firma fisica oggetto
-│       ├── procedural-engine.js   # Regole procedurali
-│       ├── depth-estimation.js      # Stima profondità ONXX
-│       ├── collision-detection.js   # Rilevamento collisioni
-│       └── video-keyframe-extraction.js
-├── geometry/              # Conversioni geometriche
-│   └── converters/
-│       ├── voxelToMesh.js  # Voxel → mesh
-│       └── meshToVoxel.js  # Mesh → voxel
-├── boolean/               # Operazioni booleane
-│   ├── BooleanOperations.js
-│   └── VoxelBooleanIntegration.js
-├── model/                 # Modelli ibridi voxel-mesh
-│   ├── VoxelModel.js
-│   ├── EditableMeshModel.js
-│   └── HybridModel.js
-├── core/                  # Python backend
-│   ├── brick.py           # Dataclass Brick (mm, volume, overlap)
-│   └── component.py       # ComponentDefinition/Instance/Library
+│   ├── geometry/
+│   │   ├── converters/
+│   │   │   ├── voxelToMesh.js  # Voxel → mesh
+│   │   │   └── meshToVoxel.js  # Mesh → voxel
+│   │   ├── primitives.js       # Cylinder, cone, sphere
+│   │   ├── Decimator.js        # Mesh decimation
+│   │   └── AutoDecimator.js    # Automatic decimation
+│   ├── boolean/          # Operazioni booleane
+│   │   ├── BooleanOperations.js
+│   │   ├── OptimizedBoolean.js
+│   │   ├── VoxelBooleanIntegration.js
+│   │   └── BooleanPreview.js
+│   ├── model/            # Modelli ibridi voxel-mesh
+│   │   ├── HybridModel.js
+│   │   ├── EditableMeshModel.js
+│   │   └── VoxelModel.js
+│   └── core/             # Strumenti editing e analisi
+│       ├── brick-system.js         # Brick frontend
+│       ├── brick-adapter.js        # Brick adapter
+│       ├── component-library.js    # Parametric components
+│       ├── scaling-tool.js         # Drag-to-scale tool
+│       ├── stl-import.js           # STL parser + QualityAnalyzer
+│       ├── vertex-edit-tool.js     # Vertex editing
+│       ├── sculpt-tool.js          # Voxel-based sculpting
+│       ├── hole-tool.js            # Drill/counterbore/thread
+│       ├── move-tool.js            # Drag-to-move voxels
+│       ├── mesh-point-edit-tool.js # Mesh point editing
+│       ├── lod-manager.js          # Dynamic LOD
+│       ├── gpu-compute.js          # WebGPU compute shaders
+│       ├── chunk-system.js         # Sparse voxel storage (16³)
+│       ├── sphere-system.js        # Voxel → spheres
+│       ├── tetrahedral-mesh.js     # FEM tetra decomposition
+│       ├── stress-analysis.js      # Stress/strain FEM
+│       ├── aerodynamics.js         # Cd/Cl/Reynolds coefficients
+│       ├── physics-signature.js    # Aggregated physics
+│       ├── collision-detection.js  # Collision detection
+│       ├── procedural-engine.js    # Rule-based generation
+│       ├── rule-editor-ui.js       # Procedural rules UI
+│       ├── depth-estimation.js     # AI 2D→3D with ONNX
+│       ├── video-keyframe-extraction.js
+│       ├── mesh-deformer.js        # Mesh deformation
+│       ├── lego-bars.js            # LEGO-style connectors
+│       └── library/                # Component libraries
+│           ├── mattoncini.js
+│           ├── cantiere.js
+│           └── finiture.js
+├── core/                  # Python backend (NumPy + pytest)
+│   ├── __init__.py       # Module init
+│   ├── brick.py          # Dataclass Brick (mm, volume, overlap)
+│   ├── component.py      # ComponentDefinition/Instance/Library
+│   ├── hole.py           # Hole operations (drill, counterbore, thread)
+│   └── bike_demo.py      # Demo script
 ├── tests/
-│   ├── test_coverage.py   # Test Python (59/59 ✅)
-│   ├── test_coverage.js   # Test JavaScript (229/229 ✅)
+│   ├── test_coverage.py   # Test Python (93/93 ✅)
+│   ├── test_coverage.js   # Test JavaScript (244/244 ✅)
 │   └── COVERAGE_REPORT.md
+├── documentationASI/      # Documentazione italiana AI
 ├── index.html             # Entry HTML
 ├── vite.config.js         # Configurazione Vite
 └── package.json           # Dipendenze
