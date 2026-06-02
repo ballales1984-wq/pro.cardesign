@@ -1,4 +1,5 @@
 import { DepthEstimation, ObjectSegmentation, DepthFilter, TSDFVolume } from './depth-estimation.js';
+import { sam2ApiClient } from './sam2-api-client.js';
 
 export class DepthPipeline {
   constructor(voxelEngine) {
@@ -6,6 +7,7 @@ export class DepthPipeline {
     this.depthEstimator = new DepthEstimation(voxelEngine);
     this.segmentation = new ObjectSegmentation();
     this.depthFilter = new DepthFilter();
+    this.sam2BackendAvailable = false;
   }
 
   async processImage(file, options = {}) {
@@ -113,12 +115,51 @@ export class DepthPipeline {
   }
 
   async _segmentImage(image) {
+    if (!this.sam2BackendAvailable) {
+      this.sam2BackendAvailable = await sam2ApiClient.check();
+    }
+
+    if (this.sam2BackendAvailable) {
+      try {
+        const result = await sam2ApiClient.segmentImage(image);
+        if (!result.local && result.carBbox) {
+          const bbox = result.carBbox;
+          const mask = this._bboxToMask(
+            this._normalizeDepthMap({ width: image.width || 256, height: image.height || 256, data: new Float32Array(image.width * image.height || 256 * 256) }), // placeholder shape
+            bbox, image.width || 256, image.height || 256
+          );
+          console.log(`[DepthPipeline] SAM2 segmentation: ${result.modelUsed}, bbox=${bbox.x},${bbox.y} ${bbox.w}x${bbox.h}`);
+          return [{ bbox: [bbox.x, bbox.y, bbox.w, bbox.h], confidence: bbox.confidence, modelUsed: result.modelUsed }];
+        }
+      } catch (err) {
+        console.warn('[DepthPipeline] SAM2 backend failed, falling back to local:', err.message);
+        this.sam2BackendAvailable = false;
+      }
+    }
+
     try {
       return await this.segmentation.segmentImage(image);
     } catch (err) {
-      console.warn('DepthPipeline: segmentation failed, using fallback full image mask', err.message);
-      return [{ bbox: [0, 0, image.width, image.height], confidence: 1.0 }];
+      console.warn('DepthPipeline: local segmentation failed, using fallback full image mask', err.message);
+      return [{ bbox: [0, 0, image.width || 256, image.height || 256], confidence: 1.0 }];
     }
+  }
+
+  _bboxToMask(normalizedDepth, bbox, width, height) {
+    const mask = new Uint8Array(width * height);
+    if (!bbox) { mask.fill(1); return mask; }
+    const [x, y, w, h] = bbox.bbox || bbox;
+    const minX = Math.max(0, Math.floor(x));
+    const minY = Math.max(0, Math.floor(y));
+    const maxX = Math.min(width, Math.ceil(x + w));
+    const maxY = Math.min(height, Math.ceil(y + h));
+    for (let yy = minY; yy < maxY; yy++) {
+      for (let xx = minX; xx < maxX; xx++) {
+        mask[yy * width + xx] = 1;
+      }
+    }
+    if (!mask.some(v => v === 1)) mask.fill(1);
+    return mask;
   }
 
   _createMaskFromObjects(objects, width, height) {

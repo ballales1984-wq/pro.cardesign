@@ -479,28 +479,59 @@
         <!-- Visual separator -->
         <div class="panel-separator"></div>
         
-        <!-- ── AI Image Import ── -->
-        <div class="panel" id="panel-ai-import">
-          <div
-            class="panel-header"
-            role="button"
-            tabindex="0"
-            aria-expanded="true"
-            aria-controls="ai-import-body">
-            🤖 AI Import
-            <span class="arrow" aria-hidden="true">▼</span>
-          </div>
-          <div class="panel-body" id="ai-import-body">
-            <div class="hint">
-              Carica un'immagine 2D per generare voxel tramite depth estimation.
-            </div>
-            <div class="ai-import-row">
-              <input type="file" id="ai-image-input" accept="image/*" aria-label="Seleziona immagine per importazione AI" title="Seleziona immagine" />
-              <button id="btn-ai-process" class="btn-primary">Genera</button>
-            </div>
-            <div id="ai-status"></div>
-          </div>
-        </div>
+<!-- ── AI Image Import ── -->
+         <div class="panel" id="panel-ai-import">
+           <div
+             class="panel-header"
+             role="button"
+             tabindex="0"
+             aria-expanded="true"
+             aria-controls="ai-import-body">
+             🤖 AI Import (2D→3D)
+             <span class="arrow" aria-hidden="true">▼</span>
+           </div>
+           <div class="panel-body" id="ai-import-body">
+             <div class="hint">
+               Carica un'immagine 2D per generare voxel tramite depth estimation AI.
+             </div>
+             <div class="ai-import-row">
+               <input type="file" id="ai-image-input" accept="image/*" aria-label="Seleziona immagine per importazione AI" title="Seleziona immagine" />
+               <button id="btn-ai-process" class="btn-primary">Genera 3D</button>
+             </div>
+             
+             <!-- Mode selector -->
+             <div class="ai-param-row">
+               <label for="ai-mode">Metodo:</label>
+               <select id="ai-mode" class="prop-input" style="width:100%;margin-bottom:6px;">
+                 <option value="tsdf">TSDF Surface (ricerca superficie)</option>
+                 <option value="heightmap">Heightmap (profondità per pixel)</option>
+               </select>
+             </div>
+             
+              <!-- Resolution control -->
+              <div class="ai-param-row">
+                <label for="ai-resolution">Risoluzione grid:</label>
+                <input type="range" id="ai-resolution" min="8" max="64" step="2" value="48" />
+                <span id="ai-resolution-val" style="font-size:10px;color:var(--text-dim);">48</span>
+              </div>
+             
+              <!-- Max depth control -->
+              <div class="ai-param-row">
+                <label for="ai-max-depth">Altezza max (voxel):</label>
+                <input type="range" id="ai-max-depth" min="5" max="50" step="1" value="30" />
+                <span id="ai-max-depth-val" style="font-size:10px;color:var(--text-dim);">30</span>
+              </div>
+             
+              <!-- Threshold control -->
+              <div class="ai-param-row">
+                <label for="ai-threshold">Soglia (filtra):</label>
+                <input type="range" id="ai-threshold" min="0.01" max="0.3" step="0.01" value="0.04" />
+                <span id="ai-threshold-val" style="font-size:10px;color:var(--text-dim);">0.04</span>
+              </div>
+             
+             <div id="ai-status" style="margin-top:8px;font-size:12px;"></div>
+           </div>
+         </div>
 
         <!-- ── Video Timeline ── -->
         <div class="panel" id="panel-timeline">

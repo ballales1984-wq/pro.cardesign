@@ -675,6 +675,23 @@ body {
   min-width: 92px;
 }
 
+/* AI Import parameter controls */
+.ai-param-row {
+  margin-bottom: 6px;
+}
+
+.ai-param-row label {
+  font-size: 10px;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.ai-param-row input[type="range"] {
+  width: 100%;
+  margin-bottom: 2px;
+}
+
 @media (max-width: 760px) {
   .ai-import-row {
     flex-direction: column;

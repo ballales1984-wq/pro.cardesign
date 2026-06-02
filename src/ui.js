@@ -1605,135 +1605,154 @@ window.addEventListener('tool-changed', function(e) {
   }
 
 // ── AI Import Panel ───────────────────────────────────────────────
-    async _setupAIImportPanel() {
-      console.log('[UI] _setupAIImportPanel called');
-      const self = this;
-      const imageInput = document.getElementById('ai-image-input');
-      const aiPanel = document.getElementById('panel-ai-import');
-      const aiHeader = aiPanel?.querySelector('.panel-header');
-      let processBtn = document.getElementById('btn-ai-process');
-      const statusEl = document.getElementById('ai-status');
+     async _setupAIImportPanel() {
+       console.log('[UI] _setupAIImportPanel called');
+       const self = this;
+       const imageInput = document.getElementById('ai-image-input');
+       const aiPanel = document.getElementById('panel-ai-import');
+       const aiHeader = aiPanel?.querySelector('.panel-header');
+       let processBtn = document.getElementById('btn-ai-process');
+       const statusEl = document.getElementById('ai-status');
 
-      if (!imageInput || !aiPanel) {
-        console.warn('[UI] AI Import elements not found', {imageInput, processBtn, aiPanel});
-        return;
-      }
+       if (!imageInput || !aiPanel) {
+         console.warn('[UI] AI Import elements not found', {imageInput, processBtn, aiPanel});
+         return;
+       }
 
-      aiPanel.classList.remove('collapsed');
-      aiHeader?.setAttribute('aria-expanded', 'true');
+       aiPanel.classList.remove('collapsed');
+       aiHeader?.setAttribute('aria-expanded', 'true');
 
-      if (!processBtn) {
-        console.warn('[UI] AI Import process button not found, creating fallback button');
-        processBtn = document.createElement('button');
-        processBtn.id = 'btn-ai-process';
-        processBtn.className = 'btn-primary';
-        processBtn.textContent = 'Genera';
-        processBtn.style.flex = '0 0 auto';
-        imageInput.parentElement.appendChild(processBtn);
-      }
+       if (!processBtn) {
+         console.warn('[UI] AI Import process button not found, creating fallback button');
+         processBtn = document.createElement('button');
+         processBtn.id = 'btn-ai-process';
+         processBtn.className = 'btn-primary';
+         processBtn.textContent = 'Genera 3D';
+         processBtn.style.flex = '0 0 auto';
+         imageInput.parentElement.appendChild(processBtn);
+       }
 
-      if (statusEl) {
-        statusEl.textContent = 'Seleziona un\'immagine e premi Genera.';
-      }
+       if (statusEl) {
+         statusEl.textContent = 'Seleziona un\'immagine e premi Genera 3D.';
+       }
 
-      processBtn.disabled = true;
-      processBtn.style.display = 'inline-flex';
-      processBtn.style.alignItems = 'center';
-      processBtn.style.justifyContent = 'center';
-      processBtn.style.minWidth = '80px';
-      processBtn.style.visibility = 'visible';
-      processBtn.style.opacity = '1';
-      processBtn.style.position = 'relative';
-      processBtn.style.zIndex = '2';
-      console.log('[UI] AI Import elements found, attaching listeners');
+       processBtn.disabled = true;
+       processBtn.style.display = 'inline-flex';
+       processBtn.style.alignItems = 'center';
+       processBtn.style.justifyContent = 'center';
+       processBtn.style.minWidth = '80px';
+       processBtn.style.visibility = 'visible';
+       processBtn.style.opacity = '1';
+       processBtn.style.position = 'relative';
+       processBtn.style.zIndex = '2';
+       console.log('[UI] AI Import elements found, attaching listeners');
 
-      const processAIImage = async (file) => {
-        if (!file) {
-          self._notify('Seleziona un\'immagine prima', 'warn');
-          return;
-        }
+        const updateSliderValues = () => {
+          const mode = document.getElementById('ai-mode')?.value || 'tsdf';
+          const resolution = document.getElementById('ai-resolution')?.value || 48;
+          const maxDepth = document.getElementById('ai-max-depth')?.value || 30;
+          const threshold = document.getElementById('ai-threshold')?.value || 0.04;
+          
+          document.getElementById('ai-resolution-val').textContent = resolution;
+          document.getElementById('ai-max-depth-val').textContent = maxDepth;
+          document.getElementById('ai-threshold-val').textContent = parseFloat(threshold).toFixed(2);
+        };
+       
+       document.getElementById('ai-resolution')?.addEventListener('input', updateSliderValues);
+       document.getElementById('ai-max-depth')?.addEventListener('input', updateSliderValues);
+       document.getElementById('ai-threshold')?.addEventListener('input', updateSliderValues);
+       updateSliderValues();
 
-        if (statusEl) statusEl.textContent = 'Elaborazione in corso...';
-        try {
-          console.log('[AI Import] Loading DepthPipeline');
-          const { DepthPipeline } = await import('./core/depth-pipeline.js');
-          const pipeline = new DepthPipeline(self.voxelEngine);
-          const result = await pipeline.processImage(file, {
-            mode: 'tsdf',
-            depthTargetSize: 256,
-            filterDepth: true,
-            medianKernel: 2,
-            gridResolution: 16,
-            voxelSize: 1,
-            surfaceThreshold: 0.18,
-            minThreshold: 0.15,
-            smooth: true,
-            minNeighbors: 2,
-            fallbackOnEmpty: true
-          });
-          console.log('[AI Import] processImage returned', result?.voxels?.length || 0, 'voxels', result?.meta);
+       const processAIImage = async (file) => {
+         if (!file) {
+           self._notify('Seleziona un\'immagine prima', 'warn');
+           return;
+         }
 
-          if (!result || !result.voxels) {
-            throw new Error('AI Import failed: no voxels generated. Try a different image.');
-          }
+         const mode = document.getElementById('ai-mode')?.value || 'tsdf';
+          const gridResolution = parseInt(document.getElementById('ai-resolution')?.value) || 48;
+          const maxDepthVoxels = parseInt(document.getElementById('ai-max-depth')?.value) || 30;
+          const minThreshold = parseFloat(document.getElementById('ai-threshold')?.value) || 0.04;
 
-          const { voxels, meta } = result;
-          let added = 0;
-          for (const v of voxels) {
-            const success = self.voxelEngine.addVoxel(v, v.material || 'steel', self.voxelEngine.activeModule);
-            if (success) added++;
-            else {
-              console.warn('Failed to add voxel', v);
-            }
-          }
-          console.log('[AI Import] Added', added, 'voxels to engine');
+         if (statusEl) statusEl.textContent = 'Elaborazione in corso...';
+         try {
+           console.log('[AI Import] Loading DepthPipeline');
+           const { DepthPipeline } = await import('./core/depth-pipeline.js');
+           const pipeline = new DepthPipeline(self.voxelEngine);
+            const result = await pipeline.processImage(file, {
+              mode: mode,
+              depthTargetSize: 256,
+              filterDepth: true,
+              medianKernel: 2,
+              gridResolution: gridResolution,
+              minThreshold: minThreshold,
+              smooth: true,
+              minNeighbors: 2,
+              fallbackOnEmpty: true,
+              maxDepthVoxels: maxDepthVoxels
+            });
+           console.log('[AI Import] processImage returned', result?.voxels?.length || 0, 'voxels', result?.meta);
 
-          self.voxelEngine._onVoxelChanged();
-          self.voxelEngine.setTool('remove');
-          if (typeof self.voxelEngine.fitCameraToVoxels === 'function') {
-            self.voxelEngine.fitCameraToVoxels();
-          } else {
-            self.voxelEngine.resetCamera();
-          }
+           if (!result || !result.voxels) {
+             throw new Error('AI Import failed: no voxels generated. Try a different image.');
+           }
 
-          // Update LOD for all voxels to ensure visibility after camera reset
-          if (self.voxelEngine.lodManager) {
-            self.voxelEngine.lodManager.update();
-            self.voxelEngine._updateInstanceVisibility();
-          }
-          if (statusEl) statusEl.textContent = `Generati ${voxels.length} voxel (${meta.modelUsed}, ${meta.width}x${meta.height})`;
-          if (added === 0) {
-            self._notify('Attenzione: nessun voxel aggiunto alla scena', 'warn');
-          } else {
-            self._notify(`AI Import completato: ${added} voxel da ${file.name}`, 'success');
-          }
-        } catch (err) {
-          console.error('[AI Import] Error:', err);
-          if (statusEl) statusEl.textContent = '';
-          self._notify('Errore AI Import: ' + err.message, 'error');
-        }
-      };
+           const { voxels, meta } = result;
+           let added = 0;
+           for (const v of voxels) {
+             const success = self.voxelEngine.addVoxel(v, v.material || 'steel', self.voxelEngine.activeModule);
+             if (success) added++;
+             else {
+               console.warn('Failed to add voxel', v);
+             }
+           }
+           console.log('[AI Import] Added', added, 'voxels to engine');
 
-      imageInput.addEventListener('change', async function() {
-        if (this.files && this.files[0]) {
-          processBtn.disabled = false;
-          if (statusEl) statusEl.textContent = 'Immagine pronta. Premi Genera.';
-          if (!processBtn.offsetParent) {
-            console.warn('[AI Import] process button is not visible, auto-processing image');
-            await processAIImage(this.files[0]);
-          }
-        } else {
-          processBtn.disabled = true;
-          if (statusEl) statusEl.textContent = '';
-        }
-      });
+           self.voxelEngine._onVoxelChanged();
+           self.voxelEngine.setTool('remove');
+           if (typeof self.voxelEngine.fitCameraToVoxels === 'function') {
+             self.voxelEngine.fitCameraToVoxels();
+           } else {
+             self.voxelEngine.resetCamera();
+           }
 
-      processBtn.addEventListener('click', async function() {
-        console.log('[AI Import] Click handler started');
-        const file = imageInput.files && imageInput.files[0];
-        await processAIImage(file);
-      });
-   }
+           if (self.voxelEngine.lodManager) {
+             self.voxelEngine.lodManager.update();
+             self.voxelEngine._updateInstanceVisibility();
+           }
+           if (statusEl) statusEl.textContent = `Generati ${voxels.length} voxel (${meta.method || meta.modelUsed}, grid:${gridResolution})`;
+           if (added === 0) {
+             self._notify('Attenzione: nessun voxel aggiunto alla scena', 'warn');
+           } else {
+             self._notify(`AI Import completato: ${added} voxel da ${file.name}`, 'success');
+           }
+         } catch (err) {
+           console.error('[AI Import] Error:', err);
+           if (statusEl) statusEl.textContent = '';
+           self._notify('Errore AI Import: ' + err.message, 'error');
+         }
+       };
+
+       imageInput.addEventListener('change', async function() {
+         if (this.files && this.files[0]) {
+           processBtn.disabled = false;
+           if (statusEl) statusEl.textContent = 'Immagine pronta. Premi Genera 3D.';
+           if (!processBtn.offsetParent) {
+             console.warn('[AI Import] process button is not visible, auto-processing image');
+             await processAIImage(this.files[0]);
+           }
+         } else {
+           processBtn.disabled = true;
+           if (statusEl) statusEl.textContent = '';
+         }
+       });
+
+       processBtn.addEventListener('click', async function() {
+         console.log('[AI Import] Click handler started');
+         const file = imageInput.files && imageInput.files[0];
+         await processAIImage(file);
+       });
+    }
 
    // Random color
    _randomColor() {
