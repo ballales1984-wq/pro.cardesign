@@ -1,6 +1,17 @@
 # Core dependencies
 numpy>=1.20.0
+scipy>=1.7.0
+Pillow>=9.0.0
 dataclasses-json>=0.5.0
+
+# AI pipeline - optional (heavy models)
+transformers>=4.30.0
+torch>=2.0.0
+open3d>=0.17.0
+scikit-learn>=1.3.0
+
+#sam2 (optional, install separately if needed)
+#pip install git+https://github.com/facebookresearch/sam2.git
 
 # Development dependencies
 pytest>=7.0
@@ -8,4 +19,3 @@ pytest-cov>=4.0
 black>=23.0
 flake8>=6.0
 mypy>=1.0
-isort>=5.0
