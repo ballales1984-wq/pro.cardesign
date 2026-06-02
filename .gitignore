@@ -81,3 +81,7 @@ exports/
 # Lock files (optional - uncomment if not using)
 # package-lock.json
 # yarn.lock
+
+# Project temp files
+public/test-image.txt
+.kilo/kilo.json
